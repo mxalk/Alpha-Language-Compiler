@@ -1,5 +1,5 @@
-"string" if else
-
+"string//geiaa_comment1_\n123" if else
+"string/*geiaa_comment2*/_\n123"
 hy 340
 ena duo tria
 
@@ -7,9 +7,10 @@ ena duo tria
 
 { lala }
 
-kappa == lamda34
+kappa == lamda
 
 //geiaa comment1
 /* geiaaaa
-        comment2
+     /*   comment2
+     */
 */

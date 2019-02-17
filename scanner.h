@@ -13,7 +13,7 @@ void t_enqueue(struct t_queue *q, struct alpha_token_t *t);
 struct alpha_token_t *t_dequeue(struct t_queue *q);
 void print_queue(struct t_queue *q);
 
-const char *typeNames[] = {"KEYWORD", "ID", "STRING", "COMMENT", "INTCONST", "DOUBLECONST", "PUNCTUATION", "OPERATOR"};
+const char *typeNames[] = {"KEYWORD", "ID", "STRING", "COMMENT", "INTCONST", "DOUBLECONST", "PUNCTUATION", "OPERATOR" ,"NESTEDCOMMENT"};
 
 typedef enum alpha_token_type_t
 {
@@ -24,7 +24,8 @@ typedef enum alpha_token_type_t
         intconst,
         doubleconst,
         punct,
-        oper
+        oper,
+        nestcomm
 } alpha_token_type_t;
 
 typedef struct alpha_token_t
@@ -72,7 +73,7 @@ void new_token(t_queue *q, unsigned int yylineno, char *yytext, alpha_token_type
                 exit(EXIT_FAILURE);
         }
         token->type = type;
-        if ((token->value = (char *)malloc(strlen(yytext) + 1)) == NULL)
+        if ((token->value = (char *)malloc(yyleng + 1)) == NULL)
         {
                 printf("Token value malloc error\n");
                 exit(EXIT_FAILURE);
