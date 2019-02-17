@@ -1,4 +1,5 @@
-#ignore scanner exec
+#ignore scanner executable
 scanner
 
-#ignore scanner.c (not ignored atm for debugging purposes)
+#ignore generated flex scanner.c code
+scanner.c
