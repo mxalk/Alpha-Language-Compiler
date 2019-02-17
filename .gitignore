@@ -1,0 +1,4 @@
+#ignore scanner exec
+scanner
+
+#ignore scanner.c (not ignored atm for debugging purposes)

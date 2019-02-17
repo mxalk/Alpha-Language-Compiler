@@ -24,7 +24,7 @@
       exit(-1);
     }
     /* token->value = (char*) malloc(sizeof(yytext)+1) ; //to be freed */
-    printf("%s\n", strlen(yytext));
+    printf("%lu\n", strlen(yytext));
     /* strncpy(token->value, yytext, strlen(yytext)+1); */
     token->value = yytext;
     token->type = type;
@@ -41,8 +41,42 @@ id  [a-zA-Z][a-zA-Z_0-9]*
 string  \"[^\n"]*\"
 comment "//".*
 delimiter [\r\n \t\v]*
+new_line "\n"
+
+IF  "if"
+ELSE  "else"
+WHILE "while"
+FOR "for"
+FUNCTION  "function"
+RETURN  "return"
+BREAK "break"
+CONTINUE  "continue"
+AND "and"
+NOT "not"
+OR  "or"
+LOCAL "local"
+TRUE  "true"
+FALSE "false"
+NIL "nil"
+/*  { } [ ] ( ) ; , : :: . .. */
 
 %%
+
+{IF}  {return 1;/*add_token_to_struct*/}
+{ELSE}  {return 1;}
+{WHILE} {return 1;}
+{FOR} {return 1;}
+{FUNCTION}  {return 1;}
+{RETURN}  {return 1;}
+{BREAK} {return 1;}
+{CONTINUE}  {return 1;}
+{AND} {return 1;}
+{NOT} {return 1;}
+{OR}  {return 1;}
+{LOCAL} {return 1;}
+{TRUE}  {return 1;}
+{FALSE} {return 1;}
+{NIL} {return 1;}
 {id}  {
   fprintf(stderr, "Recognized id with value: %s\n", yytext);
   fill_token((alpha_token_t*) yyval, yytext, id);
@@ -84,7 +118,7 @@ int main (int argc, char** argv) {
     int more;
     do {
       more = yylex(t);
-      printf(t->value);
+      printf("%s\n",t->value);
       free(t->value);
     } while (more);
     free(t);
