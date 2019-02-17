@@ -1,2 +1,15 @@
-lalalalal123 "string"
-// kalhmera
+"string" if else
+
+hy 340
+ena duo tria
+
+32.114
+
+{ lala }
+
+kappa == lamda34
+
+//geiaa comment1
+/* geiaaaa
+        comment2
+*/

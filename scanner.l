@@ -4,31 +4,8 @@
   int isatty(int i) { return 0;}
   #endif
 
-  #include <stdlib.h>
-  #include <string.h>
+  #include "scanner.h"
   #define YY_DECL int yylex(void* yyval)
-
-
-  typedef enum alpha_token_type_t {
-    id, string, comment
-  }alpha_token_type_t;
-
-  typedef struct alpha_token_t {
-    alpha_token_type_t type;
-    char *value;
-  }alpha_token_t;
-
-  void fill_token(alpha_token_t *token, char *yytext, alpha_token_type_t type) {
-    if (token == NULL) {
-      printf("Token memory not allocated");
-      exit(-1);
-    }
-    /* token->value = (char*) malloc(sizeof(yytext)+1) ; //to be freed */
-    printf("%lu\n", strlen(yytext));
-    /* strncpy(token->value, yytext, strlen(yytext)+1); */
-    token->value = yytext;
-    token->type = type;
-  }
 %}
 
 %option PREFIX="alpha_yy"
@@ -42,7 +19,10 @@ string  \"[^\n"]*\"
 comment "//".*
 delimiter [\r\n \t\v]*
 new_line "\n"
+number [0-9]+
+duble {number}\.{number}?
 
+/* KEYWORDS */
 IF  "if"
 ELSE  "else"
 WHILE "while"
@@ -58,46 +38,110 @@ LOCAL "local"
 TRUE  "true"
 FALSE "false"
 NIL "nil"
-/*  { } [ ] ( ) ; , : :: . .. */
+
+/* PUNCTUATIONS */
+CURL_O "\{"
+CURL_C "\}"
+BRAC_O "\["
+BRAC_C "\]"
+ANGL_O "\("
+ANGL_C "\)"
+SEMI   "\;"
+COMMA  "\,"
+COLON  "\:"
+DCOLON "\:\:"
+DOT    "\."
+DOTDOT "\.\."
+
+/* OPERATIONS */
+ASSIGN    "\="
+PLUS      "\+"
+MINUS     "\-"
+MUL       "\*"
+SLASH     "\/"
+PERC      "\%"
+EQUALS    "\=\="
+NEQUALS   "\!\="
+INCR      "\+\+"
+DECR      "\-\-"
+GREATER   "\>"
+LESS      "\<"
+GREATER_E "\>\="
+LESS_E    "\<\="
+
+%x COMMENT INCLUDE
 
 %%
 
-{IF}  {return 1;/*add_token_to_struct*/}
-{ELSE}  {return 1;}
-{WHILE} {return 1;}
-{FOR} {return 1;}
-{FUNCTION}  {return 1;}
-{RETURN}  {return 1;}
-{BREAK} {return 1;}
-{CONTINUE}  {return 1;}
-{AND} {return 1;}
-{NOT} {return 1;}
-{OR}  {return 1;}
-{LOCAL} {return 1;}
-{TRUE}  {return 1;}
-{FALSE} {return 1;}
-{NIL} {return 1;}
+
+"/*"  BEGIN(COMMENT);
+<COMMENT>[^*]*  /* eat anything thats not a '*' */
+<COMMENT>"*"+[^*/]* /* eat up '*' not followed by '/'s  */
+<COMMENT>"*"+"/" BEGIN(INITIAL);
+
+{IF}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{ELSE}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{WHILE} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{FOR} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{FUNCTION}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{RETURN}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{BREAK} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{CONTINUE}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{AND} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{NOT} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{OR}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{LOCAL} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{TRUE}  {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{FALSE} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{NIL} {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
+{CURL_O} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{CURL_C} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{BRAC_O} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{BRAC_C} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{ANGL_O} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{ANGL_C} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{SEMI} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{COMMA} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{COLON} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{DCOLON} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{DOT} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{DOTDOT} {new_token((t_queue *) yyval, yylineno, yytext, punct);}
+{ASSIGN} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{PLUS} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{MINUS} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{MUL} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{SLASH} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{PERC} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{EQUALS} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{NEQUALS} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{INCR} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{DECR} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{GREATER} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{LESS} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{GREATER_E} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+{LESS_E} {new_token((t_queue *) yyval, yylineno, yytext, oper);}
+
+
 {id}  {
-  fprintf(stderr, "Recognized id with value: %s\n", yytext);
-  fill_token((alpha_token_t*) yyval, yytext, id);
-  return 1;
+  new_token((t_queue *) yyval, yylineno, yytext, id);
 }
 {string}  {
-  fprintf(stderr, "Recognized string with value: %s\n", yytext);
-  fill_token((alpha_token_t*) yyval, yytext, string);
-  return 1;
+  new_token((t_queue *) yyval, yylineno, yytext, string);
 }
 {comment} {
-  fprintf(stderr, "Recognized comment with value: %s\n", yytext);
-  fill_token((alpha_token_t*) yyval, yytext, comment);
-  return 1;
 }
+{number} {
+  new_token((t_queue *) yyval, yylineno, yytext, intconst);
+}
+{duble} {
+  new_token((t_queue *) yyval, yylineno, yytext, doubleconst);
+}
+
 {delimiter} {
-  return 1;
 }
 . {
-  fprintf(stderr, "Cannot match character %s with any rule\n", yytext);
-  return 1;
+  fprintf(stderr, "Unexpected identifier \"%s\" in line %d.\n", yytext, yylineno);
+  exit(EXIT_FAILURE);
 }
 <<EOF>> {
   return 0;
@@ -112,15 +156,10 @@ int main (int argc, char** argv) {
       }
     }
     else yyin= stdin;
+    t_queue *q;
+    q = queue_init();
 
-
-    alpha_token_t *t = malloc(sizeof(alpha_token_t));
-    int more;
-    do {
-      more = yylex(t);
-      printf("%s\n",t->value);
-      free(t->value);
-    } while (more);
-    free(t);
+    yylex((void *)q);
+    print_queue(q);
     return 0;
 }

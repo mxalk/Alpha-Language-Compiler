@@ -1,5 +1,5 @@
 #ignore scanner executable
-scanner
+al
 
 #ignore generated flex scanner.c code
 scanner.c
