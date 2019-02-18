@@ -72,32 +72,33 @@ LESS      "\<"
 GREATER_E "\>\="
 LESS_E    "\<\="
 
-%x COMMENT INCLUDE
+%x COMMENT
 
 %%
 
-
-"/*"  { BEGIN(COMMENT);
-      comm_count++;
+"/*"  { 
+      BEGIN(COMMENT);
+      printf("OPEN comment #%d\n",++comm_count);
       new_token((t_queue *) yyval, yylineno, yytext, comment);
 }
-<COMMENT>"/"+"*"  {
-      comm_count++;
+
+<COMMENT>"/*"  {
+      printf("OPEN nested #%d\n",++comm_count);
       new_token((t_queue *) yyval, yylineno, yytext, nestcomm);
 }
-<COMMENT>[^*]*  { 
+
+<comment>"*"+[^*/\n]*     { 
   /* eat anything thats not a '*' */
   /* append */
-}
-<COMMENT>"*"+[^*/]* {
-
 }
 
 
 <COMMENT>"*"+"/"  {
-  if(comm_count==1)
-    BEGIN(INITIAL); 
-  else{
+  if(comm_count==1){
+    BEGIN(INITIAL);
+      printf("CLOSE comment\n"); 
+  }else{
+      printf("CLOSE nested\n");
     comm_count--;
   }
 }
@@ -184,22 +185,6 @@ LESS_E    "\<\="
   buffer[size] = '\0';
   strcpy(yytext, buffer);
   new_token((t_queue *) yyval, yylineno, yytext, string);
-}
-
-"/*" {
-  // char c;
-  // int comm_count=0;
-  // char last = '';
-  // while ((c=input()) {
-  //   if (c == EOF) {
-  //     unput(c);
-  //     break;
-  //   }
-  //   if (last == '') continue;
-  //   switch (last) {
-  //     case '/'
-  //   }
-  // // } //TBD
 }
 
 {comment} {

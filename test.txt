@@ -1,5 +1,12 @@
-"string//geiaa_comment1_\n123" if else
-"string/*geiaa_comment2*/_\n123"
+//"string//geiaa_comment1_\n123" if else
+//"string/*geiaa_comment2*/_\n123"
+""
+"1"
+" "
+"\t"
+//"\n"
+"\\"
+//"\""
 hy 340
 ena duo tria
 
