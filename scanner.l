@@ -87,7 +87,7 @@ LESS_E    "\<\="
       new_token((t_queue *) yyval, yylineno, yytext, nestcomm);
 }
 
-<comment>"*"+[^*/\n]*     { 
+<COMMENT>"*"+[^*/\n]*     { 
   /* eat anything thats not a '*' */
   /* append */
 }
