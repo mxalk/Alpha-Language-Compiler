@@ -46,6 +46,7 @@ void push_back(struct alpha_token_t *token)
               LEX_ST->container = (struct alpha_token_t**)realloc(LEX_ST->container,sizeof(LEX_ST->container)+10);
               LEX_ST->capacity += 10;  
         }
+        LEX_ST->capacity--;
         LEX_ST->container[++LEX_ST->top] = token; 
 }
 
