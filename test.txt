@@ -16,8 +16,10 @@ ena duo tria
 
 kappa == lamda
 
-//geiaa comment1
-/* geiaaaa
-     /*   comment2
+//geiaa comment0
+/* geiaaaa comment1
+     /*   
+        comment2
+        // comment3
      */
 */

@@ -87,6 +87,12 @@ LESS_E    "\<\="
       new_token((t_queue *) yyval, yylineno, yytext, nestcomm);
 }
 
+<COMMENT>"//"  {
+      printf("OPEN nested #%d\n",++comm_count);
+      new_token((t_queue *) yyval, yylineno, yytext, nestcomm);
+      comm_count--;
+}
+
 <COMMENT>"*"+[^*/\n]*     { 
   /* eat anything thats not a '*' */
   /* append */
@@ -99,8 +105,8 @@ LESS_E    "\<\="
       printf("CLOSE comment\n"); 
   }else{
       printf("CLOSE nested\n");
-    comm_count--;
   }
+  comm_count--;
 }
 
 {IF}        {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
@@ -222,5 +228,6 @@ int main (int argc, char** argv) {
 
     yylex((void *)q);
     print_queue(q);
+    if(comm_count!=0)fprintf(stderr,"Warning: some comments did'nt close correctly!\n");
     return 0;
 }

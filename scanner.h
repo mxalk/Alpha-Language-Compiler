@@ -3,17 +3,51 @@
 #include <stdlib.h>
 #include <string.h>
 #define LEX_Q lex_global_q
+#define LEX_ST lex_global_stack
 
 enum alpha_token_type_t;
 struct alpha_token_t;
 struct t_queue;
 struct node;
 struct t_queue *lex_global_q;
+struct alpha_stack *lex_global_stack;
 void t_enqueue(struct t_queue *q, struct alpha_token_t *t);
 struct alpha_token_t *t_dequeue(struct t_queue *q);
 void print_queue(struct t_queue *q);
 
-const char *typeNames[] = {"KEYWORD", "ID", "STRING", "COMMENT", "INTCONST", "DOUBLECONST", "PUNCTUATION", "OPERATOR" ,"NESTEDCOMMENT"};
+const char *typeNames[] = {"KEYWORD", "ID", "STRING", "COMMENT", "INTCONST", "DOUBLECONST", "PUNCTUATION", "OPERATOR", "NESTEDCOMMENT"};
+
+typedef struct alpha_stack
+{
+        unsigned int capacity;
+        struct alpha_token_t **container;
+        int top;
+} alpha_stack;
+
+void initStack()
+{
+        LEX_ST = (alpha_stack *)malloc(sizeof(alpha_stack));
+        LEX_ST->capacity = 10;
+        LEX_ST->container = (struct alpha_token_t **)malloc(sizeof(alpha_stack *) * 10);//memory chunks of 10
+        LEX_ST->top = -1;
+}
+int s_isEmpty()
+{
+        return (LEX_ST->top == NULL) ? 1 : 0;
+}
+int s_isFull()
+{
+        return (LEX_ST->capacity == 0)? 1 : 0;
+}
+void push_back(struct alpha_token_t *token)
+{
+        if (s_isFull()) 
+        {
+              LEX_ST->container = (struct alpha_token_t**)realloc(LEX_ST->container,sizeof(LEX_ST->container)+10);
+              LEX_ST->capacity += 10;  
+        }
+        LEX_ST->container[++LEX_ST->top] = token; 
+}
 
 typedef enum alpha_token_type_t
 {
