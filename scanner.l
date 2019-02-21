@@ -17,7 +17,7 @@
 /* Flex macros */
 
 id        [a-zA-Z][a-zA-Z_0-9]*
-string    \"[^\n"]*\"
+string    \"(?:[^"\\]++|\\.)*+\"
 comment   "//".*
 delimiter [\r\n \t\v]*
 new_line  "\n"
