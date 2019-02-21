@@ -10,4 +10,4 @@ flex:
 	flex -o scanner.c scanner.l
 
 clean:
-	rm scanner.c scanner
+	rm scanner.c al
