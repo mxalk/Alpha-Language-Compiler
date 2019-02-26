@@ -33,7 +33,7 @@ void initStack()
 }
 int s_isEmpty()
 {
-        return (LEX_ST->top == NULL) ? 1 : 0;
+        return (LEX_ST->top == -1) ? 1 : 0;
 }
 int s_isFull()
 {
