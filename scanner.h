@@ -27,8 +27,8 @@ typedef struct alpha_stack
 void initStack()
 {
         LEX_ST = (alpha_stack *)malloc(sizeof(alpha_stack));
-        LEX_ST->capacity = 10;
-        LEX_ST->container = (struct alpha_token_t **)malloc(sizeof(alpha_stack *) * 10);//memory chunks of 10
+        LEX_ST->capacity = 100;
+        LEX_ST->container = (struct alpha_token_t **)malloc(sizeof(alpha_stack *) * 100);//memory chunks of 10
         LEX_ST->top = -1;
 }
 int s_isEmpty()
@@ -43,12 +43,31 @@ void push_back(struct alpha_token_t *token)
 {
         if (s_isFull()) 
         {
-              LEX_ST->container = (struct alpha_token_t**)realloc(LEX_ST->container,sizeof(LEX_ST->container)+10);
-              LEX_ST->capacity += 10;  
+              LEX_ST->container = (struct alpha_token_t**)realloc(LEX_ST->container,sizeof(LEX_ST->container)+100);
+              LEX_ST->capacity += 100;  
         }
         LEX_ST->capacity--;
         LEX_ST->container[++LEX_ST->top] = token; 
 }
+
+// void new_comment(unsigned int yylineno, char *yytext, alpha_token_type_t type)
+// {
+//         alpha_token_t *token;
+//         if ((token = (alpha_token_t *)malloc(sizeof(alpha_token_t))) == NULL)
+//         {
+//                 printf("Token malloc error\n");
+//                 exit(EXIT_FAILURE);
+//         }
+//         token->type = type;
+//         if ((token->value = (char *)malloc(yyleng + 1)) == NULL)
+//         {
+//                 printf("Token value malloc error\n");
+//                 exit(EXIT_FAILURE);
+//         }
+//         strcpy(token->value, yytext);
+//         token->lineno = yylineno;
+//         push_back(token);
+// }
 
 typedef enum alpha_token_type_t
 {
@@ -95,7 +114,7 @@ t_queue *queue_init()
         }
         q->head = NULL;
         q->tail = NULL;
-        q->token_counter = 0;
+        q->token_counter = 1;
         return q;
 }
 

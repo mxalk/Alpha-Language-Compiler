@@ -17,7 +17,7 @@
 /* Flex macros */
 
 id        [a-zA-Z][a-zA-Z_0-9]*
-string    \"(?:[^"\\]++|\\.)*+\"
+string    \"
 comment   "//".*
 delimiter [\r\n \t\v]*
 new_line  "\n"
@@ -78,8 +78,8 @@ LESS_E    "\<\="
 
 "/*"  { 
       BEGIN(COMMENT);
-      printf("OPEN comment #%d\n",++comm_count);
       new_token((t_queue *) yyval, yylineno, yytext, comment);
+            comm_count++;
 }
 
 <COMMENT>"/*"  {
@@ -155,42 +155,44 @@ LESS_E    "\<\="
 {id}  {
   new_token((t_queue *) yyval, yylineno, yytext, id);
 }
-{string}  { //ask about keeping '\n' in symbol queue
+{string} {
+  char* buffer = (char*)malloc(sizeof(char)*1025);
+  int filled = 0;
   char c;
-  char *buffer = (char *) malloc(yyleng+1);
-  int curr = 0;
-  int size = 0;
-  while (curr < yyleng) {
-    c = yytext[curr];
-    curr++;
-      if (c != '\\') {
-        buffer[size] = c;
-        size++;
-        continue;
+  while ((c = input()) != '"') {
+    if (c == EOF) {
+      fprintf(stderr, "EOF during string");
+      exit(EXIT_FAILURE);
+    } else if (c == '\\') {
+      // just dont continue, to check next char
+    } else {
+      if (filled == 1023) {
+        fprintf(stderr, "String is bigger than 1024 characters, line %d", yylineno);
+        exit(EXIT_FAILURE);
       }
-      // Last character is \ before closing quotes
-      if (curr == yyleng) {
-        buffer[size] = '\\';
-        size++;
-        break;
-      }
-      // Get escaped character
-      c = yytext[curr];
-      curr++;
-      if (c == '\\'){
-        buffer[size] = '\\';
-      } else if (c == 'n') {
-        buffer[size] = '\n';
-      } else if (c == 't') {
-        buffer[size] = '\t';
-      } else if (c == '"') {
-        buffer[size] = '\"';
-      }
-      size++;
+      buffer[filled++] = c;
+      continue;
     }
-  buffer[size] = '\0';
-  strcpy(yytext, buffer);
-  new_token((t_queue *) yyval, yylineno, yytext, string);
+    c = input();
+    if (c == EOF) {
+      fprintf(stderr, "EOF during escaping in string");
+      exit(EXIT_FAILURE);
+    } else if (c == '\\'){
+      buffer[filled] = '\\';
+    } else if (c == 'n') {
+      buffer[filled] = '\n';
+    } else if (c == 't') {
+      buffer[filled] = '\t';
+    } else if (c == '"') {
+      buffer[filled] = '\"';
+    } else {
+      fprintf(stderr, "Unknown escaped character in string, line %d", yylineno );
+      exit(EXIT_FAILURE);
+    }
+      filled++;
+  }
+  buffer[filled] = '\0';
+  new_token((t_queue *) yyval, yylineno, buffer, string);
 }
 
 {comment} {
