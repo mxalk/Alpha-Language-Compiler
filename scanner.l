@@ -18,6 +18,7 @@
 
 id        [a-zA-Z][a-zA-Z_0-9]*
 string    \"
+multiline_comment   "/*"
 comment   "//".*
 delimiter [\r\n \t\v]*
 new_line  "\n"
@@ -72,42 +73,8 @@ LESS      "\<"
 GREATER_E "\>\="
 LESS_E    "\<\="
 
-%x COMMENT
-
 %%
 
-"/*"  { 
-      BEGIN(COMMENT);
-      new_token((t_queue *) yyval, yylineno, yytext, comment);
-            comm_count++;
-}
-
-<COMMENT>"/*"  {
-      printf("OPEN nested #%d\n",++comm_count);
-      new_token((t_queue *) yyval, yylineno, yytext, nestcomm);
-}
-
-<COMMENT>"//"  {
-      printf("OPEN nested #%d\n",++comm_count);
-      new_token((t_queue *) yyval, yylineno, yytext, nestcomm);
-      comm_count--;
-}
-
-<COMMENT>"*"+[^*/\n]*     { 
-  /* eat anything thats not a '*' */
-  /* append */
-}
-
-
-<COMMENT>"*"+"/"  {
-  if(comm_count==1){
-    BEGIN(INITIAL);
-      printf("CLOSE comment\n"); 
-  }else{
-      printf("CLOSE nested\n");
-  }
-  comm_count--;
-}
 
 {IF}        {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
 {ELSE}      {new_token((t_queue *) yyval, yylineno, yytext, keyword);}
@@ -160,22 +127,22 @@ LESS_E    "\<\="
   int filled = 0;
   char c;
   while ((c = input()) != '"') {
-    if (c == EOF) {
-      fprintf(stderr, "EOF during string");
+    if (c == 0) {
+      fprintf(stderr, "EOF during string\n");
       exit(EXIT_FAILURE);
     } else if (c == '\\') {
       // just dont continue, to check next char
     } else {
       if (filled == 1023) {
-        fprintf(stderr, "String is bigger than 1024 characters, line %d", yylineno);
+        fprintf(stderr, "String is bigger than 1024 characters, line %d\n", yylineno);
         exit(EXIT_FAILURE);
       }
       buffer[filled++] = c;
       continue;
     }
     c = input();
-    if (c == EOF) {
-      fprintf(stderr, "EOF during escaping in string");
+    if (c == 0) {
+      fprintf(stderr, "EOF during escaping in string\n");
       exit(EXIT_FAILURE);
     } else if (c == '\\'){
       buffer[filled] = '\\';
@@ -186,7 +153,7 @@ LESS_E    "\<\="
     } else if (c == '"') {
       buffer[filled] = '\"';
     } else {
-      fprintf(stderr, "Unknown escaped character in string, line %d", yylineno );
+      fprintf(stderr, "Unknown escaped character in string, line %d\n", yylineno );
       exit(EXIT_FAILURE);
     }
       filled++;
@@ -195,6 +162,38 @@ LESS_E    "\<\="
   new_token((t_queue *) yyval, yylineno, buffer, string);
 }
 
+{multiline_comment} {
+  char c;
+  int stack = 1;
+  while (1) {
+    c = input();
+    if (c == 0) {
+      break;
+    }
+    if (c == '/') {
+      c = input();
+      if (c == '/') {
+        new_token((t_queue *) yyval, yylineno, "comment", comment);
+        continue;
+      } else if (c != '*') {
+        unput(c);
+        continue;
+      } 
+      stack++;
+      // nested comment here
+    } else if (c == '*') {
+      c = input();
+      if (c != '/') {
+        unput(c);
+        continue;
+      } 
+      new_token((t_queue *) yyval, yylineno, "multiline_comment", comment);
+      stack--;
+      if (stack == 0) break;
+    }
+  }
+  printf("\nStack ended with %d\n",stack);
+}
 {comment} {
     new_token((t_queue *) yyval, yylineno, yytext, comment);
 }

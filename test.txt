@@ -24,5 +24,3 @@ kappa == lamda
         // comment3
      */
 */
-
-//"
