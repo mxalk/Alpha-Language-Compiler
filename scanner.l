@@ -3,7 +3,7 @@
   #define YY_NO_UNISTD_H
   int isatty(int i) { return 0;}
   #endif
-  #include "./Structs/List.h"
+  #include "./Structs/Stack.h"
   #include "scanner.h"
   #define YY_DECL int yylex(void* yyval)
   
@@ -166,15 +166,15 @@ LESS_E    "\<\="
 {multiline_comment} {
   char c, *buffer, *temp;
   int balanced = 1, i ;
-  List *list = List_init();
-  List *reverse = List_init();
-  List_Node *node;
+  Stack *stack = Stack_init();
+  Stack *reverse = Stack_init();
+  Stack_Node *node;
   comment_node *comment_n;
   comment_n = (comment_node *) malloc(sizeof(comment_node));
   comment_n->line_open = yylineno;
   comment_n->line_close = -1;
   comment_n->isMultiLine = 1;
-  List_append(list, (void *)comment_n);
+  Stack_append(stack, (void *)comment_n);
   while (1) {
     c = input();
     if (c == 0) {
@@ -186,7 +186,7 @@ LESS_E    "\<\="
         comment_n = (comment_node *) malloc(sizeof(comment_node));
         comment_n->line_open = yylineno;
         comment_n->isMultiLine = 0;
-        List_append(list, (void *)comment_n);
+        Stack_append(stack, (void *)comment_n);
         continue;
       } else if (c != '*') {
         unput(c);
@@ -197,15 +197,15 @@ LESS_E    "\<\="
       comment_n->line_open = yylineno;
       comment_n->line_close = -1;
       comment_n->isMultiLine = 1;
-      List_append(list, (void *)comment_n);
+      Stack_append(stack, (void *)comment_n);
     } else if (c == '*') {
       c = input();
       if (c != '/') {
         unput(c);
         continue;
       }
-      node = list->front;
-      for (i=0; i<list->size; i++) {
+      node = stack->top;
+      for (i=0; i<stack->size; i++) {
         comment_n = (comment_node *)(node->content);
         if (comment_n->isMultiLine == 1 && comment_n->line_close == -1){
           comment_n->line_close = yylineno;
@@ -217,9 +217,9 @@ LESS_E    "\<\="
       if (balanced == 0) break;
     }
   }
-  while (List_isEmpty(list) == 0)List_append(reverse, List_pop(list));
-  while (List_isEmpty(reverse) == 0) {
-    comment_n = List_pop(reverse);
+  while (Stack_isEmpty(stack) == 0)Stack_append(reverse, Stack_pop(stack));
+  while (Stack_isEmpty(reverse) == 0) {
+    comment_n = Stack_pop(reverse);
     if (comment_n->isMultiLine == 0) {
       new_token((t_queue *) yyval, comment_n->line_open, "", comment);
       continue;
@@ -234,8 +234,8 @@ LESS_E    "\<\="
     free(comment_n);
   }
   //free(yytext);
-  List_destroy(list);
-  List_destroy(reverse);
+  Stack_destroy(stack);
+  Stack_destroy(reverse);
 }
 {comment} {
   new_token((t_queue *) yyval, yylineno, yytext, comment);
