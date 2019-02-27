@@ -62,7 +62,6 @@ alpha_token_t *new_token(Queue *q, unsigned int yylineno, char *yytext, alpha_to
         token->lineno = yylineno;
         token->token_num = token_id++;
         token->category = category;
-        printf("%d ", type);
         if (type != OTHER) {
                 token->type = type;
         } else if (category == intconst) {

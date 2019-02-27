@@ -236,14 +236,17 @@ LESS_E    "\<\="
   Stack_destroy(stack);
   Stack_destroy(reverse);
 }
+
 {comment} {
   char temp[128];
   sprintf(temp , "%d" , yylineno);
   new_token((Queue *) yyval, yylineno, temp, comment, LINECOMM);
 }
+
 {number} {
   new_token((Queue *) yyval, yylineno, yytext, intconst, 0);
 }
+
 {float} {
   new_token((Queue *) yyval, yylineno, yytext, floatconst, 0);
 }
