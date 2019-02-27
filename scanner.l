@@ -3,11 +3,11 @@
   #define YY_NO_UNISTD_H
   int isatty(int i) { return 0;}
   #endif
-
+  #include "./Structs/List.h"
   #include "scanner.h"
   #define YY_DECL int yylex(void* yyval)
   
-  unsigned int comm_count;
+  unsigned int flag = 0;
 %}
 
 %option PREFIX="alpha_yy"
@@ -122,6 +122,7 @@ LESS_E    "\<\="
 {id}  {
   new_token((t_queue *) yyval, yylineno, yytext, id);
 }
+
 {string} {
   char* buffer = (char*)malloc(sizeof(char)*1025);
   int filled = 0;
@@ -163,8 +164,17 @@ LESS_E    "\<\="
 }
 
 {multiline_comment} {
-  char c;
-  int stack = 1;
+  char c, *buffer, *temp;
+  int balanced = 1, i ;
+  List *list = List_init();
+  List *reverse = List_init();
+  List_Node *node;
+  comment_node *comment_n;
+  comment_n = (comment_node *) malloc(sizeof(comment_node));
+  comment_n->line_open = yylineno;
+  comment_n->line_close = -1;
+  comment_n->isMultiLine = 1;
+  List_append(list, (void *)comment_n);
   while (1) {
     c = input();
     if (c == 0) {
@@ -173,29 +183,62 @@ LESS_E    "\<\="
     if (c == '/') {
       c = input();
       if (c == '/') {
-        new_token((t_queue *) yyval, yylineno, "comment", comment);
+        comment_n = (comment_node *) malloc(sizeof(comment_node));
+        comment_n->line_open = yylineno;
+        comment_n->isMultiLine = 0;
+        List_append(list, (void *)comment_n);
         continue;
       } else if (c != '*') {
         unput(c);
         continue;
-      } 
-      stack++;
-      // nested comment here
+      }
+      balanced++;
+      comment_n = (comment_node *) malloc(sizeof(comment_node));
+      comment_n->line_open = yylineno;
+      comment_n->line_close = -1;
+      comment_n->isMultiLine = 1;
+      List_append(list, (void *)comment_n);
     } else if (c == '*') {
       c = input();
       if (c != '/') {
         unput(c);
         continue;
-      } 
-      new_token((t_queue *) yyval, yylineno, "multiline_comment", comment);
-      stack--;
-      if (stack == 0) break;
+      }
+      node = list->front;
+      for (i=0; i<list->size; i++) {
+        comment_n = (comment_node *)(node->content);
+        if (comment_n->isMultiLine == 1 && comment_n->line_close == -1){
+          comment_n->line_close = yylineno;
+          break;
+        }
+        node = node->next;
+      }
+      balanced--;
+      if (balanced == 0) break;
     }
   }
-  printf("\nStack ended with %d\n",stack);
+  while (List_isEmpty(list) == 0)List_append(reverse, List_pop(list));
+  while (List_isEmpty(reverse) == 0) {
+    comment_n = List_pop(reverse);
+    if (comment_n->isMultiLine == 0) {
+      new_token((t_queue *) yyval, comment_n->line_open, "", comment);
+      continue;
+    }
+    if (comment_n->line_close == -1){
+      sprintf(temp , "%d-EOF" ,comment_n->line_open);
+      flag=1;
+    } else {
+      sprintf(temp , "%d-%d" ,comment_n->line_open, comment_n->line_close);
+    }
+    new_token((t_queue *) yyval, comment_n->line_open, temp, nestcomm);
+    free(comment_n);
+  }
+  //free(yytext);
+  List_destroy(list);
+  List_destroy(reverse);
 }
 {comment} {
-    new_token((t_queue *) yyval, yylineno, yytext, comment);
+  new_token((t_queue *) yyval, yylineno, yytext, comment);
 }
 {number} {
   new_token((t_queue *) yyval, yylineno, yytext, intconst);
@@ -206,11 +249,13 @@ LESS_E    "\<\="
 
 {delimiter} {
 }
+
 . {
   fprintf(stderr, "Unexpected identifier \"%s\" in line %d.\n", yytext, yylineno);
   print_queue((t_queue *) yyval);
   exit(EXIT_FAILURE);
 }
+
 <<EOF>> {
   return 0;
 }
@@ -229,6 +274,6 @@ int main (int argc, char** argv) {
 
     yylex((void *)q);
     print_queue(q);
-    if(comm_count!=0)fprintf(stderr,"Warning: some comments did'nt close correctly!\n");
+    if(flag == 1)fprintf(stderr,"warning: some comments didn't close correctly!\n");
     return 0;
 }

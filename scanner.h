@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define LEX_Q lex_global_q
-#define LEX_ST lex_global_stack
 
 enum alpha_token_type_t;
 struct alpha_token_t;
@@ -17,38 +15,9 @@ void print_queue(struct t_queue *q);
 
 const char *typeNames[] = {"KEYWORD", "ID", "STRING", "COMMENT", "INTCONST", "DOUBLECONST", "PUNCTUATION", "OPERATOR", "NESTEDCOMMENT"};
 
-typedef struct alpha_stack
-{
-        unsigned int capacity;
-        struct alpha_token_t **container;
-        int top;
-} alpha_stack;
-
-void initStack()
-{
-        LEX_ST = (alpha_stack *)malloc(sizeof(alpha_stack));
-        LEX_ST->capacity = 100;
-        LEX_ST->container = (struct alpha_token_t **)malloc(sizeof(alpha_stack *) * 100);//memory chunks of 10
-        LEX_ST->top = -1;
-}
-int s_isEmpty()
-{
-        return (LEX_ST->top == -1) ? 1 : 0;
-}
-int s_isFull()
-{
-        return (LEX_ST->capacity == 0)? 1 : 0;
-}
-void push_back(struct alpha_token_t *token)
-{
-        if (s_isFull()) 
-        {
-              LEX_ST->container = (struct alpha_token_t**)realloc(LEX_ST->container,sizeof(LEX_ST->container)+100);
-              LEX_ST->capacity += 100;  
-        }
-        LEX_ST->capacity--;
-        LEX_ST->container[++LEX_ST->top] = token; 
-}
+typedef struct comment_node {
+        int line_open, line_close, isMultiLine;
+} comment_node;
 
 // void new_comment(unsigned int yylineno, char *yytext, alpha_token_type_t type)
 // {
