@@ -1,5 +1,3 @@
-
-
 typedef struct Stack_Node Stack_Node;
 typedef struct Stack Stack;
 

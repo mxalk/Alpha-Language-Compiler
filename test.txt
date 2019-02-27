@@ -12,8 +12,8 @@ hy 340
 ena duo tria
 
 32.114
-
-{ lala }
+..
+{ lala } 
 
 kappa == lamda
 

@@ -3,7 +3,7 @@ CC=gcc
 all: scan
 
 scan: flex
-	$(CC) -o al -O0 scanner.c ./Structs/Stack.c
+	$(CC) -o al -O0 scanner.c ./Structs/Stack.c ./Structs/Queue.c
 	./al test.txt
 
 flex:
