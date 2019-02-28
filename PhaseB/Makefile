@@ -7,7 +7,7 @@ out: parser flex
 	$(CC) $(CCFLAGS) -o out parser.c scanner.c
 
 parser: 
-	bison --yacc --defines=parser.h --output=parser.c parser.y
+	bison --yacc --defines=parser.h --output=parser.c -v parser.y
 
 scan: flex
 	$(CC) -o al $(CCFLAGS) scanner.c ./Structs/Stack.c ./Structs/Queue.c

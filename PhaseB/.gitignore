@@ -1,5 +1,8 @@
 #ignore scanner executable
 al
 
+#ignore parser output
+parser.output
+
 #ignore generated flex scanner.c code
 
