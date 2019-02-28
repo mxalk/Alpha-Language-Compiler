@@ -4,5 +4,6 @@ al
 #ignore parser output
 parser.output
 
-#ignore generated flex scanner.c code
-
+#ignore generated .c and parser.h
+*.c
+parser.h 
