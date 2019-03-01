@@ -1,6 +1,8 @@
 #ignore scanner executable
 al
 
+phaseB.code-workspace
+
 #ignore parser output
 parser.output
 
