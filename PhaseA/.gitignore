@@ -1,6 +1,0 @@
-#ignore scanner executable
-al
-
-#ignore generated flex scanner.c code
-scanner.c
-\.vscode/ftp-kr\.sync\.cache\.json
