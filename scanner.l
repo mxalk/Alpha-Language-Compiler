@@ -4,10 +4,12 @@
   int isatty(int i) { return 0;}
   #endif
   #include "scanner.h"
-  #include "parser.h"
+  // #include "parser.h"
   #define YY_DECL int yylex(void* yyval)
   
   unsigned int flag = 0;
+
+  #define EOF_NUMBER 0
 %}
 
 %option PREFIX="alpha_yy"
@@ -123,20 +125,21 @@ LESS_E    "\<\="
 }
 
 {string} {
-  char* buffer = (char*)malloc(sizeof(char)*1025);
+  char* buffer = (char*)malloc(sizeof(char)*1026);
   int filled = 0;
+  int reallocs = 1;
   char c;
   while ((c = input()) != '"') {
     if (c == 0) {
       fprintf(stderr, "EOF during string\n");
       exit(EXIT_FAILURE);
-    } else if (c == '\\') {
-      // just dont continue, to check next char
-    } else {
-      if (filled == 1023) {
-        fprintf(stderr, "String is bigger than 1024 characters, line %d\n", yylineno);
-        exit(EXIT_FAILURE);
+    }
+            printf("%c on buffer[%d]\n",c,filled);
+    if (filled == reallocs*1024) {
+        buffer = (char*)realloc(buffer, reallocs*1024 + 1026);
+        reallocs++;
       }
+    if (c != '\\') {
       buffer[filled++] = c;
       continue;
     }
@@ -160,6 +163,7 @@ LESS_E    "\<\="
   }
   buffer[filled] = '\0';
   new_token((Queue *) yyval, yylineno, buffer, string, 0);
+  free(buffer);
 }
 
 {multiline_comment} {
@@ -176,18 +180,12 @@ LESS_E    "\<\="
   Stack_append(stack, (void *)comment_n);
   while (1) {
     c = input();
-    if (c == 0) {
+    if (c == EOF_NUMBER) {
       break;
     }
     if (c == '/') {
       c = input();
-      if (c == '/') {
-        comment_n = (comment_node *) malloc(sizeof(comment_node));
-        comment_n->line_open = yylineno;
-        comment_n->isBlock = 0;
-        Stack_append(stack, (void *)comment_n);
-        continue;
-      } else if (c != '*') {
+      if (c != '*') {
         unput(c);
         continue;
       }
@@ -231,7 +229,7 @@ LESS_E    "\<\="
       sprintf(temp , "%d-%d" , comment_n->line_open, comment_n->line_close);
     }
     new_token((Queue *) yyval, comment_n->line_open, temp, comment, BLOCKCOMM);
-    free(comment_n);
+    //free(comment_n);
   }
   //free(yytext);
   Stack_destroy(stack);

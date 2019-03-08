@@ -53,12 +53,7 @@ alpha_token_t *new_token(Queue *q, unsigned int yylineno, char *yytext, alpha_to
                 printf("Token malloc error\n");
                 exit(EXIT_FAILURE);
         }
-        if ((token->value = (char *)malloc(yyleng + 1)) == NULL)
-        {
-                printf("Token value malloc error\n");
-                exit(EXIT_FAILURE);
-        }
-        strcpy(token->value, yytext);
+        token->value = strdup(yytext);
         token->lineno = yylineno;
         token->token_num = token_id++;
         token->category = category;
@@ -71,8 +66,7 @@ alpha_token_t *new_token(Queue *q, unsigned int yylineno, char *yytext, alpha_to
                 token->data = malloc(sizeof(float));
                 *((float *)token->data) = atof(token->value);
         } else if (category == id || category == string) {
-                token->data = malloc(sizeof(strlen(token->value)+1));
-                strcpy(token->data, token->value);
+                token->data = strdup(token->value);
         }
         Queue_enqueue(q, (void *)token);
 }

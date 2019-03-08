@@ -10,6 +10,10 @@ out: parser flex
 parser: 
 	bison --yacc --defines=parser.h --output=parser.c -v parser.y
 
+a.out:	flex
+	gcc scanner.c $(LIBS) -o al
+	./al test2.txt
+
 flex:
 	flex -o scanner.c scanner.l
 
