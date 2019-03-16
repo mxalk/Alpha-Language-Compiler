@@ -4,7 +4,7 @@
   int isatty(int i) { return 0;}
   #endif
   #include "scanner.h"
-  // #include "parser.h"
+  #include "parser.h"
   #define YY_DECL int yylex(void* yyval)
   
   unsigned int flag = 0;
@@ -77,51 +77,52 @@ LESS_E    "\<\="
 %%
 
 
-{IF}        {new_token((Queue *) yyval, yylineno, yytext, keyword, IF);}
-{ELSE}      {new_token((Queue *) yyval, yylineno, yytext, keyword, ELSE);}
-{WHILE}     {new_token((Queue *) yyval, yylineno, yytext, keyword, WHILE);}
-{FOR}       {new_token((Queue *) yyval, yylineno, yytext, keyword, FOR);}
-{FUNCTION}  {new_token((Queue *) yyval, yylineno, yytext, keyword, FUNCTION);}
-{RETURN}    {new_token((Queue *) yyval, yylineno, yytext, keyword, RETURN);}
-{BREAK}     {new_token((Queue *) yyval, yylineno, yytext, keyword, BREAK);}
-{CONTINUE}  {new_token((Queue *) yyval, yylineno, yytext, keyword, CONTINUE);}
-{AND}       {new_token((Queue *) yyval, yylineno, yytext, keyword, AND);}
-{NOT}       {new_token((Queue *) yyval, yylineno, yytext, keyword, NOT);}
-{OR}        {new_token((Queue *) yyval, yylineno, yytext, keyword, OR);}
-{LOCAL}     {new_token((Queue *) yyval, yylineno, yytext, keyword, LOCAL);}
-{TRUE}      {new_token((Queue *) yyval, yylineno, yytext, keyword, TRUE);}
-{FALSE}     {new_token((Queue *) yyval, yylineno, yytext, keyword, FALSE);}
-{NIL}       {new_token((Queue *) yyval, yylineno, yytext, keyword, NIL);}
-{CURL_O}    {new_token((Queue *) yyval, yylineno, yytext, punct, CURL_O);}
-{CURL_C}    {new_token((Queue *) yyval, yylineno, yytext, punct, CURL_C);}
-{BRAC_O}    {new_token((Queue *) yyval, yylineno, yytext, punct, BRAC_O);}
-{BRAC_C}    {new_token((Queue *) yyval, yylineno, yytext, punct, BRAC_C);}
-{ANGL_O}    {new_token((Queue *) yyval, yylineno, yytext, punct, ANGL_O);}
-{ANGL_C}    {new_token((Queue *) yyval, yylineno, yytext, punct, ANGL_C);}
-{SEMI}      {new_token((Queue *) yyval, yylineno, yytext, punct, SEMI);}
-{COMMA}     {new_token((Queue *) yyval, yylineno, yytext, punct, COMMA);}
-{COLON}     {new_token((Queue *) yyval, yylineno, yytext, punct, COLON);}
-{DCOLON}    {new_token((Queue *) yyval, yylineno, yytext, punct, DCOLON);}
-{DOT}       {new_token((Queue *) yyval, yylineno, yytext, punct, DOT);}
-{DOTDOT}    {new_token((Queue *) yyval, yylineno, yytext, punct, DOTDOT);}
-{ASSIGN}    {new_token((Queue *) yyval, yylineno, yytext, oper, ASSIGN);}
-{PLUS}      {new_token((Queue *) yyval, yylineno, yytext, oper, PLUS);}
-{MINUS}     {new_token((Queue *) yyval, yylineno, yytext, oper, MINUS);}
-{MUL}       {new_token((Queue *) yyval, yylineno, yytext, oper, MUL);}
-{SLASH}     {new_token((Queue *) yyval, yylineno, yytext, oper, SLASH);}
-{PERC}      {new_token((Queue *) yyval, yylineno, yytext, oper, PERC);}
-{EQUALS}    {new_token((Queue *) yyval, yylineno, yytext, oper, EQUALS);}
-{NEQUALS}   {new_token((Queue *) yyval, yylineno, yytext, oper, NEQUALS);}
-{INCR}      {new_token((Queue *) yyval, yylineno, yytext, oper, INCR);}
-{DECR}      {new_token((Queue *) yyval, yylineno, yytext, oper, DECR);}
-{GREATER}   {new_token((Queue *) yyval, yylineno, yytext, oper, GREATER);}
-{LESS}      {new_token((Queue *) yyval, yylineno, yytext, oper, LESS);}
-{GREATER_E} {new_token((Queue *) yyval, yylineno, yytext, oper, GREATER_E);}
-{LESS_E}    {new_token((Queue *) yyval, yylineno, yytext, oper, LESS_E);}
+{IF}        {return IF;} //return IF;
+{ELSE}      {return ELSE;}
+{WHILE}     {return WHILE;}
+{FOR}       {return FOR;}
+{FUNCTION}  {return FUNCTION;}
+{RETURN}    {return RETURN;}
+{BREAK}     {return BREAK;}
+{CONTINUE}  {return CONTINUE;}
+{AND}       {return AND;}
+{NOT}       {return NOT;}
+{OR}        {return OR;}
+{LOCAL}     {return LOCAL;}
+{TRUE}      {return TRUE;}
+{FALSE}     {return FALSE;}
+{NIL}       {return NIL;}
+{CURL_O}    {return CURL_O;}
+{CURL_C}    {return CURL_C;}
+{BRAC_O}    {return BRAC_O;}
+{BRAC_C}    {return BRAC_C;}
+{ANGL_O}    {return ANGL_O;}
+{ANGL_C}    {return ANGL_C;}
+{SEMI}      {return SEMI;}
+{COMMA}     {return COMMA;}
+{COLON}     {return COLON;}
+{DCOLON}    {return DCOLON;}
+{DOT}       {return DOT;}
+{DOTDOT}    {return DOTDOT;}
+{ASSIGN}    {return ASSIGN;}
+{PLUS}      {return PLUS;}
+{MINUS}     {return MINUS;}
+{MUL}       {return MUL;}
+{SLASH}     {return SLASH;}
+{PERC}      {return PERC;}
+{EQUALS}    {return EQUALS;}
+{NEQUALS}   {return NEQUALS;}
+{INCR}      {return INCR;}
+{DECR}      {return DECR;}
+{GREATER}   {return GREATER;}
+{LESS}      {return LESS;}
+{GREATER_E} {return GREATER_E;}
+{LESS_E}    {return LESS_E;}
 
 
 {id}  {
-  new_token((Queue *) yyval, yylineno, yytext, id, 0);
+  alpha_yylval.stringValue = strdup(yytext);
+  return ID;
 }
 
 {string} {
@@ -134,7 +135,6 @@ LESS_E    "\<\="
       fprintf(stderr, "EOF during string\n");
       exit(EXIT_FAILURE);
     }
-            printf("%c on buffer[%d]\n",c,filled);
     if (filled == reallocs*1024) {
         buffer = (char*)realloc(buffer, reallocs*1024 + 1026);
         reallocs++;
@@ -162,8 +162,9 @@ LESS_E    "\<\="
       filled++;
   }
   buffer[filled] = '\0';
-  new_token((Queue *) yyval, yylineno, buffer, string, 0);
+  alpha_yylval.stringValue = strdup(buffer);
   free(buffer);
+  return STRING;
 }
 
 {multiline_comment} {
@@ -219,7 +220,7 @@ LESS_E    "\<\="
     comment_n = Stack_pop(reverse);
     if (comment_n->isBlock == 0) {
       sprintf(temp , "%d" ,comment_n->line_open);
-      new_token((Queue *) yyval, comment_n->line_open, temp, comment, LINECOMM);
+      //new_token((Queue *) alpha_yylval, comment_n->line_open, temp, comment, LINECOMM);
       continue;
     }
     if (comment_n->line_close == -1){
@@ -228,7 +229,7 @@ LESS_E    "\<\="
     } else {
       sprintf(temp , "%d-%d" , comment_n->line_open, comment_n->line_close);
     }
-    new_token((Queue *) yyval, comment_n->line_open, temp, comment, BLOCKCOMM);
+    //new_token((Queue *) alpha_yylval, comment_n->line_open, temp, comment, BLOCKCOMM);
     //free(comment_n);
   }
   //free(yytext);
@@ -237,17 +238,16 @@ LESS_E    "\<\="
 }
 
 {comment} {
-  char temp[128];
-  sprintf(temp , "%d" , yylineno);
-  new_token((Queue *) yyval, yylineno, temp, comment, LINECOMM);
 }
 
 {number} {
-  new_token((Queue *) yyval, yylineno, yytext, intconst, 0);
+  alpha_yylval.intValue = atoi(yytext);
+  return INTNUM;
 }
 
 {float} {
-  new_token((Queue *) yyval, yylineno, yytext, floatconst, 0);
+  alpha_yylval.floatValue = atof(yytext);
+  return REALNUM;
 }
 
 {delimiter} {
@@ -255,7 +255,6 @@ LESS_E    "\<\="
 
 . {
   fprintf(stderr, "Unexpected identifier \"%s\" in line %d.\n", yytext, yylineno);
-  print_queue((Queue *) yyval);
   exit(EXIT_FAILURE);
 }
 
@@ -263,19 +262,3 @@ LESS_E    "\<\="
   return 0;
 }
 %%
-
-int main (int argc, char** argv) {
-    if (argc > 1) {
-      if (!(yyin = fopen(argv[1], "r"))) {
-        fprintf(stderr, "Cannot read file: %s\n",argv[1]);
-        return 1;
-      }
-    }
-    else yyin= stdin;
-    Queue *q = Queue_init();
-    yylex((void *)q);
-
-    print_queue(q);
-    if(flag == 1)fprintf(stderr,"warning: some comments didn't close correctly!\n");
-    return 0;
-}

@@ -1,38 +1,7 @@
-//"string//geiaa_comment1_\n123"
-"string/*aagasd;glkan;gklramrhl;kamhlkmehpokemopjhnojnhjksnhkjsdhkdhkjskdhndlfkhnlkdjsh
-gakgankglnssdasdasdasdasdasdsddddddasdasdjhasvdbaskdbakdbasjkvdlasbd alsnbd khasbdhasvbdahksvbd
- askvhjbd asvkbd aksvhb nvashkb dnmasvbn mbavkblnd masvbm dnavhbnm,d amvbnd ambvd asnmvbnd
-  asnmvbdnas nmvbdsan mbasnd vbadsnm vhdsndbhsnkdsabhklkndsahbkndasbhksadnbkhadsjnkbjdsahjk
-  ndsabhkknsdabhksadnb,hksadnbdhsaknkdbs,ahkjlnsadbkhsadnbshanbsadhklnbdsa,ksandbhkasdnbksadnbs
-  adhkndsbansdabsadnb,skadhnbdsandsab,ksadnb, bmkasdnb,ahdkslnbd,sahklnadsbvmhkalsjdnbhkdsbn,dskbndsabnbd
-  sahkasdnbkasdndasbknasd,nadsmjasdnmb,asdnmb,adslnmds,bnas.dm,nbnasd.m,asdnmdjsln.m sdan,bnsadm,basdn,kasd
-  bn,dksahnbdskhasdnjbhkasdbkhsdajbksadbdsjdsahksadbksadjbsd,nsdkbdsanadsasdj,nadskjdaskdsanjbasdhnbadsndbsa,kasdjb
-  ahsdnjb,nasdjnba,sdnasdb,kjalsdnbkasjdlnbnasdbsadn,jlasdn,ksadjn,asdjnbadsnsdamb,sadn,bdsa,ndskanbasd,
-  knasdb,hkasdnb,sakdnbas,dknsadbjhlsdanbsdabn,sdhkbjsdhakbjsadnhkadsjnbkhasdjnb,adshklnadsjbkhgasdjnbhksadjnbadskjladnsbkhasdjbadsnt2*/_\n123"
-""
-"1"
-" "
-"\""
-"\t"
-//"\n"
-"\\"
-"\""
-hy 340
-ena duo tria
+1 + 2
 
-32.114
-..
-{ lala } 
+program: expr {printf("0\n");};
 
-kappa == lamda
-
-//geiaa comment0
-/*
-/* geiaaaa comment1
-     /*   
-        comment2
-        // comment3
-     */
-     /*
-     */
-*/
+expr: INTNUM {printf("1\n");} | 
+      expr PLUS expr {printf("2\n");}| 
+        {printf("3\n");}

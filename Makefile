@@ -12,7 +12,7 @@ parser:
 
 a.out:	flex
 	gcc scanner.c $(LIBS) -o al
-	./al test2.txt
+	./al test6.txt
 
 flex:
 	flex -o scanner.c scanner.l
