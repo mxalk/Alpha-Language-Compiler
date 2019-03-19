@@ -63,7 +63,7 @@ ASSIGN    "\="
 PLUS      "\+"
 MINUS     "\-"
 MUL       "\*"
-SLASH     "\/"
+DIV     "\/"
 PERC      "\%"
 EQUALS    "\=\="
 NEQUALS   "\!\="
@@ -108,7 +108,7 @@ LESS_E    "\<\="
 {PLUS}      {return PLUS;}
 {MINUS}     {return MINUS;}
 {MUL}       {return MUL;}
-{SLASH}     {return SLASH;}
+{DIV}     {return DIV;}
 {PERC}      {return PERC;}
 {EQUALS}    {return EQUALS;}
 {NEQUALS}   {return NEQUALS;}

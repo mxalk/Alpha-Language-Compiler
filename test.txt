@@ -1,7 +1,10 @@
-1 + 2
 
-program: expr {printf("0\n");};
 
-expr: INTNUM {printf("1\n");} | 
-      expr PLUS expr {printf("2\n");}| 
-        {printf("3\n");}
+
+x = 1
+
+if ( x == 1) {
+        x =3 
+}else {
+        x =2
+}
