@@ -86,7 +86,7 @@ primary: lvalue { printf("primary -> lvalue\n");}
        | ANGL_O funcdef ANGL_C { printf("primary -> ( funcdef )\n");}
        | const { printf("primary -> const\n");};
     
-lvalue: ID { printf("lvalue -> ID\n");}
+lvalue: ID { printf("lvalue -> ID %s\n",$1);}
       | LOCAL ID { printf("lvalue -> local id %s\n" , $2);}
       | DCOLON ID { printf("lvalue -> dcolon id %s\n" , $2);}
       | member { printf("lvalue -> member\n");}; 
@@ -122,11 +122,11 @@ block: CURL_O start CURL_C { printf("block -> {start}\n");};
 
 funcdef: FUNCTION if_id ANGL_O idlist ANGL_C block { printf("funcdef -> FUNCTION [ID] ( idlist ) block \n");};
 
-if_id: ID { printf("if_id -> ID\n");}| { printf("if_id -> empty\n");};
+if_id: ID { printf("if_id -> ID %s\n",$1);}| { printf("if_id -> empty\n");};
 
 const: INTNUM | REALNUM | STRING | NIL | TRUE | FALSE ;
 
-idlist: ID idlist_comm { printf("idlist -> ID idlist\n");}| { printf("idlist -> empty\n");};
+idlist: ID idlist_comm { printf("idlist -> ID idlist %s\n",$1);}| { printf("idlist -> empty\n");};
 
 idlist_comm: COMMA ID idlist_comm { printf("idlist_comm -> COMMA ID idlist_comm %s" , $2);}| { printf("idlist_comm -> empty\n");};
 
