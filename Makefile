@@ -2,7 +2,7 @@ CC=gcc
 CCFLAGS=-O0
 LIBS= ./Structs/Stack.c ./Structs/Queue.c
 
-all: out
+all: clean out
 
 out: parser flex
 	$(CC) $(CCFLAGS) -o out parser.c scanner.c $(LIBS)

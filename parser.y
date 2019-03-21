@@ -45,101 +45,120 @@ extern FILE* alpha_yyin;
 %destructor { free($$);  }ID
 %%
 
-/* Den eimai sigouros an xreiazontai ta semicolons sto telos ka8e kanona */
-/* opou exei [ ] *  einai regular expression leei alla dn to pianei */
 
-program: start ;
 
-start: stmt start { printf("start -> stmt start\n");}| ;
+program:	stmt_star {printf("program ->  statements\n");};
 
-stmt: expr { printf("stmt -> expr\n");}
-    | ifstmt { printf("stmt -> ifstmt\n");}
-    | whilestmt { printf("stmt -> whilestmt\n");}
-    | forstmt { printf("stmt -> forstmt\n");}
-    | returnstmt { printf("stmt -> return stmt\n");}
-    | BREAK { printf("stmt -> BREAK\n");}
-    | CONTINUE { printf("stmt -> CONTINUE\n");}
-    | block { printf("stmt -> block\n");}
-    | funcdef { printf("stmt -> funcdef\n");}
-    | { printf("stmt -> end\n");};
+stmt: 		expr SEMI {printf("stmt ->  expr SEMI\n");}
+      |ifstmt {printf("stmt ->  ifstmst\n");}
+      |whilestmt {printf("stmt ->  whilestmt\n");}
+			|forstmt {printf("stmt ->  forstmt\n");}
+			|returnstmt {printf("stmt ->  returnstmt\n");}
+			|BREAK SEMI {printf("stmt ->  break SEMI \n");}
+			|CONTINUE SEMI {printf("stmt ->  continue SEMI\n");}
+			|block {printf("stmt ->  block\n");}
+			|funcdef {printf("stmt ->  funcdef\n");}
+			|SEMI {printf("stmt ->  SEMI\n");};
 
-expr: assignexpr { printf("expr -> assignexpr\n");}
-    | expr op expr { printf("expr -> expr op expr\n");}
-    | term { printf("expr -> term\n");};
-    
-op: PLUS | MINUS | MUL | DIV | PERC | LESS | LESS_E | GREATER | GREATER_E | EQUALS | NEQUALS | AND | OR ;
+stmt_star:			stmt stmt_star {printf("stmt_star ->  stmt and stmt_star\n");}
+			| {printf("stmt_star ->  nothing\n");};
 
-term: ANGL_O expr ANGL_C  { printf("term -> ( expr )\n");}
-    | UMINUS expr { printf("term -> -expr\n");}
-    | NOT expr { printf("term -> NOT expr \n");}
-    | INCR lvalue { printf("term -> ++expr \n");}
-    | lvalue INCR { printf("term -> expr++\n");}
-    | DECR lvalue { printf("term -> --expr \n");}
-    | lvalue DECR { printf("term ->  expr--\n");}
-    | primary { printf("term -> primary\n");};
+expr:			assignexpr  {printf("expr ->  assignexpr\n");}
+			|expr PLUS expr {printf("expr ->  expr + expr\n");}
+			|expr MINUS expr {printf("expr ->  expr - expr\n");}
+			|expr MUL expr {printf("expr ->  expr * expr\n");}
+			|expr DIV expr {printf("expr ->  expr / expr\n");}
+			|expr PERC expr {printf("expr ->  expr PERC expr\n");}
+			|expr GREATER expr {printf("expr ->  expr > expr\n");}
+			|expr GREATER_E expr {printf("expr ->  expr >= expr\n");}
+			|expr LESS expr {printf("expr ->  expr < expr\n");}
+			|expr LESS_E expr {printf("expr ->  expr <= expr\n");}
+			|expr EQUALS expr {printf("expr ->  expr == expr\n");}
+			|expr NEQUALS expr {printf("expr ->  expr != expr\n");}
+			|expr AND expr {printf("expr ->  expr and expr\n");}
+			|expr OR expr {printf("expr ->  expr or expr\n");}
+			|term {printf("expr ->  term\n");};
 
-assignexpr: lvalue ASSIGN expr { printf("assignexpr -> lvalue ASSIGN expr\n");};
+term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
+			|MINUS expr {printf("term ->  - expr \n");}
+			|NOT expr {printf("term ->  not expr \n");}
+			|lvalue INCR {printf("term ->   lvalue ++ \n");}
+			|INCR lvalue {printf("term ->  ++ lvalue\n");}
+			|lvalue DECR {printf("term ->  lvalue -- \n");}
+			|DECR lvalue {printf("term ->  -- lvalue \n");}
+			|primary {printf("term ->  primary\n");};
 
-primary: lvalue { printf("primary -> lvalue\n");}
-       | call { printf("primary -> call\n");}
-       | objectdef { printf("primary -> objectdef\n");}
-       | ANGL_O funcdef ANGL_C { printf("primary -> ( funcdef )\n");}
-       | const { printf("primary -> const\n");};
-    
-lvalue: ID { printf("lvalue -> ID %s\n",$1);}
-      | LOCAL ID { printf("lvalue -> local id %s\n" , $2);}
-      | DCOLON ID { printf("lvalue -> dcolon id %s\n" , $2);}
-      | member { printf("lvalue -> member\n");}; 
+assignexpr:		lvalue ASSIGN expr {printf("assignexpr ->  lvalue = expr\n");};
 
-member: lvalue DOT ID { printf("member -> lvalue dot id %s\n" , $3);}
-      | lvalue BRAC_O expr BRAC_C { printf("member -> lvalue [ expr ] \n");}
-      | call DOT ID { printf("member -> call DOT ID %s" , $3);}
-      | call BRAC_O expr BRAC_C { printf("member -> [ expr ]\n");};
+primary:		lvalue	{printf("primary ->  lvalue\n");}
+			|call {printf("primary ->  call\n");}
+			|objectdef {printf("primary ->  objectdef\n");}
+			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");}
+			|const {printf("primary ->  const\n");};
 
-call: call ANGL_O elist ANGL_C { printf("call -> ( elist )\n");}
-    | lvalue callsuffix { printf("call  -> callsuffix \n");}
-    | ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C { printf("call -> ( funcdef ) ( elist )\n");};
+lvalue:			ID {printf("lvalue ->  ID \n");}
+			|LOCAL ID {printf("lvalue ->  LOCAL ID\n");}
+			|DCOLON ID {printf("lvalue ->  DSCOPE ID\n");}
+			|member {printf("lvalue ->  member\n");};
 
-callsuffix: normcall { printf("callsuffix -> normcall\n");}
-          | methodcall { printf("callsuffix -> methodcall\n");};
+member: lvalue DOT ID {printf("member ->  lvalue . ID\n");}
+			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
+			|call DOT ID {printf("member ->  calL . ID\n");}
+			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
-normcall: ANGL_O elist ANGL_C { printf("normcall -> ( elist )\n");};
+call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
+			|lvalue callsuffix {printf("call ->  lvalue callsuffix \n");}
+			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");};
 
-methodcall: DOTDOT ID ANGL_O elist ANGL_C { printf("methodcall -> DOTDOT ID %s ( elist )\n" , $2);}; 
+callsuffix:		normcall {printf("callsuffix ->  normcall\n");}
+			|methodcall {printf("callsuffix ->  methodcall\n");};
 
-elist:  expr elist_comm { printf("elist -> elist elist_comm\n");}| ;
-elist_comm: COMMA expr elist_comm { printf("elist_comm -> COMMA expr elist_comm \n");}| ; 
+normcall:		ANGL_O elist ANGL_C {printf("normcall ->  ( elist )\n");};
 
-objectdef: BRAC_O objectdef_or BRAC_C { printf("objectdef -> [ objectdef_or ]\n");} ;
-objectdef_or: elist { printf("objectdef_or -> elist\n");}| indexed{ printf("objectdef_or -> indexed\n");} | { printf("objectdef_or -> empty\n");};
+methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID ( elist )\n");};
 
-indexed: indexedelem indexed_comm { printf("indexed -> indexedelem indexed_comm\n");}| { printf("indexed -> empty\n");};
-indexed_comm: COMMA indexedelem indexed_comm { printf("indexed_comm -> COMMA indexedelem indexed_comm\n");}| { printf("indexed_comm -> empty\n");};
+elist:		expr exprs {printf("elist ->  expr exprs\n");}
+			|	{printf("elist ->  nothing\n");};
 
-indexedelem: CURL_O expr COLON expr CURL_C { printf("indexedelem -> { expr:expr }\n");};
+exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");}
+			| {printf("exprs ->  nothing\n");};
 
-block: CURL_O start CURL_C { printf("block -> {start}\n");};
+objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");}
+			|BRAC_O indexed BRAC_C  {printf("objectdef ->  [ indexed ]\n");};
 
-funcdef: FUNCTION if_id ANGL_O idlist ANGL_C block { printf("funcdef -> FUNCTION [ID] ( idlist ) block \n");};
+indexed:		indexedelem indexedelems {printf("indexed ->  indexedelem indexedelems\n");};
 
-if_id: ID { printf("if_id -> ID %s\n",$1);}| { printf("if_id -> empty\n");};
+indexedelem:		CURL_O expr COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");};
 
-const: INTNUM | REALNUM | STRING | NIL | TRUE | FALSE ;
+indexedelems:		COMMA indexedelem indexedelems {printf("indexedelems ->  , indexedelem indexedelems\n");}
+			| {printf("indexedelems ->  nothing\n");};
 
-idlist: ID idlist_comm { printf("idlist -> ID idlist %s\n",$1);}| { printf("idlist -> empty\n");};
+block:			CURL_O  stmt_star CURL_C  {printf("block ->  { stmt_star }\n");};
 
-idlist_comm: COMMA ID idlist_comm { printf("idlist_comm -> COMMA ID idlist_comm %s" , $2);}| { printf("idlist_comm -> empty\n");};
+funcdef:		FUNCTION{printf("funcdef ->  function ( idlist ) block \n");}
+			|FUNCTION ID{printf("funcdef ->  function ID ( idlist ) block\n");};
 
-ifstmt: IF ANGL_O expr ANGL_C stmt else_stmt { printf("ifstmt -> IF (expr) stmt else_stmt\n");};
+const:			INTNUM {printf("const ->  INTNUM\n");}
+			|REALNUM {printf("const ->  REALNUM\n");}
+			|STRING {printf("const ->  STRING\n");}
+			|NIL {printf("const ->  NIL\n");}
+			|TRUE {printf("const ->  TRUE\n");}
+			|FALSE {printf("const ->  FALSE\n");};
 
-else_stmt: ELSE stmt { printf("else_stmt -> ELSE stmt\n");} | { printf("else_stmt -> empty\n");};
+idlist:			ID ids {printf("idlist ->  ID ids\n");}
+			| {printf("idlist ->  nothing\n");};
 
-whilestmt: WHILE ANGL_O expr ANGL_C stmt { printf("whilestmt -> WHILE ( expr ) stmt \n");};
+ids:	COMMA ID ids {printf("ids ->  , ID ids\n");}
+			| {printf("ids ->  nothing\n");};
 
-forstmt: FOR ANGL_O elist SEMI expr SEMI elist ANGL_C stmt { printf("forstmt -> FOR ( elist; expr ; elist) stmt\n");};
+ifstmt:			IF ANGL_O expr ANGL_C stmt {printf("ifstmt ->  if ( expr ) stmt \n");}
+            |IF ANGL_O expr ANGL_C stmt ELSE stmt {printf("ifstmt ->  if ( expr ) stmt else stmt \n");};
 
-returnstmt: RETURN expr { printf("returnstmt -> RETURN expr\n");}| RETURN { printf("returnstmt -> RETURN empty\n");};
+whilestmt:		WHILE ANGL_O expr ANGL_C stmt {printf("whilestmt ->  while ( expr ) stmt \n");};
 
+forstmt:		FOR ANGL_O elist SEMI expr SEMI elist ANGL_C stmt {printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n");};
+
+returnstmt:		RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
 
 %%
 int alpha_yyerror (const char* yaccProvidedMessage){
