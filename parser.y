@@ -135,8 +135,8 @@ indexedelems:		COMMA indexedelem indexedelems {printf("indexedelems ->  , indexe
 
 block:			CURL_O  stmt_star CURL_C  {printf("block ->  { stmt_star }\n");};
 
-funcdef:		FUNCTION{printf("funcdef ->  function ( idlist ) block \n");}
-			|FUNCTION ID{printf("funcdef ->  function ID ( idlist ) block\n");};
+funcdef:		FUNCTION ANGL_O idlist ANGL_C block {printf("funcdef ->  function ( idlist ) block \n");}
+			|FUNCTION ID ANGL_O idlist ANGL_C block {printf("funcdef ->  function ID ( idlist ) block\n");};
 
 const:			INTNUM {printf("const ->  INTNUM\n");}
 			|REALNUM {printf("const ->  REALNUM\n");}
