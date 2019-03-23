@@ -7,7 +7,8 @@ phaseB.code-workspace
 parser.output
 
 #ignore generated .c and parser.h
-*.c
+scanner.c 
+parser.c
 parser.h 
 
 \.vscode/ftp-kr\.json
