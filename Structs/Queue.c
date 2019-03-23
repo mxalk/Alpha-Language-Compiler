@@ -15,9 +15,17 @@ Queue *Queue_init() {
     return queue;
 }
 
+// Does not free node->content !!
 void Queue_destroy(Queue *queue) {
-    assert(queue != 0);
+    assert(queue != NULL);
 
+    Queue_Node *node = queue->head;
+    Queue_Node *next;
+    while(node != NULL) {
+        next = node->next;
+        free(node);
+        node = next;
+    }
     free(queue);
 }
 
@@ -57,7 +65,7 @@ void *Queue_dequeue(Queue *queue) {
     } else queue->head = queue->head->next;
     (queue->size)--;
     content = node->content;
-      if (content == NULL) fprintf(stderr, "content is NULL\n");
+    if (content == NULL) fprintf(stderr, "content is NULL\n");
     free(node);
     return content;
 }

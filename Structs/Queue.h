@@ -1,3 +1,4 @@
+#pragma once
 typedef struct Queue_Node Queue_Node;
 typedef struct Queue Queue;
 

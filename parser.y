@@ -7,10 +7,10 @@ int alpha_yylex(void);
 extern int alpha_yylineno;
 extern char* alpha_yytext;
 extern FILE* alpha_yyin;
-int scope = 0;
+unsigned int arg_scope = 0;
 %}
-/*%define api.prefix {alpha_yy}*/
-%name-prefix="alpha_yy"
+%define api.prefix {alpha_yy}
+// %name-prefix="alpha_yy"
 %error-verbose
 %start program
 
@@ -89,7 +89,10 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 			|DECR lvalue {printf("term ->  -- lvalue \n");}
 			|primary {printf("term ->  primary\n");};
 
-assignexpr:		lvalue ASSIGN expr {printf("assignexpr ->  lvalue = expr\n");};
+assignexpr:		lvalue ASSIGN expr {printf("assignexpr ->  lvalue = expr\n");
+			printf("funcdef ->  function ID ( idlist ) block\n");
+					if(lookup($1,LCL,alpha_yylineno,0)==NULL)
+						insert($1,LCL,getScope(),alpha_yylineno);};
 
 primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|call {printf("primary ->  call\n");}
@@ -97,15 +100,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");}
 			|const {printf("primary ->  const\n");};
 
-lvalue:			ID {
-				printf("lvalue ->  ID %s \n",$1);
-				if(lookup($1,0,GLBL)==NULL)
-					insert($1,GLBL,0,alpha_yylineno);
-				else{
-					alpha_yyerror("error declaring variable %s\n");
-				}
-				
-			}
+lvalue:			ID {printf("lvalue -> ID \n") ; $$ = $1}
 			|LOCAL ID {printf("lvalue ->  LOCAL ID\n");}
 			|DCOLON ID {printf("lvalue ->  DSCOPE ID\n");}
 			|member {printf("lvalue ->  member\n");};
@@ -116,7 +111,8 @@ member: 	lvalue DOT ID {printf("member ->  lvalue . ID\n");}
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
-			|lvalue callsuffix {printf("call ->  lvalue callsuffix \n");}
+			|lvalue callsuffix {
+				printf("call ->  lvalue callsuffix \n");}
 			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");};
 
 callsuffix:		normcall {printf("callsuffix ->  normcall\n");}
@@ -142,19 +138,17 @@ indexedelem:		CURL_O expr COLON expr CURL_C {printf("indexedelem ->  { expr : ex
 indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm ->  , indexedelem indexedelem_comm\n");}
 			| {printf("indexedelem_comm ->  nothing\n");};
 
-block:			CURL_O  stmt_star CURL_C  {printf("block ->  { stmt_star }\n");};
 
-funcdef:		FUNCTION ANGL_O idlist ANGL_C block {printf("funcdef ->  function ( idlist ) block \n");}
-			|FUNCTION ID ANGL_O idlist ANGL_C block 
+funcdef:		FUNCTION ANGL_O {increaseScope();} idlist ANGL_C CURL_O stmt_star CURL_C {decreaseScope();printf("funcdef ->  function ( idlist ) block \n");}
+			|FUNCTION ID ANGL_O{increaseScope();} idlist  ANGL_C CURL_O stmt_star CURL_C 
 			{
+				decreaseScope();
 				printf("funcdef ->  function ID ( idlist ) block\n");
-					if(lookup($2,0,USRFUNC)==NULL){
-						insert($2,USRFUNC,0,alpha_yylineno);
-					}
-					else{
-						alpha_yyerror("error declaring variable as funct %s\n");		
-					}
+					if(lookup($2,USRFUNC,alpha_yylineno,0)==NULL)
+						insert($2,USRFUNC,getScope(),alpha_yylineno);
 			};
+			
+block:			CURL_O{increaseScope();}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");};
 
 const:			INTNUM {printf("const ->  INTNUM\n");}
 			|REALNUM {printf("const ->  REALNUM\n");}
@@ -163,10 +157,14 @@ const:			INTNUM {printf("const ->  INTNUM\n");}
 			|TRUE {printf("const ->  TRUE\n");}
 			|FALSE {printf("const ->  FALSE\n");};
 
-idlist:			ID ids {printf("idlist ->  ID ids\n");}
+idlist:	ID ids {printf("idlist ->  ID ids\n");
+								if(lookup($1,FORMAL,alpha_yylineno,0)!=NULL)
+									insert($1,LCL,getScope(),alpha_yylineno);}
 			| {printf("idlist ->  nothing\n");};
 
-ids:	COMMA ID ids {printf("ids ->  , ID ids\n");}
+ids: COMMA ID ids {printf("ids ->  , ID ids\n");
+									 if(lookup($2,FORMAL,alpha_yylineno,0)!=NULL)
+									 	insert($2,LCL,getScope(),alpha_yylineno);}
 			| {printf("ids ->  nothing\n");};
 
 ifstmt:			IF ANGL_O expr ANGL_C stmt {printf("ifstmt ->  if ( expr ) stmt \n");}
@@ -181,7 +179,7 @@ returnstmt:		RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SE
 %%
 
 int alpha_yyerror (const char* yaccProvidedMessage){
-  fprintf(stderr,"\033[0;31m Error %s \033[0m\n",yaccProvidedMessage);
+  fprintf(stderr,"\033[0;31m Error %s %u \033[0m\n",yaccProvidedMessage,alpha_yylineno);
   exit(EXIT_FAILURE);
 }
 

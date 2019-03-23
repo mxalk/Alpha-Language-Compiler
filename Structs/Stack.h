@@ -1,3 +1,4 @@
+#pragma once
 typedef struct Stack_Node Stack_Node;
 typedef struct Stack Stack;
 
@@ -8,7 +9,7 @@ struct Stack_Node{
 
 struct Stack{
         Stack_Node *top;
-        int size;
+        unsigned int size;
 };
 
 
