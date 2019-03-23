@@ -1,11 +1,11 @@
 CC=gcc
-CCFLAGS=-O0
-LIBS= ./Structs/Stack.c ./Structs/Queue.c
+CCFLAGS=-O0 -o out
+LIBS= ./Structs/Stack.c ./Structs/Queue.c ./Structs/SymTable.c
 
 all: clean out
 
 out: parser flex
-	$(CC) $(CCFLAGS) -o out parser.c scanner.c $(LIBS)
+	$(CC) $(CCFLAGS)  parser.c scanner.c $(LIBS)
 
 parser: 
 	bison --yacc --defines=parser.h --output=parser.c -v parser.y

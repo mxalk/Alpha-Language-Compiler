@@ -1,11 +1,13 @@
 %{ //introduction
 #include <stdio.h>
 #include <stdlib.h>
+#include "./Structs/SymTable.h"
 int alpha_yyerror (const char* yaccProvidedMessage);
 int alpha_yylex(void);
 extern int alpha_yylineno;
 extern char* alpha_yytext;
 extern FILE* alpha_yyin;
+//scope glbl
 
 %}
 /*%define api.prefix {alpha_yy}*/
@@ -96,12 +98,20 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");}
 			|const {printf("primary ->  const\n");};
 
-lvalue:			ID {printf("lvalue ->  ID \n");}
+lvalue:			ID {
+				printf("lvalue ->  ID %s \n",$1);
+				if(lookup($1,0,GLBL)==NULL)
+					insert($1,GLBL,0,alpha_yylineno);
+				else{
+					alpha_yyerror("error declaring variable %s\n");
+				}
+				
+			}
 			|LOCAL ID {printf("lvalue ->  LOCAL ID\n");}
 			|DCOLON ID {printf("lvalue ->  DSCOPE ID\n");}
 			|member {printf("lvalue ->  member\n");};
 
-member: lvalue DOT ID {printf("member ->  lvalue . ID\n");}
+member: 	lvalue DOT ID {printf("member ->  lvalue . ID\n");}
 			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
 			|call DOT ID {printf("member ->  calL . ID\n");}
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
@@ -136,7 +146,16 @@ indexedelems:		COMMA indexedelem indexedelems {printf("indexedelems ->  , indexe
 block:			CURL_O  stmt_star CURL_C  {printf("block ->  { stmt_star }\n");};
 
 funcdef:		FUNCTION ANGL_O idlist ANGL_C block {printf("funcdef ->  function ( idlist ) block \n");}
-			|FUNCTION ID ANGL_O idlist ANGL_C block {printf("funcdef ->  function ID ( idlist ) block\n");};
+			|FUNCTION ID ANGL_O idlist ANGL_C block 
+			{
+				printf("funcdef ->  function ID ( idlist ) block\n");
+					if(lookup($2,0,USRFUNC)==NULL){
+						insert($2,USRFUNC,0,alpha_yylineno);
+					}
+					else{
+						alpha_yyerror("error declaring variable as funct %s\n");		
+					}
+			}
 
 const:			INTNUM {printf("const ->  INTNUM\n");}
 			|REALNUM {printf("const ->  REALNUM\n");}
@@ -168,6 +187,7 @@ int alpha_yyerror (const char* yaccProvidedMessage){
 
 
 int main (int argc, char** argv) {
+    sym_init();
     if (argc > 1) {
       if (!(alpha_yyin = fopen(argv[1], "r"))) {
         fprintf(stderr, "Cannot read file: %s\n",argv[1]);
@@ -177,5 +197,7 @@ int main (int argc, char** argv) {
     }
     else alpha_yyin= stdin;
     yyparse();
+
+    display();
     return 0;
 }

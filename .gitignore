@@ -9,3 +9,5 @@ parser.output
 #ignore generated .c and parser.h
 *.c
 parser.h 
+
+\.vscode/ftp-kr\.json

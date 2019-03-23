@@ -1,0 +1,130 @@
+{
+  "sftp://gate2.csd.uoc.gr:17177@csd3655": {
+    "HY340": {
+      "project": {}
+    },
+    "home": {
+      "ugrads": {
+        "class15": {
+          "csd3655": {
+            "HY340": {
+              "project": {
+                "parser.output": {
+                  "type": "-",
+                  "size": 84299,
+                  "lmtime": 0,
+                  "modified": false
+                },
+                "scanner.h": {
+                  "type": "-",
+                  "size": 3742,
+                  "lmtime": 1553284163595,
+                  "modified": false
+                },
+                "scanner.l": {
+                  "type": "-",
+                  "size": 5727,
+                  "lmtime": 1553284162638,
+                  "modified": false
+                },
+                "scanner.c": {
+                  "type": "-",
+                  "size": 58997,
+                  "lmtime": 0,
+                  "modified": false
+                },
+                "Structs": {
+                  "Queue.h": {
+                    "type": "-",
+                    "size": 446,
+                    "lmtime": 1552045544640,
+                    "modified": false
+                  },
+                  "Queue.c": {
+                    "type": "-",
+                    "size": 1513,
+                    "lmtime": 1553009244331,
+                    "modified": false
+                  },
+                  "SymTable.h": {
+                    "type": "-",
+                    "size": 477,
+                    "lmtime": 1553288493741,
+                    "modified": false
+                  },
+                  "Stack.h": {
+                    "type": "-",
+                    "size": 414,
+                    "lmtime": 1552045544641,
+                    "modified": false
+                  },
+                  "SymTable.c": {
+                    "type": "-",
+                    "size": 2553,
+                    "lmtime": 1553288587786,
+                    "modified": false
+                  },
+                  "Stack.c": {
+                    "type": "-",
+                    "size": 1236,
+                    "lmtime": 1553009256542,
+                    "modified": false
+                  }
+                },
+                ".DS_Store": {
+                  "type": "-",
+                  "size": 6148,
+                  "lmtime": 1553285573584,
+                  "modified": false
+                },
+                "parser.h": {
+                  "type": "-",
+                  "size": 3998,
+                  "lmtime": 0,
+                  "modified": false
+                },
+                "parser.c": {
+                  "type": "-",
+                  "size": 74561,
+                  "lmtime": 0,
+                  "modified": true
+                },
+                ".gitignore": {
+                  "type": "-",
+                  "size": 139,
+                  "lmtime": 1552045544640,
+                  "modified": false
+                },
+                "Makefile": {
+                  "type": "-",
+                  "size": 396,
+                  "lmtime": 1553284164425,
+                  "modified": false
+                },
+                "parser.y": {
+                  "type": "-",
+                  "size": 6987,
+                  "lmtime": 1553289681403,
+                  "modified": false
+                },
+                "out": {
+                  "type": "-",
+                  "size": 39184,
+                  "lmtime": 1553283865005,
+                  "modified": true
+                },
+                "test.txt": {
+                  "type": "-",
+                  "size": 343,
+                  "lmtime": 1553289456618,
+                  "modified": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$version": 1
+}
