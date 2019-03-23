@@ -7,8 +7,7 @@ int alpha_yylex(void);
 extern int alpha_yylineno;
 extern char* alpha_yytext;
 extern FILE* alpha_yyin;
-//scope glbl
-
+int scope = 0;
 %}
 /*%define api.prefix {alpha_yy}*/
 %name-prefix="alpha_yy"
@@ -136,12 +135,12 @@ exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");}
 objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");}
 			|BRAC_O indexed BRAC_C  {printf("objectdef ->  [ indexed ]\n");};
 
-indexed:		indexedelem indexedelems {printf("indexed ->  indexedelem indexedelems\n");};
+indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");};
 
 indexedelem:		CURL_O expr COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");};
 
-indexedelems:		COMMA indexedelem indexedelems {printf("indexedelems ->  , indexedelem indexedelems\n");}
-			| {printf("indexedelems ->  nothing\n");};
+indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm ->  , indexedelem indexedelem_comm\n");}
+			| {printf("indexedelem_comm ->  nothing\n");};
 
 block:			CURL_O  stmt_star CURL_C  {printf("block ->  { stmt_star }\n");};
 
@@ -155,7 +154,7 @@ funcdef:		FUNCTION ANGL_O idlist ANGL_C block {printf("funcdef ->  function ( id
 					else{
 						alpha_yyerror("error declaring variable as funct %s\n");		
 					}
-			}
+			};
 
 const:			INTNUM {printf("const ->  INTNUM\n");}
 			|REALNUM {printf("const ->  REALNUM\n");}
@@ -180,6 +179,7 @@ forstmt:		FOR ANGL_O elist SEMI expr SEMI elist ANGL_C stmt {printf("forstmt -> 
 returnstmt:		RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
 
 %%
+
 int alpha_yyerror (const char* yaccProvidedMessage){
   fprintf(stderr,"\033[0;31m Error %s \033[0m\n",yaccProvidedMessage);
   exit(EXIT_FAILURE);
