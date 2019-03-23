@@ -11,6 +11,6 @@ scanner.c
 parser.c
 parser.h 
 
-\.vscode/ftp-kr\.json
+\.vscode/*
 
 out
