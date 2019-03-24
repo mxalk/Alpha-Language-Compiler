@@ -108,7 +108,7 @@ LESS_E    "\<\="
 {PLUS}      {return PLUS;}
 {MINUS}     {return MINUS;}
 {MUL}       {return MUL;}
-{DIV}     {return DIV;}
+{DIV}       {return DIV;}
 {PERC}      {return PERC;}
 {EQUALS}    {return EQUALS;}
 {NEQUALS}   {return NEQUALS;}

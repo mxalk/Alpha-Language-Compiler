@@ -8,7 +8,7 @@
 
 struct SymbolTableRecord;
 
-char *typeNames[] = {"LOCAL", "GLOBAL", "LIBFUNC", "USRFUNC", "UNDEF"};
+char *typeNames[] = {"LOCAL", "GLOBAL", "LIBFUNC", "USRFUNC", "FORMAL"};
 
 typedef struct SymbolTableRecord
 {
@@ -35,12 +35,13 @@ typedef struct Scope
 
 int hash_f(SymbolTableRecord *record)
 {
-        unsigned int key = 0U;
+        unsigned int key = 0;
         unsigned int i;
-        for (i = 0U; record->name[i] != '\0'; i++)
+        char* tmp = record->name;
+        for (i = 0; tmp[i]!='\0'; i++)
         {
-                // printf("%d\n",record->name[i]);
-                key += record->name[i];
+                // printf("%d\n",tmp);
+                key += tmp[i];
         }
 
         return key % SYM_SIZE;
@@ -58,92 +59,80 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
         SymbolTableRecord *iter = GST[hash_index];
         record = NULL;
 
-        //  int i;
-        // Stack_Node *stack_node = GSS->top;
-        // Queue_Node *queue_node;
-        // // STACK WITHOUT GLOBALS
-        // for (i=0; i<GSS->size-1; i++) {
-        //         queue_node = ((Scope *)stack_node->content)->queue->head;
-        //         while (queue_node != NULL) {
-        //                 iter = (SymbolTableRecord *) queue_node->content;
-        //                 if (iter->name == name) {
-        //                         record = iter;
-        //                         break;
-        //                 }
-        //                 queue_node = queue_node->next;
-        //         }
-        //         if (record != NULL) break;
-        //         if (((Scope *)stack_node->content)->isFunction) break;
-        //         stack_node = stack_node->next;
-        // }
-        // // GLOBALS
-        // if (record == NULL) {
-        //         // scope = Stack_get(GSS, GSS->size-1); // or -1
-        //         while(stack_node->next != NULL) stack_node = stack_node->next;
-        //         queue_node = ((Scope *)stack_node->content)->queue->head;
-        //         while (queue_node != NULL) {
-        //                 iter = (SymbolTableRecord *) queue_node->content;
-        //                 if (iter->name == name) {
-        //                         record = iter;
-        //                         break;
-        //                 }
-        //                 queue_node = queue_node->next;
-        //         }
-        // }
-
         int i;
         Scope *scope;
         Queue_Node *node;
         // STACK WITHOUT GLOBALS
         for (i=0; i<GSS->size-1; i++) {
-                scope = Stack_get(GSS, i);
+                scope = (Scope *)Stack_get(GSS, i);
                 node = scope->queue->head;
                 while (node != NULL) {
                         iter = (SymbolTableRecord *) node->content;
-                        if (iter->name == name) {
+                        if (strcmp(iter->name, name)==0) {
                                 record = iter;
                                 break;
                         }
                         node = node->next;
                 }
-                if (record != NULL) break;
-                if (scope->isFunction) break;
+                if (record != NULL || scope->isFunction) break;
         }
         // GLOBALS
         if (record == NULL) {
-                scope = Stack_get(GSS, GSS->size-1); // or -1
+                scope = (Scope *)Stack_get(GSS, GSS->size-1);
                 node = scope->queue->head;
                 while (node != NULL) {
                         iter = (SymbolTableRecord *) node->content;
-                        if (iter->name == name) {
+                        if (strcmp(iter->name, name)==0) {
                                 record = iter;
                                 break;
                         }
                         node = node->next;
                 }
         }
-
-        // while (iter != NULL)
-        // {
-        //         if (iter->name == name && iter->active == 1 && iter->scope == scope) {
-        //                 token = iter;
-        //                 break;
-        //         }
-        //         iter = iter->next;
-        // }
+        printGSS();
+        printRecord(record);
+        
         char *buffer = (char*)malloc(30+strlen(name));
         if (record == NULL) {
                 if (expected == 1){
                 sprintf(buffer, "Undefined token \'%s\' line %u", name, line);
                 alpha_yyerror(buffer);
                 }
-        } else if (expected == 0 && record->type==LIBFUNC && type==USRFUNC) {
-                sprintf(buffer, "try to define a lib function  \'%s\' line %u", name, line);
-                alpha_yyerror(buffer);
+        } else if (expected == 0) { 
+                // SymType rtype = record->type;
+                if (record->type==LIBFUNC && type==USRFUNC) {
+                        sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", name, line);
+                        alpha_yyerror(buffer);
+                } else if (record->type == USRFUNC && type != USRFUNC) {
+                        sprintf(buffer, "Cannot define a function again as a var \'%s\' line %u", name, line);
+                        alpha_yyerror(buffer);
+                }else if (record->type != USRFUNC && type == USRFUNC) {
+                        sprintf(buffer, "Cannot define a var again as a function \'%s\' line %u", name, line);
+                        alpha_yyerror(buffer);
+                }
         }
         return record;
 }
 
+SymbolTableRecord *lookupGlobal(char *name, enum SymType type, unsigned int line, unsigned int expected)
+{
+
+        SymbolTableRecord *iter, *record = NULL;
+        int i;
+        Scope *scope;
+        Queue_Node *node;
+        scope = (Scope *)Stack_get(GSS, GSS->size-1);
+                node = scope->queue->head;
+                while (node != NULL) {
+                        iter = (SymbolTableRecord *) node->content;
+                        if (strcmp(iter->name, name)==0) {
+                                record = iter;
+                                break;
+                        }
+                        node = node->next;
+                }
+        return record;
+}
 void insert(char *name, enum SymType type, unsigned int scope, unsigned int line)
 {
         SymbolTableRecord *record = (SymbolTableRecord *)malloc(sizeof(SymbolTableRecord));
@@ -156,24 +145,49 @@ void insert(char *name, enum SymType type, unsigned int scope, unsigned int line
         //get the hash
         int hash_index = hash_f(record);
         SymbolTableRecord *iter = GST[hash_index];
-        while (iter != NULL)
-        {
-                //printf("ti fash\n");
-                iter = iter->next;
-        }
-        printf("%s -> %d\n",record->name,hash_index);
+        
+        // printf("%s -> %d\n",record->name,hash_index);
         //  exit(EXIT_FAILURE);
-
+        record->next = GST[hash_index];
         GST[hash_index] = record;
-        assert(scope == GSS->size -1);
-        Queue_enqueue((Queue *)GSS->top->content, record);
+        //assert(scope == GSS->size -1);
+        Queue_enqueue(((Scope *)Stack_get(GSS, GSS->size-1-scope))->queue, record);
 }
 
-void increaseScope()
+
+void printRecord(SymbolTableRecord *r) {
+        if (r == NULL) {
+                printf("NULL\n");
+        } else printf("%30s %10s %5u %5u\n", r->name, typeNames[r->type], r->scope, r->line);
+        
+}
+
+void printGSS() {
+        printf("------------------------\n");
+        int i, j;
+        Scope *scope;
+        Queue *q;
+        SymbolTableRecord *r;
+        for (i=0; i<GSS->size; i++) {
+                scope = (Scope *) Stack_get(GSS, i);
+                printf("\nScope %d\n", GSS->size-i-1);
+                printf("IsFunctionScope %d\n", scope->isFunction);
+                q = scope->queue;
+                for (j=0; j<q->size; j++) {
+                        r = (SymbolTableRecord *) Queue_get(q, j);
+                        printf("\t");
+                        printRecord(r);
+                }
+                printf("\n");
+        }
+        printf("------------------------\n");
+}
+
+void increaseScope(int isFunct)
 {
         Scope *scope = (Scope*)malloc(sizeof(Scope));
         scope->queue = Queue_init();
-        scope->isFunction = 0;
+        scope->isFunction = isFunct;
         Stack_append(GSS, scope);
 }
 
@@ -192,34 +206,35 @@ unsigned int getScope(){
 
 void display()
 {
-        printf("=========================\n");
+        printf("====================================================\n");
         int i = 0;
         SymbolTableRecord *iter;
-        printf("%30s %10s %3s %5s %3s\n", "name", "type", "scope", "line", "active");
+        printf("%20s %10s %3s %5s %3s\n", "name", "type", "scope", "line", "active");
         for (i = 0; i < SYM_SIZE; i++)
         {
                 iter = GST[i];
                 while (iter != NULL)
                 {
-                        if (iter->type != LIBFUNC) printf("%30s %10s %3d %5d %3d [%3d] \n", iter->name, typeNames[iter->type], iter->scope, iter->line, iter->active ,i);
+                       if(iter->type!=LIBFUNC)printf("%20s %10s %3d %5d %3d [%3d] \n", iter->name, typeNames[iter->type], iter->scope, iter->line, iter->active ,i);
                         iter = iter->next;
                 }
         }
-        printf("=========================\n");
+        printf("====================================================\n");
 }
 
 void sym_init()
 {
 
         int i;
-        GST = (SymbolTableRecord **)malloc(sizeof(SymbolTableRecord *) * SYM_SIZE);
+        GST = (SymbolTableRecord **)malloc(sizeof(Queue *) * SYM_SIZE);
         GSS = Stack_init();
-        increaseScope();
+        increaseScope(0);
 
         for (i = 0; i < SYM_SIZE; i++)
         {
                 GST[i] = NULL;
         }
+        insert("print",LIBFUNC,0,0);
         insert("input",LIBFUNC,0,0);
         insert("objectmemberkeys",LIBFUNC,0,0);
         insert("objecttotalmembers",LIBFUNC,0,0);
@@ -234,17 +249,3 @@ void sym_init()
 
 
 }
-
-//hide -- NO LONGER NEEDED, IMPLEMENTED IN decreaseScope()
-// void hide(unsigned int scope) {
-//         int i = 0;
-//         SymbolTableRecord *iter;
-//         for (i = 0; i < SYM_SIZE; i++)
-//         {
-//                 iter = GST[i];
-//                 while (iter != NULL) {
-//                         if (iter->scope == scope) iter->active = 0;
-//                         iter = iter->next;
-//                 }
-//         }
-// }

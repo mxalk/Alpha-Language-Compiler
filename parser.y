@@ -89,10 +89,16 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 			|DECR lvalue {printf("term ->  -- lvalue \n");}
 			|primary {printf("term ->  primary\n");};
 
-assignexpr:		lvalue ASSIGN expr {printf("assignexpr ->  lvalue = expr\n");
+assignexpr:		lvalue{
+				// if(lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0)==NULL){
+				// 	if(getScope())
+				// 		insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
+				// 	else 
+				// 		insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
+				// }	
+			} ASSIGN expr {printf("assignexpr ->  lvalue = expr\n");
 			printf("funcdef ->  function ID ( idlist ) block\n");
-					if(lookup($1,LCL,alpha_yylineno,0)==NULL)
-						insert($1,LCL,getScope(),alpha_yylineno);};
+					};
 
 primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|call {printf("primary ->  call\n");}
@@ -100,9 +106,31 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");}
 			|const {printf("primary ->  const\n");};
 
-lvalue:			ID {printf("lvalue -> ID \n") ; $$ = $1}
-			|LOCAL ID {printf("lvalue ->  LOCAL ID\n");}
-			|DCOLON ID {printf("lvalue ->  DSCOPE ID\n");}
+lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
+				int sc = getScope();
+				if(lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0)==NULL){
+					if(sc)
+						insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
+					else 
+						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
+				}
+			}
+			|LOCAL ID {
+				printf("lvalue ->  LOCAL ID\n");
+				int sc = getScope();
+				if(lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0)==NULL){
+					if(sc)
+						insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
+					else 
+						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
+				}}
+			|DCOLON ID {
+				printf("lvalue ->  DCOLON ID\n");
+				if(lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,0)==NULL){
+						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
+						sprintf(buffer, "Global variable %s not defined \n",alpha_yylval.stringValue);
+                				alpha_yyerror(buffer);
+				}}
 			|member {printf("lvalue ->  member\n");};
 
 member: 	lvalue DOT ID {printf("member ->  lvalue . ID\n");}
@@ -139,16 +167,18 @@ indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm 
 			| {printf("indexedelem_comm ->  nothing\n");};
 
 
-funcdef:		FUNCTION ANGL_O {increaseScope();} idlist ANGL_C CURL_O stmt_star CURL_C {decreaseScope();printf("funcdef ->  function ( idlist ) block \n");}
-			|FUNCTION ID ANGL_O{increaseScope();} idlist  ANGL_C CURL_O stmt_star CURL_C 
+funcdef:		FUNCTION ANGL_O {increaseScope(1);} idlist ANGL_C CURL_O stmt_star CURL_C {decreaseScope();printf("funcdef ->  function ( idlist ) block \n");}
+			|FUNCTION ID{
+				if(lookup(alpha_yylval.stringValue,USRFUNC,alpha_yylineno,0)==NULL)
+						insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+			} ANGL_O{increaseScope(1);} idlist  ANGL_C CURL_O stmt_star CURL_C 
 			{
 				decreaseScope();
 				printf("funcdef ->  function ID ( idlist ) block\n");
-					if(lookup($2,USRFUNC,alpha_yylineno,0)==NULL)
-						insert($2,USRFUNC,getScope(),alpha_yylineno);
+					
 			};
 			
-block:			CURL_O{increaseScope();}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");};
+block:			CURL_O{increaseScope(0);}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");};
 
 const:			INTNUM {printf("const ->  INTNUM\n");}
 			|REALNUM {printf("const ->  REALNUM\n");}
@@ -157,15 +187,21 @@ const:			INTNUM {printf("const ->  INTNUM\n");}
 			|TRUE {printf("const ->  TRUE\n");}
 			|FALSE {printf("const ->  FALSE\n");};
 
-idlist:	ID ids {printf("idlist ->  ID ids\n");
-								if(lookup($1,FORMAL,alpha_yylineno,0)!=NULL)
-									insert($1,LCL,getScope(),alpha_yylineno);}
-			| {printf("idlist ->  nothing\n");};
+idlist:	ID{
+	if(lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0)==NULL)
+		insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+} ids {
+	printf("idlist ->  ID ids\n");
+	}
+	| {printf("idlist ->  nothing\n");};
 
-ids: COMMA ID ids {printf("ids ->  , ID ids\n");
-									 if(lookup($2,FORMAL,alpha_yylineno,0)!=NULL)
-									 	insert($2,LCL,getScope(),alpha_yylineno);}
-			| {printf("ids ->  nothing\n");};
+ids: COMMA ID{
+		if(lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0)==NULL)
+			insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+	} ids {
+		printf("ids ->  , ID ids\n");
+	}
+		| {printf("ids ->  nothing\n");};
 
 ifstmt:			IF ANGL_O expr ANGL_C stmt {printf("ifstmt ->  if ( expr ) stmt \n");}
             |IF ANGL_O expr ANGL_C stmt ELSE stmt {printf("ifstmt ->  if ( expr ) stmt else stmt \n");};
@@ -179,7 +215,7 @@ returnstmt:		RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SE
 %%
 
 int alpha_yyerror (const char* yaccProvidedMessage){
-  fprintf(stderr,"\033[0;31m Error %s %u \033[0m\n",yaccProvidedMessage,alpha_yylineno);
+  fprintf(stderr,"\033[0;31m Error %s, line %u \033[0m\n",yaccProvidedMessage,alpha_yylineno);
   exit(EXIT_FAILURE);
 }
 
@@ -196,6 +232,7 @@ int main (int argc, char** argv) {
     else alpha_yyin= stdin;
     yyparse();
 
+		printGSS();
     display();
     return 0;
 }

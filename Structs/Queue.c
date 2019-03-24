@@ -37,7 +37,7 @@ int Queue_isEmpty(Queue *queue) {
 }
 
 void Queue_enqueue(Queue *queue, void *element) {
-    assert(queue != 0);
+    assert(queue != NULL);
 
     Queue_Node *node;
 
@@ -77,7 +77,7 @@ void *Queue_get(Queue *queue, int index) {
     int i;
 
     if (queue->size <= index) return NULL;
-    node = queue->tail;
+    node = queue->head;
     for (i=0; i<index; i++) {
         node = node->next;
     }
