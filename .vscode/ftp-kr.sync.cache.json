@@ -1,7 +1,20 @@
 {
-  "sftp://gate2.csd.uoc.gr:17177@csd3655": {
+  "sftp://kiwi.csd.uoc.gr:22@csd3655": {
     "HY340": {
-      "project": {}
+      "project": {
+        ".DS_Store": {
+          "type": "-",
+          "size": 6148,
+          "lmtime": 0,
+          "modified": false
+        },
+        ".gitignore": {
+          "type": "-",
+          "size": 139,
+          "lmtime": 0,
+          "modified": false
+        }
+      }
     },
     "home": {
       "ugrads": {
@@ -11,20 +24,20 @@
               "project": {
                 "parser.output": {
                   "type": "-",
-                  "size": 84299,
+                  "size": 89961,
                   "lmtime": 0,
-                  "modified": false
+                  "modified": true
                 },
                 "scanner.h": {
                   "type": "-",
                   "size": 3742,
-                  "lmtime": 1553284163595,
+                  "lmtime": 1553506363712,
                   "modified": false
                 },
                 "scanner.l": {
                   "type": "-",
-                  "size": 5727,
-                  "lmtime": 1553284162638,
+                  "size": 5729,
+                  "lmtime": 1553506363713,
                   "modified": false
                 },
                 "scanner.c": {
@@ -33,90 +46,270 @@
                   "lmtime": 0,
                   "modified": false
                 },
+                ".vs": {
+                  "slnx.sqlite": {
+                    "type": "-",
+                    "size": 77824,
+                    "lmtime": 1553506631533,
+                    "modified": false
+                  },
+                  "ProjectSettings.json": {
+                    "type": "-",
+                    "size": 52,
+                    "lmtime": 1553506628738,
+                    "modified": false
+                  },
+                  "Alpha-Language-Compiler": {
+                    "v15": {
+                      ".suo": {
+                        "type": "-",
+                        "size": 14336,
+                        "lmtime": 1553506631480,
+                        "modified": false
+                      },
+                      "Browse.VC.db": {
+                        "type": "-",
+                        "size": 270336,
+                        "lmtime": 1553506631632,
+                        "modified": false
+                      }
+                    }
+                  },
+                  "VSWorkspaceState.json": {
+                    "type": "-",
+                    "size": 78,
+                    "lmtime": 1553506631501,
+                    "modified": false
+                  }
+                },
                 "Structs": {
                   "Queue.h": {
                     "type": "-",
-                    "size": 446,
-                    "lmtime": 1552045544640,
+                    "size": 459,
+                    "lmtime": 1553506363716,
                     "modified": false
                   },
                   "Queue.c": {
                     "type": "-",
-                    "size": 1513,
-                    "lmtime": 1553009244331,
+                    "size": 1709,
+                    "lmtime": 1553506363714,
                     "modified": false
                   },
                   "SymTable.h": {
                     "type": "-",
-                    "size": 477,
-                    "lmtime": 1553288493741,
+                    "size": 880,
+                    "lmtime": 1553508305220,
                     "modified": false
                   },
                   "Stack.h": {
                     "type": "-",
-                    "size": 414,
-                    "lmtime": 1552045544641,
+                    "size": 436,
+                    "lmtime": 1553506363718,
                     "modified": false
                   },
                   "SymTable.c": {
                     "type": "-",
-                    "size": 2553,
-                    "lmtime": 1553288587786,
+                    "size": 8079,
+                    "lmtime": 1553511002253,
                     "modified": false
                   },
                   "Stack.c": {
                     "type": "-",
                     "size": 1236,
-                    "lmtime": 1553009256542,
+                    "lmtime": 1553506358087,
                     "modified": false
                   }
+                },
+                "antest.txt": {
+                  "type": "-",
+                  "size": 418,
+                  "lmtime": 1553506363710,
+                  "modified": false
                 },
                 ".DS_Store": {
                   "type": "-",
                   "size": 6148,
-                  "lmtime": 1553285573584,
+                  "lmtime": 0,
                   "modified": false
                 },
                 "parser.h": {
                   "type": "-",
-                  "size": 3998,
+                  "size": 4281,
                   "lmtime": 0,
                   "modified": false
                 },
                 "parser.c": {
                   "type": "-",
-                  "size": 74561,
+                  "size": 78756,
                   "lmtime": 0,
                   "modified": true
                 },
                 ".gitignore": {
                   "type": "-",
-                  "size": 139,
-                  "lmtime": 1552045544640,
+                  "size": 172,
+                  "lmtime": 1553506363708,
                   "modified": false
                 },
                 "Makefile": {
                   "type": "-",
                   "size": 396,
-                  "lmtime": 1553284164425,
+                  "lmtime": 1553506363711,
                   "modified": false
+                },
+                "testfiles": {
+                  "errors": {
+                    "Error11.asc": {
+                      "type": "-",
+                      "size": 61,
+                      "lmtime": 1553506363722,
+                      "modified": false
+                    },
+                    "Error2.asc": {
+                      "type": "-",
+                      "size": 331,
+                      "lmtime": 1553506363723,
+                      "modified": false
+                    },
+                    "Error12.asc": {
+                      "type": "-",
+                      "size": 90,
+                      "lmtime": 1553506363722,
+                      "modified": false
+                    },
+                    "Error10.asc": {
+                      "type": "-",
+                      "size": 313,
+                      "lmtime": 1553506363722,
+                      "modified": false
+                    },
+                    "Error3.asc": {
+                      "type": "-",
+                      "size": 179,
+                      "lmtime": 1553506363726,
+                      "modified": false
+                    },
+                    "Error1.asc": {
+                      "type": "-",
+                      "size": 223,
+                      "lmtime": 1553506363720,
+                      "modified": false
+                    },
+                    "Error0.asc": {
+                      "type": "-",
+                      "size": 79,
+                      "lmtime": 1553506363722,
+                      "modified": false
+                    },
+                    "Error4.asc": {
+                      "type": "-",
+                      "size": 153,
+                      "lmtime": 1553506363722,
+                      "modified": false
+                    },
+                    "Error5.asc": {
+                      "type": "-",
+                      "size": 121,
+                      "lmtime": 1553506363725,
+                      "modified": false
+                    },
+                    "Error6.asc": {
+                      "type": "-",
+                      "size": 254,
+                      "lmtime": 1553506363723,
+                      "modified": false
+                    },
+                    "Error7.asc": {
+                      "type": "-",
+                      "size": 189,
+                      "lmtime": 1553506363725,
+                      "modified": false
+                    },
+                    "Error8.asc": {
+                      "type": "-",
+                      "size": 92,
+                      "lmtime": 1553506363725,
+                      "modified": false
+                    },
+                    "Error9.asc": {
+                      "type": "-",
+                      "size": 146,
+                      "lmtime": 1553506363725,
+                      "modified": false
+                    }
+                  },
+                  "working": {
+                    "GlobalAndLocal.asc": {
+                      "type": "-",
+                      "size": 422,
+                      "lmtime": 1553506363727,
+                      "modified": false
+                    },
+                    "Block.asc": {
+                      "type": "-",
+                      "size": 103,
+                      "lmtime": 1553506363728,
+                      "modified": false
+                    },
+                    "Simple.asc": {
+                      "type": "-",
+                      "size": 1711,
+                      "lmtime": 1553506363730,
+                      "modified": false
+                    },
+                    "Random.asc": {
+                      "type": "-",
+                      "size": 2010,
+                      "lmtime": 1553506363729,
+                      "modified": false
+                    },
+                    "Circle.asc": {
+                      "type": "-",
+                      "size": 1145,
+                      "lmtime": 1553506363730,
+                      "modified": false
+                    },
+                    "Anonymous.asc": {
+                      "type": "-",
+                      "size": 149,
+                      "lmtime": 1553506363727,
+                      "modified": false
+                    },
+                    "ShadowedNameOffunctions.asc": {
+                      "type": "-",
+                      "size": 799,
+                      "lmtime": 1553506363731,
+                      "modified": false
+                    },
+                    "Grammar.asc": {
+                      "type": "-",
+                      "size": 1589,
+                      "lmtime": 1553506363729,
+                      "modified": false
+                    },
+                    "Tree.asc": {
+                      "type": "-",
+                      "size": 2460,
+                      "lmtime": 1553506363730,
+                      "modified": false
+                    }
+                  }
                 },
                 "parser.y": {
                   "type": "-",
-                  "size": 6987,
-                  "lmtime": 1553289681403,
+                  "size": 9248,
+                  "lmtime": 1553510859737,
                   "modified": false
                 },
                 "out": {
                   "type": "-",
-                  "size": 39184,
-                  "lmtime": 1553283865005,
+                  "size": 42816,
+                  "lmtime": 0,
                   "modified": true
                 },
                 "test.txt": {
                   "type": "-",
-                  "size": 343,
-                  "lmtime": 1553289456618,
+                  "size": 12,
+                  "lmtime": 1553509196259,
                   "modified": false
                 }
               }

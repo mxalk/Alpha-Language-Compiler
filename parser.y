@@ -8,6 +8,7 @@ extern int alpha_yylineno;
 extern char* alpha_yytext;
 extern FILE* alpha_yyin;
 unsigned int arg_scope = 0;
+struct SymbolTableRecord* dummy;
 %}
 %define api.prefix {alpha_yy}
 // %name-prefix="alpha_yy"
@@ -83,7 +84,18 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 			|MINUS expr {printf("term ->  - expr \n");}
 			|NOT expr {printf("term ->  not expr \n");}
-			|lvalue INCR {printf("term ->   lvalue ++ \n");}
+			|lvalue{
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1); //type(arg:#4) is not important when we are expecting this var
+				if(dummy == NULL){
+					char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
+					sprintf(buffer, "Illegal instruction ++ on undefined variable at line %d \n",alpha_yylineno);
+          alpha_yyerror(buffer);
+				}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
+					char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
+					sprintf(buffer, "Illegal instruction ++ on Function variable at line %d \n",alpha_yylineno);
+          alpha_yyerror(buffer);
+				}
+			} INCR {printf("term ->   lvalue ++ \n");}
 			|INCR lvalue {printf("term ->  ++ lvalue\n");}
 			|lvalue DECR {printf("term ->  lvalue -- \n");}
 			|DECR lvalue {printf("term ->  -- lvalue \n");}

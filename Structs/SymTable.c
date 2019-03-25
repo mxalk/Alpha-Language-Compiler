@@ -89,25 +89,26 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                         node = node->next;
                 }
         }
-        printGSS();
-        printRecord(record);
+        //printGSS();
+        //printRecord(record);
         
         char *buffer = (char*)malloc(30+strlen(name));
+        if(expected == 1 && record!=NULL)return record;
         if (record == NULL) {
-                if (expected == 1){
-                sprintf(buffer, "Undefined token \'%s\' line %u", name, line);
-                alpha_yyerror(buffer);
-                }
+                // if (expected == 1){
+                // sprintf(buffer, "Undefined variable \'%s\' line %u", name, line);
+                // alpha_yyerror(buffer);
+                // }
         } else if (expected == 0) { 
                 // SymType rtype = record->type;
                 if (record->type==LIBFUNC && type==USRFUNC) {
                         sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", name, line);
                         alpha_yyerror(buffer);
                 } else if (record->type == USRFUNC && type != USRFUNC) {
-                        sprintf(buffer, "Cannot define a function again as a var \'%s\' line %u", name, line);
+                        sprintf(buffer, "Cannot redefine a function as a var \'%s\' line %u", name, line);
                         alpha_yyerror(buffer);
                 }else if (record->type != USRFUNC && type == USRFUNC) {
-                        sprintf(buffer, "Cannot define a var again as a function \'%s\' line %u", name, line);
+                        sprintf(buffer, "Cannot redefine a var as a function \'%s\' line %u", name, line);
                         alpha_yyerror(buffer);
                 }
         }

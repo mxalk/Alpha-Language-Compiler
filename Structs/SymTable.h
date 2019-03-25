@@ -26,4 +26,5 @@ void hide(unsigned int scope);
 void increaseScope(int isFunct);
 void decreaseScope();
 unsigned int getScope();
+void printRecord(struct SymbolTableRecord *r);
 void printGSS();
