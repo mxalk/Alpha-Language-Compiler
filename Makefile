@@ -32,10 +32,10 @@ t_success:	all
 	#./out testfiles/working/Tree.asc
 
 t_error:	all
-	#./out testfiles/errors/Error0.asc
-	 ./out  testfiles/errors/Error1.asc
+	# ./out testfiles/errors/Error0.asc
+	# ./out testfiles/errors/Error1.asc
 	# ./out testfiles/errors/Error2.asc
-	# ./out testfiles/errors/Error3.asc
+	 ./out testfiles/errors/Error3.asc
 	# ./out testfiles/errors/Error4.asc
 	# ./out testfiles/errors/Error5.asc
 	# ./out testfiles/errors/Error6.asc

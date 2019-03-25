@@ -13,6 +13,7 @@ extern FILE* alpha_yyin;
 unsigned int arg_scope = 0;
 unsigned int anon_funct_count = 0;
 unsigned int isLamda = 0;
+unsigned int in_loop = 0;
 SymbolTableRecord* func_for_args = NULL;
 SymbolTableRecord* dummy;
 %}
@@ -64,8 +65,8 @@ stmt: 		expr SEMI {printf("stmt ->  expr SEMI\n");}
       |whilestmt {printf("stmt ->  whilestmt\n");}
 			|forstmt {printf("stmt ->  forstmt\n");}
 			|returnstmt {printf("stmt ->  returnstmt\n");}
-			|BREAK SEMI {printf("stmt ->  break SEMI \n");}
-			|CONTINUE SEMI {printf("stmt ->  continue SEMI\n");}
+			|BREAK SEMI {if(!in_loop) alpha_yyerror("use of break outside loop"); printf("stmt ->  break SEMI \n");}
+			|CONTINUE SEMI {if(!in_loop) alpha_yyerror("use of continue outside loop"); printf("stmt ->  continue SEMI\n");}
 			|block {printf("stmt ->  block\n");}
 			|funcdef {printf("stmt ->  funcdef\n");}
 			|SEMI {printf("stmt ->  SEMI\n");};
@@ -170,7 +171,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;}
 			|const {printf("primary ->  const\n");};
 
-lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
+lvalue:			ID {printf("lvalue -> ID = %s \n", $1) ; /*scope lookup and decide what type of var it is*/
 				dummy=NULL;
 				//char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
@@ -187,6 +188,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				
 			}
 			|LOCAL ID {
+				printf("lvalue ->  LOCAL ID = %s\n", $2);
 				dummy=NULL;
 				char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
@@ -205,7 +207,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 					}
 				}
 			}|DCOLON ID {
-				printf("lvalue ->  DCOLON ID\n");
+				printf("lvalue ->  DCOLON ID = %s\n", $2);
 				if(lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,0)==NULL){
 						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 						sprintf(buffer, "Global variable %s not defined \n",alpha_yylval.stringValue);
@@ -213,9 +215,9 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				}}
 			|member {printf("lvalue ->  member\n");};
 
-member: 	lvalue DOT ID {printf("member ->  lvalue . ID\n");}
+member: 	lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", $3);}
 			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
-			|call DOT ID {printf("member ->  calL . ID\n");}
+			|call DOT ID {printf("member ->  calL . ID = %s\n", $3);}
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
@@ -229,7 +231,7 @@ callsuffix:		normcall {printf("callsuffix ->  normcall\n");}
 
 normcall:		ANGL_O elist ANGL_C {printf("normcall ->  ( elist )\n");};
 
-methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID ( elist )\n");};
+methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID=%s ( elist )\n",$2);};
 
 elist:		expr exprs {printf("elist ->  expr exprs\n");}
 			|	{printf("elist ->  nothing\n");};
@@ -345,9 +347,11 @@ ids: COMMA ID{
 ifstmt:			IF ANGL_O expr ANGL_C stmt {printf("ifstmt ->  if ( expr ) stmt \n");}
             |IF ANGL_O expr ANGL_C stmt ELSE stmt {printf("ifstmt ->  if ( expr ) stmt else stmt \n");};
 
-whilestmt:		WHILE ANGL_O expr ANGL_C stmt {printf("whilestmt ->  while ( expr ) stmt \n");};
+whilestmt:		WHILE ANGL_O expr ANGL_C {in_loop++;}
+						  stmt {printf("whilestmt ->  while ( expr ) stmt \n"); in_loop--;};
 
-forstmt:		FOR ANGL_O elist SEMI expr SEMI elist ANGL_C stmt {printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n");};
+forstmt:		FOR ANGL_O elist SEMI expr SEMI elist ANGL_C {in_loop++;}
+						stmt {printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n"); in_loop--;};
 
 returnstmt:		RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
 
