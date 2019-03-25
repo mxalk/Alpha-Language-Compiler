@@ -10,22 +10,7 @@ struct SymbolTableRecord;
 
 char *typeNames[] = {"LOCAL", "GLOBAL", "LIBFUNC", "USRFUNC", "FORMAL"};
 
-typedef struct SymbolTableRecord
-{
-        char *name;
-        struct SymbolTableRecord *next;
-        enum SymType type;
-        unsigned int scope;
-        unsigned int line;
-        unsigned char **args; //func
-        unsigned int active;
-        union{  
-                char* stringValue;
-                int intValue;
-                float floatValue;
-                unsigned int boolValue;
-        }value;
-} SymbolTableRecord;
+
 
 typedef struct Scope
 {
@@ -92,26 +77,16 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
         //printGSS();
         //printRecord(record);
         
-        char *buffer = (char*)malloc(30+strlen(name));
-        if(expected == 1 && record!=NULL)return record;
-        if (record == NULL) {
-                // if (expected == 1){
-                // sprintf(buffer, "Undefined variable \'%s\' line %u", name, line);
-                // alpha_yyerror(buffer);
-                // }
-        } else if (expected == 0) { 
-                // SymType rtype = record->type;
-                if (record->type==LIBFUNC && type==USRFUNC) {
-                        sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", name, line);
-                        alpha_yyerror(buffer);
-                } else if (record->type == USRFUNC && type != USRFUNC) {
-                        sprintf(buffer, "Cannot redefine a function as a var \'%s\' line %u", name, line);
-                        alpha_yyerror(buffer);
-                }else if (record->type != USRFUNC && type == USRFUNC) {
-                        sprintf(buffer, "Cannot redefine a var as a function \'%s\' line %u", name, line);
-                        alpha_yyerror(buffer);
-                }
-        }
+        // if(expected == 1 && record!=NULL)return record;
+        // if (record == NULL) {
+        //         // if (expected == 1){
+        //         // sprintf(buffer, "Undefined variable \'%s\' line %u", name, line);
+        //         // alpha_yyerror(buffer);
+        //         // }
+        // } else if (expected == 0) { 
+        //         // SymType rtype = record->type;
+                
+        // }
         return record;
 }
 
@@ -134,7 +109,7 @@ SymbolTableRecord *lookupGlobal(char *name, enum SymType type, unsigned int line
                 }
         return record;
 }
-void insert(char *name, enum SymType type, unsigned int scope, unsigned int line)
+SymbolTableRecord* insert(char *name, enum SymType type, unsigned int scope, unsigned int line)
 {
         SymbolTableRecord *record = (SymbolTableRecord *)malloc(sizeof(SymbolTableRecord));
         record->name = name;

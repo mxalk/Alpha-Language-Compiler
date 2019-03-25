@@ -15,8 +15,17 @@ enum SymType
         USRFUNC,
         FORMAL
 };
-struct SymbolTableRecord;
-void insert(char *name, enum SymType type, unsigned int scope, unsigned int line);
+typedef struct SymbolTableRecord
+{
+        char *name;
+        struct SymbolTableRecord *next;
+        enum SymType type;
+        unsigned int scope;
+        unsigned int line;
+        unsigned char **args; //func
+        unsigned int active;
+} SymbolTableRecord;
+SymbolTableRecord* insert(char *name, enum SymType type, unsigned int scope, unsigned int line);
 struct SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line,unsigned int expected);
 struct SymbolTableRecord *lookupGlobal(char *name, enum SymType type, unsigned int line, unsigned int expected);
 int hash_f(struct SymbolTableRecord *record);

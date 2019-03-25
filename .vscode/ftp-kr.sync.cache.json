@@ -1,16 +1,85 @@
 {
-  "sftp://kiwi.csd.uoc.gr:22@csd3655": {
+  "sftp://gate2.csd.uoc.gr:18101@csd3655": {
     "HY340": {
       "project": {
+        "parser.output": {
+          "type": "-",
+          "size": 90156,
+          "lmtime": 0,
+          "modified": false
+        },
+        "scanner.h": {
+          "type": "-",
+          "size": 3742,
+          "lmtime": 0,
+          "modified": false
+        },
+        "scanner.l": {
+          "type": "-",
+          "size": 5729,
+          "lmtime": 0,
+          "modified": false
+        },
+        "scanner.c": {
+          "type": "-",
+          "size": 58997,
+          "lmtime": 0,
+          "modified": false
+        },
+        ".vs": {},
+        "Structs": {},
+        "antest.txt": {
+          "type": "-",
+          "size": 418,
+          "lmtime": 0,
+          "modified": false
+        },
         ".DS_Store": {
           "type": "-",
           "size": 6148,
           "lmtime": 0,
           "modified": false
         },
+        "parser.h": {
+          "type": "-",
+          "size": 4281,
+          "lmtime": 0,
+          "modified": false
+        },
+        "parser.c": {
+          "type": "-",
+          "size": 81504,
+          "lmtime": 0,
+          "modified": false
+        },
         ".gitignore": {
           "type": "-",
-          "size": 139,
+          "size": 172,
+          "lmtime": 0,
+          "modified": false
+        },
+        "Makefile": {
+          "type": "-",
+          "size": 398,
+          "lmtime": 0,
+          "modified": false
+        },
+        "testfiles": {},
+        "parser.y": {
+          "type": "-",
+          "size": 11926,
+          "lmtime": 0,
+          "modified": false
+        },
+        "out": {
+          "type": "-",
+          "size": 43240,
+          "lmtime": 0,
+          "modified": false
+        },
+        "test.txt": {
+          "type": "-",
+          "size": 71,
           "lmtime": 0,
           "modified": false
         }
@@ -24,20 +93,20 @@
               "project": {
                 "parser.output": {
                   "type": "-",
-                  "size": 89961,
+                  "size": 90415,
                   "lmtime": 0,
                   "modified": true
                 },
                 "scanner.h": {
                   "type": "-",
                   "size": 3742,
-                  "lmtime": 1553506363712,
+                  "lmtime": 0,
                   "modified": false
                 },
                 "scanner.l": {
                   "type": "-",
                   "size": 5729,
-                  "lmtime": 1553506363713,
+                  "lmtime": 0,
                   "modified": false
                 },
                 "scanner.c": {
@@ -46,84 +115,49 @@
                   "lmtime": 0,
                   "modified": false
                 },
-                ".vs": {
-                  "slnx.sqlite": {
-                    "type": "-",
-                    "size": 77824,
-                    "lmtime": 1553506631533,
-                    "modified": false
-                  },
-                  "ProjectSettings.json": {
-                    "type": "-",
-                    "size": 52,
-                    "lmtime": 1553506628738,
-                    "modified": false
-                  },
-                  "Alpha-Language-Compiler": {
-                    "v15": {
-                      ".suo": {
-                        "type": "-",
-                        "size": 14336,
-                        "lmtime": 1553506631480,
-                        "modified": false
-                      },
-                      "Browse.VC.db": {
-                        "type": "-",
-                        "size": 270336,
-                        "lmtime": 1553506631632,
-                        "modified": false
-                      }
-                    }
-                  },
-                  "VSWorkspaceState.json": {
-                    "type": "-",
-                    "size": 78,
-                    "lmtime": 1553506631501,
-                    "modified": false
-                  }
-                },
+                ".vs": {},
                 "Structs": {
                   "Queue.h": {
                     "type": "-",
                     "size": 459,
-                    "lmtime": 1553506363716,
+                    "lmtime": 0,
                     "modified": false
                   },
                   "Queue.c": {
                     "type": "-",
                     "size": 1709,
-                    "lmtime": 1553506363714,
+                    "lmtime": 0,
                     "modified": false
                   },
                   "SymTable.h": {
                     "type": "-",
-                    "size": 880,
-                    "lmtime": 1553508305220,
+                    "size": 1118,
+                    "lmtime": 0,
                     "modified": false
                   },
                   "Stack.h": {
                     "type": "-",
                     "size": 436,
-                    "lmtime": 1553506363718,
+                    "lmtime": 0,
                     "modified": false
                   },
                   "SymTable.c": {
                     "type": "-",
-                    "size": 8079,
-                    "lmtime": 1553511002253,
+                    "size": 6946,
+                    "lmtime": 0,
                     "modified": false
                   },
                   "Stack.c": {
                     "type": "-",
                     "size": 1236,
-                    "lmtime": 1553506358087,
+                    "lmtime": 0,
                     "modified": false
                   }
                 },
                 "antest.txt": {
                   "type": "-",
                   "size": 418,
-                  "lmtime": 1553506363710,
+                  "lmtime": 0,
                   "modified": false
                 },
                 ".DS_Store": {
@@ -140,20 +174,20 @@
                 },
                 "parser.c": {
                   "type": "-",
-                  "size": 78756,
+                  "size": 81251,
                   "lmtime": 0,
                   "modified": true
                 },
                 ".gitignore": {
                   "type": "-",
                   "size": 172,
-                  "lmtime": 1553506363708,
+                  "lmtime": 0,
                   "modified": false
                 },
                 "Makefile": {
                   "type": "-",
-                  "size": 396,
-                  "lmtime": 1553506363711,
+                  "size": 398,
+                  "lmtime": 0,
                   "modified": false
                 },
                 "testfiles": {
@@ -161,155 +195,155 @@
                     "Error11.asc": {
                       "type": "-",
                       "size": 61,
-                      "lmtime": 1553506363722,
-                      "modified": false
-                    },
-                    "Error2.asc": {
-                      "type": "-",
-                      "size": 331,
-                      "lmtime": 1553506363723,
-                      "modified": false
-                    },
-                    "Error12.asc": {
-                      "type": "-",
-                      "size": 90,
-                      "lmtime": 1553506363722,
-                      "modified": false
-                    },
-                    "Error10.asc": {
-                      "type": "-",
-                      "size": 313,
-                      "lmtime": 1553506363722,
-                      "modified": false
-                    },
-                    "Error3.asc": {
-                      "type": "-",
-                      "size": 179,
-                      "lmtime": 1553506363726,
-                      "modified": false
-                    },
-                    "Error1.asc": {
-                      "type": "-",
-                      "size": 223,
-                      "lmtime": 1553506363720,
-                      "modified": false
-                    },
-                    "Error0.asc": {
-                      "type": "-",
-                      "size": 79,
-                      "lmtime": 1553506363722,
-                      "modified": false
-                    },
-                    "Error4.asc": {
-                      "type": "-",
-                      "size": 153,
-                      "lmtime": 1553506363722,
-                      "modified": false
-                    },
-                    "Error5.asc": {
-                      "type": "-",
-                      "size": 121,
-                      "lmtime": 1553506363725,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Error6.asc": {
                       "type": "-",
                       "size": 254,
-                      "lmtime": 1553506363723,
+                      "lmtime": 0,
                       "modified": false
                     },
-                    "Error7.asc": {
+                    "Error5.asc": {
                       "type": "-",
-                      "size": 189,
-                      "lmtime": 1553506363725,
+                      "size": 121,
+                      "lmtime": 0,
                       "modified": false
                     },
-                    "Error8.asc": {
+                    "Error2.asc": {
                       "type": "-",
-                      "size": 92,
-                      "lmtime": 1553506363725,
+                      "size": 331,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Error9.asc": {
                       "type": "-",
                       "size": 146,
-                      "lmtime": 1553506363725,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error12.asc": {
+                      "type": "-",
+                      "size": 90,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error10.asc": {
+                      "type": "-",
+                      "size": 313,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error3.asc": {
+                      "type": "-",
+                      "size": 179,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error1.asc": {
+                      "type": "-",
+                      "size": 223,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error4.asc": {
+                      "type": "-",
+                      "size": 153,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error0.asc": {
+                      "type": "-",
+                      "size": 79,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error8.asc": {
+                      "type": "-",
+                      "size": 92,
+                      "lmtime": 0,
+                      "modified": false
+                    },
+                    "Error7.asc": {
+                      "type": "-",
+                      "size": 189,
+                      "lmtime": 0,
                       "modified": false
                     }
                   },
                   "working": {
+                    "Tree.asc": {
+                      "type": "-",
+                      "size": 2460,
+                      "lmtime": 0,
+                      "modified": false
+                    },
                     "GlobalAndLocal.asc": {
                       "type": "-",
                       "size": 422,
-                      "lmtime": 1553506363727,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Block.asc": {
                       "type": "-",
                       "size": 103,
-                      "lmtime": 1553506363728,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Simple.asc": {
                       "type": "-",
                       "size": 1711,
-                      "lmtime": 1553506363730,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Random.asc": {
                       "type": "-",
                       "size": 2010,
-                      "lmtime": 1553506363729,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Circle.asc": {
                       "type": "-",
                       "size": 1145,
-                      "lmtime": 1553506363730,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Anonymous.asc": {
                       "type": "-",
                       "size": 149,
-                      "lmtime": 1553506363727,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "ShadowedNameOffunctions.asc": {
                       "type": "-",
                       "size": 799,
-                      "lmtime": 1553506363731,
+                      "lmtime": 0,
                       "modified": false
                     },
                     "Grammar.asc": {
                       "type": "-",
                       "size": 1589,
-                      "lmtime": 1553506363729,
-                      "modified": false
-                    },
-                    "Tree.asc": {
-                      "type": "-",
-                      "size": 2460,
-                      "lmtime": 1553506363730,
+                      "lmtime": 0,
                       "modified": false
                     }
                   }
                 },
                 "parser.y": {
                   "type": "-",
-                  "size": 9248,
-                  "lmtime": 1553510859737,
+                  "size": 11439,
+                  "lmtime": 1553524769673,
                   "modified": false
                 },
                 "out": {
                   "type": "-",
-                  "size": 42816,
+                  "size": 43564,
                   "lmtime": 0,
                   "modified": true
                 },
                 "test.txt": {
                   "type": "-",
-                  "size": 12,
-                  "lmtime": 1553509196259,
+                  "size": 98,
+                  "lmtime": 1553524075295,
                   "modified": false
                 }
               }
