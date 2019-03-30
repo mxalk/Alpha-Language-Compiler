@@ -1,11 +1,17 @@
 #pragma once
 #include "Stack.h"
+#include "Queue.h"
 #include <assert.h>
 #define SYM_SIZE 1000
 #define GlobalSymbolTable GST
 #define GlobalScopeStack GSS
 
 struct SymbolTableRecord **GlobalSymbolTable;
+typedef struct Scope
+{
+        Queue *queue;
+        int isFunction;
+} Scope;
 Stack *GlobalScopeStack;
 enum SymType
 {

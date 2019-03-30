@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "./Structs/SymTable.h"
+#include "./Structs/Stack.h"
 #define debug 1
+#define errors_halt 0
 #define printf(...) if(debug)printf(__VA_ARGS__);
 int alpha_yyerror (const char* yaccProvidedMessage);
 int alpha_yylex(void);
@@ -138,9 +140,9 @@ assignexpr:		lvalue{
 				dummy=NULL;
 				// char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
-				if($1==NULL)break;
-				//fprintf(stderr,"lala = %s\n",$1);
-				//dummy=lookup($1,(sc==0)?GLBL:LCL,alpha_yylineno,1);
+				//if($1==NULL)break;
+				//fprintf(stderr,"======lala = %s\n",$1);
+				//dummy=lookup(strdup($1),(sc==0)?GLBL:LCL,alpha_yylineno,1);
 				//fprintf(stderr,"--lala\n");
 				//alpha_yyerror("assign: assigment"); break;
 				if( dummy != NULL){
@@ -183,6 +185,10 @@ lvalue:			ID {printf("lvalue -> ID = %s \n", $1) ; /*scope lookup and decide wha
 						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
 					}
 				}else{
+					Scope* curr_scope = (Scope *)Stack_get(GSS, getScope());
+					if(curr_scope->isFunction == 1 ){
+						alpha_yyerror("cannot access variable");
+					}
 					//fprintf(stderr,"->>>>>>>>>>>>>>%s. %d\n",alpha_yylval.stringValue,getScope());
 				}
 				
@@ -222,6 +228,7 @@ member: 	lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", $3);}
 
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
 			|lvalue{
+				
 			} callsuffix {
 				printf("call ->  lvalue callsuffix \n");}
 			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");};

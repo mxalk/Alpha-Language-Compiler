@@ -12,12 +12,6 @@ char *typeNames[] = {"LOCAL", "GLOBAL", "LIBFUNC", "USRFUNC", "FORMAL"};
 
 
 
-typedef struct Scope
-{
-        Queue *queue;
-        int isFunction;
-} Scope;
-
 int hash_f(SymbolTableRecord *record)
 {
         unsigned int key = 0;
