@@ -68,15 +68,17 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                         node = node->next;
                 }
         }
-        //printGSS();
+        // printGSS();
         //printRecord(record);
         
-        // if(expected == 1 && record!=NULL)return record;
-        // if (record == NULL) {
-        //         // if (expected == 1){
-        //         // sprintf(buffer, "Undefined variable \'%s\' line %u", name, line);
-        //         // alpha_yyerror(buffer);
-        //         // }
+        if (expected == 1 && record!=NULL)return record;
+        if (record == NULL) {
+                if (expected == 1){
+                        char *buffer = (char*)malloc(30+strlen(name));
+                        sprintf(buffer, "Undefined variable \'%s\'", name);
+                        alpha_yyerror(buffer);
+                }
+        }
         // } else if (expected == 0) { 
         //         // SymType rtype = record->type;
                 
