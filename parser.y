@@ -18,6 +18,8 @@ unsigned int isLamda = 0;
 unsigned int in_loop = 0;
 SymbolTableRecord* func_for_args = NULL;
 SymbolTableRecord* dummy;
+SymbolTableRecord* dummy2;
+
 %}
 %define api.prefix {alpha_yy}
 // %name-prefix="alpha_yy"
@@ -31,6 +33,9 @@ SymbolTableRecord* dummy;
 }
 %union {  char* lvName;} 
 %type <lvName> lvalue
+%type <lvName> expr
+%type <lvName> member
+
 
 %token <stringValue> ID
 %token <intValue> INTNUM
@@ -136,36 +141,30 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 			}
 			|primary {printf("term ->  primary\n");};
 
-assignexpr:		lvalue{
-				dummy=NULL;
-				// char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
-				int sc = getScope();
-				//if($1==NULL)break;
-				//fprintf(stderr,"======lala = %s\n",$1);
-				//dummy=lookup(strdup($1),(sc==0)?GLBL:LCL,alpha_yylineno,1);
-				//fprintf(stderr,"--lala\n");
-				//alpha_yyerror("assign: assigment"); break;
-				if( dummy != NULL){
-				//printf("=====!NULL======%s\n",alpha_yylval.stringValue);
-					// if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
-					// 	alpha_yyerror("assign: Illegal assigment to function");
-					// }
-					
+assignexpr:		lvalue ASSIGN expr {
+				//dummy = dummy2;
+				printf("assignexpr ->  lvalue = expr\n");
+				dummy2 = NULL;
+				if($1 == NULL || $3 == NULL || alpha_yylval.intValue){
+						// alpha_yyerror("Error on assigment found\n");	
 				}else{
-					//printf("======NULL=====%s\n",alpha_yylval.stringValue);
-					
+					dummy = lookup($1,LCL,alpha_yylineno,1); //type(arg:#4) is not important when we are expecting this var
+					if( dummy != NULL){
+						if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
+							printf("%s = %s at %d\n",$1,$3,alpha_yylineno);
+							alpha_yyerror("Illegal assigment to function\n");
+							exit(EXIT_FAILURE);
+						}
+					}else{
+						dummy2 = lookup($3,LCL,alpha_yylineno,1);
+						if(dummy2!=NULL){
+							if(dummy2->type == USRFUNC){
+								insert($1,dummy->type,getScope(),alpha_yylineno);
+							}
+						}
+					}
 				}
-				
-					
-			} ASSIGN expr {printf("assignexpr ->  lvalue = expr\n");
-					// if(func_for_args != NULL && isLamda == 1){
-					// 	alpha_yyerror("LALA");
-					// 	dummy = lookup($1,(getScope()==0)?GLBL:LCL,alpha_yylineno,0);
-					// 	dummy = func_for_args;
-					// 	func_for_args = NULL;
-					// 	isLamda = 0;
-					// }
-					};
+			};
 
 primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|call {printf("primary ->  call\n");}
@@ -173,12 +172,13 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;}
 			|const {printf("primary ->  const\n");};
 
-lvalue:			ID {printf("lvalue -> ID = %s \n", $1) ; /*scope lookup and decide what type of var it is*/
+lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
 				dummy=NULL;
 				//char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
 				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0);
 				if(dummy==NULL){
+					$$ = $1;
 					if(sc){
 						insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 					}else{ 
@@ -194,18 +194,20 @@ lvalue:			ID {printf("lvalue -> ID = %s \n", $1) ; /*scope lookup and decide wha
 				
 			}
 			|LOCAL ID {
-				printf("lvalue ->  LOCAL ID = %s\n", $2);
+				printf("lvalue ->  LOCAL ID\n");
 				dummy=NULL;
 				char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
 				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0);
 				if(dummy!=NULL){
+					$$ = $2;
 					if(dummy->scope == 0 && sc != 0 && dummy->type!=LIBFUNC) insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 					else if (dummy->type==LIBFUNC) {
 						sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
 						alpha_yyerror(buffer);
 					}
 				}else{
+					$$ = $2;
 					if(sc){
 						insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 					}else{ 
@@ -213,7 +215,8 @@ lvalue:			ID {printf("lvalue -> ID = %s \n", $1) ; /*scope lookup and decide wha
 					}
 				}
 			}|DCOLON ID {
-				printf("lvalue ->  DCOLON ID = %s\n", $2);
+					$$ = $2;
+				printf("lvalue ->  DCOLON ID\n");
 				if(lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,0)==NULL){
 						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 						sprintf(buffer, "Global variable %s not defined \n",alpha_yylval.stringValue);
@@ -223,7 +226,7 @@ lvalue:			ID {printf("lvalue -> ID = %s \n", $1) ; /*scope lookup and decide wha
 
 member: 	lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", $3);}
 			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
-			|call DOT ID {printf("member ->  calL . ID = %s\n", $3);}
+			|call DOT ID {printf("member ->  call . ID = %s\n", $3);}
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
