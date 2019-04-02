@@ -3,3 +3,8 @@ example = (function (a,b) { return a + b; });
 example (3, 4);
 
 example(2,1);
+
+function geia(){
+
+}
+geia();

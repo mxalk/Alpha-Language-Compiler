@@ -145,30 +145,19 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 			}
 			|primary {printf("term ->  primary\n");};
 
-assignexpr:		lvalue ASSIGN expr {
-				//dummy = dummy2;
-				printf("assignexpr ->  lvalue = expr\n");
-				dummy2 = NULL;
-				if($1 == NULL || $3 == NULL || alpha_yylval.intValue){
-						// alpha_yyerror("Error on assigment found\n");	
-				}else{
-					dummy = lookup($1,LCL,alpha_yylineno,1); //type(arg:#4) is not important when we are expecting this var
+assignexpr:		lvalue{
+					fprintf(stderr,"%s %d %d %d\n",$1,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
+					dummy = lookup($1,LCL,alpha_yylineno,0); //type(arg:#4) is not important when we are expecting this var
 					if( dummy != NULL){
-						if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
-							printf("%s = %s at %d\n",$1,$3,alpha_yylineno);
-							alpha_yyerror("Illegal assigment to function\n");
-							exit(EXIT_FAILURE);
-						}
-					}else{
-						dummy2 = lookup($3,LCL,alpha_yylineno,1);
-						if(dummy2!=NULL){
-							if(dummy2->type == USRFUNC){
-								insert($1,dummy->type,getScope(),alpha_yylineno);
+						//if(dummy->scope == 0){
+							if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
+								//printf("%s = %s at %d\n",$1,$3,alpha_yylineno);
+								alpha_yyerror("Illegal assigment to function\n");
+								exit(EXIT_FAILURE);
 							}
-						}
+						//}
 					}
-				}
-			};
+			} ASSIGN expr ;
 
 primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|call {printf("primary ->  call\n");}
@@ -177,21 +166,20 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|const {printf("primary ->  const\n");};
 
 lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
+				$$ = $1;
 				Scope* curr_scope = (Scope *)Stack_get(GSS, GSS->size - getScope() - 1);
 				int expected = curr_scope->isFunction?1:0;
-				// printf("%d %s\n",expected,alpha_yylval.stringValue);
+				fprintf(stderr,"%d %s\n",getScope(),alpha_yylval.stringValue);
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,expected);
 				if(dummy==NULL){
 					if(getScope())
 						insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 					else
 						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
-				}else{
-					//if(dummy->scope == 0)
 				}
-
 			}
 			|LOCAL ID {
+				$$ = $2;
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0);
 				if(getScope())
 					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
@@ -208,9 +196,24 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				}}
 			|member {printf("lvalue ->  member\n");};
 
-member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", $3);}
+member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", $3);
+				increaseScope(0);
+				$$ = $3;
+				dummy =	lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0);
+				if(dummy==NULL){
+						insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
+				}
+				decreaseScope();
+			}
 			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
-			|call DOT ID {printf("member ->  call . ID = %s\n", $3);}
+			|call DOT ID {printf("member ->  call . ID = %s\n", $3);
+				increaseScope(0);
+				$$ = $3;
+				dummy =	lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0);
+				if(dummy==NULL){
+						insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
+				}
+				decreaseScope();}
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
@@ -239,20 +242,12 @@ objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");}
 indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");};
 
 indexedelem:		CURL_O expr{
-			// dummy=NULL;
-			// 	//char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
-			// 	dummy=lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0);
-			// 	if(dummy==NULL){
-
-			// 			insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
-					
-			// 	}else{
-			// 		Scope* curr_scope = (Scope *)Stack_get(GSS, getScope());
-			// 		if(curr_scope->isFunction == 1 ){
-			// 			alpha_yyerror("cannot access variable");
-			// 		}
-			// 		//fprintf(stderr,"->>>>>>>>>>>>>>%s. %d\n",alpha_yylval.stringValue,getScope());
-			// 	}
+				Scope* curr_scope = (Scope *)Stack_get(GSS, GSS->size - getScope() - 1);
+				// printf("%d %s\n",expected,alpha_yylval.stringValue);
+				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0);
+				if(dummy==NULL){
+					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
+				}
 
 			} COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");};
 
