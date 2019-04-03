@@ -38,11 +38,11 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
         SymbolTableRecord *iter = GST[hash_index];
         record = NULL;
 
-        int i;
+        int i, wasFunction = 0, isFunction = 0;
         Scope *scope;
         Queue_Node *node;
-        // STACK WITHOUT GLOBALS
-        for (i=0; i<GSS->size-1; i++) {
+        for (i=0; i<GSS->size; i++) {
+                if (wasFunction) isFunction = 1;
                 scope = (Scope *)Stack_get(GSS, i);
                 node = scope->queue->head;
                 while (node != NULL) {
@@ -53,31 +53,24 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                         }
                         node = node->next;
                 }
-                if (record != NULL || scope->isFunction) break;
-        }
-        // GLOBALS
-        if (record == NULL) {
-                scope = (Scope *)Stack_get(GSS, GSS->size-1);
-                node = scope->queue->head;
-                while (node != NULL) {
-                        iter = (SymbolTableRecord *) node->content;
-                        if (strcmp(iter->name, name)==0) {
-                                record = iter;
-                                break;
-                        }
-                        node = node->next;
-                }
+                if (record != NULL) break;
+                if (scope->isFunction) wasFunction = 1;
         }
         // printGSS();
         //printRecord(record);
-        
+        if (isFunction && record!= NULL && record->scope!=0) {
+                char *buffer = (char*)malloc(50+strlen(name));
+                sprintf(buffer, "Variable access not allowed \'%s\'", name);
+                alpha_yyerror(buffer);
+        }
         if (expected == 1 && record!=NULL)return record;
-        if (record == NULL) {
-                if (expected == 1){
-                        char *buffer = (char*)malloc(30+strlen(name));
+        if (expected){
+                if (record == NULL) {
+                        char *buffer = (char*)malloc(50+strlen(name));
                         sprintf(buffer, "Undefined variable \'%s\'", name);
                         alpha_yyerror(buffer);
                 }
+                
         }
         // } else if (expected == 0) { 
         //         // SymType rtype = record->type;
