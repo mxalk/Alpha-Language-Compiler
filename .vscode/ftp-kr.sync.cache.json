@@ -6,7 +6,7 @@
           "type": "-",
           "size": 91012,
           "lmtime": 0,
-          "modified": false
+          "modified": true
         },
         "scanner.h": {
           "type": "-",
@@ -50,32 +50,32 @@
           "type": "-",
           "size": 84581,
           "lmtime": 0,
-          "modified": false
+          "modified": true
         },
         ".gitignore": {
           "type": "-",
           "size": 347,
           "lmtime": 0,
-          "modified": false
+          "modified": true
         },
         "Makefile": {
           "type": "-",
           "size": 1274,
           "lmtime": 0,
-          "modified": false
+          "modified": true
         },
         "testfiles": {},
         "parser.y": {
           "type": "-",
           "size": 13804,
           "lmtime": 0,
-          "modified": false
+          "modified": true
         },
         "out": {
           "type": "-",
           "size": 45464,
           "lmtime": 0,
-          "modified": false
+          "modified": true
         },
         "test.txt": {
           "type": "-",
@@ -93,9 +93,13 @@
               "project": {
                 "parser.output": {
                   "type": "-",
+<<<<<<< Updated upstream
                   "size": 90800,
+=======
+                  "size": 90515,
+>>>>>>> Stashed changes
                   "lmtime": 0,
-                  "modified": true
+                  "modified": false
                 },
                 "scanner.h": {
                   "type": "-",
@@ -115,8 +119,85 @@
                   "lmtime": 0,
                   "modified": false
                 },
+<<<<<<< Updated upstream
                 ".vs": {},
                 "Structs": {},
+=======
+                ".vs": {
+                  "slnx.sqlite": {
+                    "type": "-",
+                    "size": 77824,
+                    "lmtime": 1553959819185,
+                    "modified": false
+                  },
+                  "ProjectSettings.json": {
+                    "type": "-",
+                    "size": 50,
+                    "lmtime": 1553959819183,
+                    "modified": false
+                  },
+                  "VSWorkspaceState.json": {
+                    "type": "-",
+                    "size": 73,
+                    "lmtime": 1553959819183,
+                    "modified": false
+                  },
+                  "Alpha-Language-Compiler": {
+                    "v15": {
+                      ".suo": {
+                        "type": "-",
+                        "size": 14336,
+                        "lmtime": 1553959819186,
+                        "modified": false
+                      },
+                      "Browse.VC.db": {
+                        "type": "-",
+                        "size": 270336,
+                        "lmtime": 1553959819186,
+                        "modified": false
+                      }
+                    }
+                  }
+                },
+                "Structs": {
+                  "Queue.h": {
+                    "type": "-",
+                    "size": 459,
+                    "lmtime": 0,
+                    "modified": false
+                  },
+                  "Queue.c": {
+                    "type": "-",
+                    "size": 1709,
+                    "lmtime": 0,
+                    "modified": false
+                  },
+                  "SymTable.h": {
+                    "type": "-",
+                    "size": 1229,
+                    "lmtime": 1553959819024,
+                    "modified": false
+                  },
+                  "Stack.h": {
+                    "type": "-",
+                    "size": 436,
+                    "lmtime": 0,
+                    "modified": false
+                  },
+                  "SymTable.c": {
+                    "type": "-",
+                    "size": 6881,
+                    "lmtime": 1553959819023,
+                    "modified": false
+                  },
+                  "Stack.c": {
+                    "type": "-",
+                    "size": 1236,
+                    "lmtime": 0,
+                    "modified": false
+                  }
+                },
+>>>>>>> Stashed changes
                 "antest.txt": {
                   "type": "-",
                   "size": 418,
@@ -137,19 +218,28 @@
                 },
                 "parser.c": {
                   "type": "-",
+<<<<<<< Updated upstream
                   "size": 84120,
+=======
+                  "size": 83693,
+>>>>>>> Stashed changes
                   "lmtime": 0,
-                  "modified": true
+                  "modified": false
                 },
                 ".gitignore": {
                   "type": "-",
                   "size": 347,
+<<<<<<< Updated upstream
                   "lmtime": 0,
+=======
+                  "lmtime": 1553960315056,
+>>>>>>> Stashed changes
                   "modified": false
                 },
                 "Makefile": {
                   "type": "-",
                   "size": 1274,
+<<<<<<< Updated upstream
                   "lmtime": 1553967736959,
                   "modified": false
                 },
@@ -215,18 +305,37 @@
                   "type": "-",
                   "size": 13705,
                   "lmtime": 1553967727151,
+=======
+                  "lmtime": 1553959819021,
+                  "modified": false
+                },
+                "testfiles": {},
+                "parser.y": {
+                  "type": "-",
+                  "size": 13804,
+                  "lmtime": 1553959819024,
+>>>>>>> Stashed changes
                   "modified": false
                 },
                 "out": {
                   "type": "-",
+<<<<<<< Updated upstream
                   "size": 45488,
+=======
+                  "size": 44320,
+>>>>>>> Stashed changes
                   "lmtime": 0,
-                  "modified": true
+                  "modified": false
                 },
                 "test.txt": {
                   "type": "-",
+<<<<<<< Updated upstream
                   "size": 77,
                   "lmtime": 1553963271217,
+=======
+                  "size": 62,
+                  "lmtime": 0,
+>>>>>>> Stashed changes
                   "modified": false
                 }
               }

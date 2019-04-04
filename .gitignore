@@ -14,3 +14,15 @@ parser.h
 \.vscode/*
 
 out
+
+\.vs/Alpha-Language-Compiler/v15/\.suo
+
+\.vs/Alpha-Language-Compiler/v15/Browse\.VC\.db
+
+\.vs/ProjectSettings\.json
+
+\.vs/slnx\.sqlite
+
+\.vs/VSWorkspaceState\.json
+
+\.vscode/

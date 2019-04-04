@@ -33,7 +33,7 @@ t_success:	all
 
 t_error:	all
 	#./out testfiles/errors/Error0.asc 
-	# ./out testfiles/errors/Error1.asc #x
+	 ./out testfiles/errors/Error1.asc #x
 	# ./out testfiles/errors/Error2.asc
 	# ./out testfiles/errors/Error3.asc
 	# ./out testfiles/errors/Error4.asc

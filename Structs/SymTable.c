@@ -26,7 +26,7 @@ int hash_f(SymbolTableRecord *record)
         return key % SYM_SIZE;
 }
 
-SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsigned int expected)
+SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsigned int expected, unsigned int func_def)
 {
         //expected == 1 , we need to use the var
         //expected == 0 , we want to declare the var
@@ -58,10 +58,12 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
         }
         // printGSS();
         //printRecord(record);
-        if (isFunction && record!= NULL && record->scope!=0) {
-                char *buffer = (char*)malloc(50+strlen(name));
-                sprintf(buffer, "Variable access not allowed \'%s\'", name);
-                alpha_yyerror(buffer);
+        if(!func_def){
+                if (isFunction && record!= NULL && record->scope!=0) {
+                        char *buffer = (char*)malloc(50+strlen(name));
+                        sprintf(buffer, "Variable access not allowed \'%s\'", name);
+                        alpha_yyerror(buffer);
+                }
         }
         if (expected == 1 && record!=NULL)return record;
         if (expected){

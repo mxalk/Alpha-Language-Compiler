@@ -32,7 +32,7 @@ typedef struct SymbolTableRecord
         unsigned int active;
 } SymbolTableRecord;
 SymbolTableRecord* insert(char *name, enum SymType type, unsigned int scope, unsigned int line);
-struct SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line,unsigned int expected);
+struct SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line,unsigned int expected,unsigned int func_def);
 struct SymbolTableRecord *lookupGlobal(char *name, enum SymType type, unsigned int line, unsigned int expected);
 int hash_f(struct SymbolTableRecord *record);
 void display();
