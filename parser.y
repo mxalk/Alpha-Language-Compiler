@@ -4,7 +4,7 @@
 #include <string.h>
 #include "./Structs/SymTable.h"
 #include "./Structs/Stack.h"
-#define debug 1
+#define debug 0
 #define errors_halt 1
 #define exit(x) if(errors_halt)exit(EXIT_FAILURE)
 #define printf(...) if(debug)printf(__VA_ARGS__);
