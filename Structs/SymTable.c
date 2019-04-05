@@ -39,9 +39,14 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
         record = NULL;
 
         int i, wasFunction = 0, isFunction = 0;
+        int all_scopes = GSS->size;
         Scope *scope;
         Queue_Node *node;
-        for (i=0; i<GSS->size; i++) {
+        if(func_def){
+                all_scopes = 1; //func_def: only check the scope that the function is defined
+        }
+
+        for (i=0; i < all_scopes; i++) {
                 if (wasFunction) isFunction = 1;
                 scope = (Scope *)Stack_get(GSS, i);
                 node = scope->queue->head;
@@ -56,17 +61,17 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                 if (record != NULL) break;
                 if (scope->isFunction) wasFunction = 1;
         }
-        // printGSS();
-        //printRecord(record);
+        //  printGSS();
+        // printRecord(record);
         if(!func_def){
                 if (isFunction && record!= NULL && record->scope!=0) {
                         char *buffer = (char*)malloc(50+strlen(name));
-                        sprintf(buffer, "Variable access not allowed \'%s\'", name);
+                        sprintf(buffer, "variable with scope %d access not allowed \'%s\'",record->scope, name);
                         alpha_yyerror(buffer);
                 }
         }
-        if (expected == 1 && record!=NULL)return record;
         if (expected){
+                if (record != NULL) return record;
                 if (record == NULL) {
                         char *buffer = (char*)malloc(50+strlen(name));
                         sprintf(buffer, "Undefined variable \'%s\'", name);
@@ -74,10 +79,6 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                 }
                 
         }
-        // } else if (expected == 0) { 
-        //         // SymType rtype = record->type;
-                
-        // }
         return record;
 }
 

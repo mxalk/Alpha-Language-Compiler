@@ -4,8 +4,9 @@
 #include <string.h>
 #include "./Structs/SymTable.h"
 #include "./Structs/Stack.h"
-#define debug 0
-#define errors_halt 0
+#define debug 1
+#define errors_halt 1
+#define exit(x) if(errors_halt)exit(EXIT_FAILURE)
 #define printf(...) if(debug)printf(__VA_ARGS__);
 int alpha_yyerror (const char* yaccProvidedMessage);
 int alpha_yylex(void);
@@ -273,9 +274,16 @@ funcdef:		FUNCTION {
 					if (dummy->type==LIBFUNC) {
 						sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
 						alpha_yyerror(buffer);
+					}
+					else if(dummy->type==USRFUNC){
+						sprintf(buffer, "Function already defined as USERFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror(buffer);
 					}else if(dummy->scope == 0 && getScope()>0){
 						func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
-
+					}
+					else{
+						sprintf(buffer, "Function definition on existing var \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror(buffer);
 					}
 
 				}else{

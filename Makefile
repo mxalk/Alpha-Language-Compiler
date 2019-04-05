@@ -29,19 +29,19 @@ t_success:	all
 	./out testfiles/working/Random.asc
 	./out testfiles/working/ShadowedNameOffunctions.asc
 	./out testfiles/working/Simple.asc
-	#./out testfiles/working/Tree.asc # x
+	./out testfiles/working/Tree.asc # x
 
 t_error:	all
 	#./out testfiles/errors/Error0.asc 
-	 ./out testfiles/errors/Error1.asc #x
-	# ./out testfiles/errors/Error2.asc
-	# ./out testfiles/errors/Error3.asc
-	# ./out testfiles/errors/Error4.asc
+	# ./out testfiles/errors/Error1.asc
+	#./out testfiles/errors/Error2.asc
+	#./out testfiles/errors/Error3.asc
+	#./out testfiles/errors/Error4.asc
 	# ./out testfiles/errors/Error5.asc
-	# ./out testfiles/errors/Error6.asc # x
+	# ./out testfiles/errors/Error6.asc 
 	# ./out testfiles/errors/Error7.asc
 	# ./out testfiles/errors/Error8.asc
 	# ./out testfiles/errors/Error9.asc 
-	# ./out testfiles/errors/Error10.asc
+	 #./out testfiles/errors/Error10.asc
 	# ./out testfiles/errors/Error11.asc
 	# ./out testfiles/errors/Error12.asc
