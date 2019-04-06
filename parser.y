@@ -4,9 +4,10 @@
 #include <string.h>
 #include "./Structs/SymTable.h"
 #include "./Structs/Stack.h"
+#include "./Structs/Quad.h"
 #define debug 0
 #define errors_halt 1
-#define exit(x) if(errors_halt)exit(EXIT_FAILURE)
+#define exit(x) if(errors_halt)exit(x)
 #define printf(...) if(debug)printf(__VA_ARGS__);
 int alpha_yyerror (const char* yaccProvidedMessage);
 int alpha_yylex(void);

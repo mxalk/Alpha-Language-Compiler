@@ -1,6 +1,6 @@
 CC=gcc
 CCFLAGS=-O0 -o out 
-LIBS= ./Structs/Stack.c ./Structs/Queue.c ./Structs/SymTable.c
+LIBS= ./Structs/Stack.c ./Structs/Queue.c ./Structs/SymTable.c ./Structs/Quad.c
 
 all: clean out
 
@@ -29,7 +29,7 @@ t_success:	all
 	./out testfiles/working/Random.asc
 	./out testfiles/working/ShadowedNameOffunctions.asc
 	./out testfiles/working/Simple.asc
-	./out testfiles/working/Tree.asc # x
+	#./out testfiles/working/Tree.asc # x
 
 t_error:	all
 	#./out testfiles/errors/Error0.asc 
