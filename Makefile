@@ -5,7 +5,7 @@ LIBS= ./Structs/Stack.c ./Structs/Queue.c ./Structs/SymTable.c ./Structs/Quad.c
 all: clean out
 
 out: parser flex
-	$(CC) $(CCFLAGS)  parser.c scanner.c $(LIBS)
+	$(CC) $(CCFLAGS) $(LIBS) parser.c scanner.c
 
 parser: 
 	bison --yacc --defines=parser.h --output=parser.c -v parser.y 

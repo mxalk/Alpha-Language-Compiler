@@ -1,16 +1,11 @@
 #pragma once
-
-typedef enum iopcode Iopcode;
-typedef enum expr_t Expr_t;
-typedef struct expr Expr;
-typedef struct quad Quad;
-
-enum iopcode {
+#include "SymTable.h"
+typedef enum iopcode_t {
 	assign,
 	add,
 	sub,
 	mul,
-	div,
+	divi,
 	mod,
 	uminus,
 	and,
@@ -31,9 +26,9 @@ enum iopcode {
 	tablecreate,
 	tablegetelem,
 	tablesetelem
-};
+} Iopcode;
 
-enum expr_t {
+typedef enum expr_t {
 	var_e,
 	tableitem_e,
 
@@ -50,7 +45,12 @@ enum expr_t {
 	conststring_e,
 
 	nil_e
-};
+} Expr_t;
+
+// extern struct expr; 
+// extern struct quad;
+typedef struct expr Expr;
+typedef struct quad Quad;
 
 struct expr {
 	Expr_t type;
@@ -61,7 +61,6 @@ struct expr {
 	unsigned char boolConst;
 	Expr *next;
 };
-
 struct quad {
 	Iopcode op;
 	Expr *result;
@@ -70,3 +69,45 @@ struct quad {
 	unsigned label;
 	unsigned line;
 };
+
+extern const char *iopcodeNames[];
+
+typedef enum scopespace_t {
+    programvar,
+    functionlocal,
+    formalarg
+} Scopespace_t;
+
+typedef enum symbol_t {
+	var_s,
+	programfunc_s,
+	libraryfunc_s
+} Symbol_t;
+
+// -----
+
+
+extern unsigned programVarOffset;
+extern unsigned functionLocalOffset;
+extern unsigned formalArgOffset;
+extern unsigned scopeSpaceCounter;
+
+SymbolTableRecord *new_temp();
+
+void reset_temp();
+
+Expr *new_expr(Expr_t type);
+Expr* lvalue_expr (SymbolTableRecord* sym);
+
+Expr *newexpr_conststring(const char* name);
+
+// dialexi 9, diafania 41
+void expand();
+
+void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line);
+
+Expr *emit_iftableitem(Expr *e);
+
+Expr *member_item(Expr *lvalue,char *name);
+
+enum scopespace_t currscopespace(void);

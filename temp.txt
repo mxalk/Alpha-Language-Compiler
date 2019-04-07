@@ -1,0 +1,74 @@
+
+
+//
+
+expr -> expr + expr {
+    Expr* expr0 = (Expr*) 0;
+    expr0 = newexpr(arithexpr_e);
+    expr0->sym = newtemp();
+    $$ = expr0;
+    emit(add,$1,$3,$$);
+}
+lvalue ASSIGN expr5 {
+    $$ = $3 ;//(_tmp1)
+}
+
+primary -> lvalue
+{ $primary = emit_iftableitem($lvalue); }
+
+
+lvalue{
+    lvalue -> ID {
+        //symbol = lookup...
+        $lvalue = lvalue_expr(var_e);
+        $lvalue->sym = symbol;
+    }
+
+    lvalue ->LOCAL ID {
+        //symbol = lookup...
+        $lvalue = lvalue_expr(var_e);
+        $lvalue->sym = symbol;
+    }
+
+    lvalue ->DCOLON ID {
+        //symbol = lookup...
+        $lvalue = lvalue_expr(var_e);
+        $lvalue->sym = symbol;
+    }
+}
+
+
+const{
+    const -> INTNUM {
+            Expr* const0 = (Expr*) 0;
+            const0 = newexpr(constnum_e);
+            const0->numConst = $1;
+            $$ = const0;
+    }
+    const -> REALNUM {
+            //same as INTNUM
+    }
+    const -> STRING {
+            Expr* const0 = (Expr*) 0;
+            const0 = newexpr(conststring_e);
+            const0->strConst = strdup($1);
+            $$ = const0;
+    }
+    const -> NIL {
+            Expr* const0 = (Expr*) 0;
+            const0 = newexpr(nil_e);
+            $$ = const0;
+    }
+    const -> TRUE {
+            Expr* const0 = (Expr*) 0;
+            const0 = newexpr(constbool_e);
+            const0->numConst = 1;
+            $$ = const0;
+    }
+    const -> FALSE {
+            Expr* const0 = (Expr*) 0;
+            const0 = newexpr(constbool_e);
+            const0->numConst = 0;
+            $$ = const0;
+    }
+}

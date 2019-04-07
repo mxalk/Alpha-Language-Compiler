@@ -25,18 +25,18 @@ SymbolTableRecord* dummy2;
 %}
 %define api.prefix {alpha_yy}
 // %name-prefix="alpha_yy"
-%error-verbose
+%define parse.error verbose
 %start program
 
 %union{
-  char* stringValue;
+  char *stringValue;
   int intValue;
   float floatValue;
+	struct expr *expression;
 }
-%union {  char* lvName;} 
-%type <lvName> lvalue
-%type <lvName> expr
-%type <lvName> member
+%type <expression> lvalue
+%type <expression> expr
+%type <stringValue> member
 
 
 %token <stringValue> ID
@@ -149,7 +149,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 
 assignexpr:		lvalue{
 					fprintf(stderr,"%s %d %d %d\n",$1,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
-					dummy = lookup($1,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
+					dummy = lookup($1->sym->name,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
 					if( dummy != NULL){
 						//if(dummy->scope == 0){
 							if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
@@ -168,7 +168,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");}
 			|const {printf("primary ->  const\n");};
 
 lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
-				$$ = $1;
+				//$$ = $1;
 				Scope* curr_scope = (Scope *)Stack_get(GSS, GSS->size - getScope() - 1);
 				int expected =0;// curr_scope->isFunction?1:0;
 				fprintf(stderr,"%d %s\n",getScope(),alpha_yylval.stringValue);
@@ -181,7 +181,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				}
 			}
 			|LOCAL ID {
-				$$ = $2;
+				//$$ = $2;
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0);
 				if(getScope())
 					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
@@ -189,7 +189,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 					insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
 			}
 			|DCOLON ID {
-					$$ = $2;
+				//	$$ = $2;
 				printf("lvalue ->  DCOLON ID\n");
 				if(lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,1)==NULL){
 						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
@@ -219,9 +219,7 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", $3);
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
-			|lvalue{
-				
-			} callsuffix {
+			|lvalue callsuffix {
 				printf("call ->  lvalue callsuffix \n");}
 			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");};
 

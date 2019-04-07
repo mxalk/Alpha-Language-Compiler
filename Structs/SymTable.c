@@ -1,16 +1,14 @@
-
 #include "SymTable.h"
-#include "Queue.h"
 #include "Stack.h"
-#include "stdlib.h"
-#include "stdio.h"
-#include "string.h"
+#include "Queue.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-struct SymbolTableRecord;
+extern int alpha_yyerror (const char* yaccProvidedMessage);
 
 char *typeNames[] = {"LOCAL", "GLOBAL", "LIBFUNC", "USRFUNC", "FORMAL"};
-
-
 
 int hash_f(SymbolTableRecord *record)
 {
@@ -26,10 +24,10 @@ int hash_f(SymbolTableRecord *record)
         return key % SYM_SIZE;
 }
 
-SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsigned int expected, unsigned int func_def)
-{
         //expected == 1 , we need to use the var
         //expected == 0 , we want to declare the var
+SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsigned int expected, unsigned int func_def)
+{
         SymbolTableRecord *record = (SymbolTableRecord *)malloc(sizeof(SymbolTableRecord));
         record->name = name;
         int hash_index = hash_f(record);
