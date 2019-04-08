@@ -9,12 +9,78 @@ expr -> expr + expr {
     $$ = expr0;
     emit(add,$1,$3,$$);
 }
-lvalue ASSIGN expr5 {
-    $$ = $3 ;//(_tmp1)
+lvalue ASSIGN expr {
+    Expr* assign_ret;
+    if($1->type == tableitem_e){
+        emit(tablesetelem,$1,$1->index,$3);// that is: lvalue[index] = expr
+        assign_ret = emit_iftableitem ($1);
+     // Will always emit. 
+        assign_ret->type = assignexpr_e;
+    }else {
+        emit(assign,$3,(Expr*)0,$1);// that is: lvalue = expr
+        assign_ret = newexpr(assignexpr_e);
+        assign_ret->sym = newtemp();
+        emit(assign, $1, (expr*) 0, assign_ret);
+    }
+    $$ = assign_ret;
 }
 
 primary -> lvalue
-{ $primary = emit_iftableitem($lvalue); }
+{
+    Expr* primary = emit_iftableitem($1);
+    $$ = primary; 
+}
+
+tableitem -> lvalue.id{
+    $tableitem = member_item($lvalue,id.name);
+}
+call{
+
+    call -> call (elist){
+        Expr* call = make_call($1,$3); // (call , elist)
+        $$ = call;
+    }
+    call -> (funcdef) (elist){
+        Expr* call;
+        Expr* func = new_expr(programmfunc_e);
+        func->sym = $2;// $2 = funcdef
+        call = make_call(func,$5);//$5 = elist
+        $$ = call;
+    }
+    call -> lvalue callsuffix{
+        Expr* call,
+        *lvalue = $1,
+        *csuff = $2;
+
+        if(csuff->method){
+            Expr* self = lvalue;//$1 = lvalue, $2 = callsuffix
+            lvalue = emit_iftableitem(member_item(self,csuff->name));
+            csuff->elist->add_front(self);
+        }
+        call = make_call(lvalue,csuff->elist);
+        $$ = call;
+    }
+    callsuffix -> normcall{
+        Expr *csuff = $1;
+        $$ = csuff;
+    }
+    callsuffix -> methodcall{
+        Expr *csuff = $1;
+        $$ = csuff;
+    }
+    normcall -> (elist){
+        Expr *normc = new_expr(var_e);
+        $$ = csuff;
+    }
+    methodcall -> .. id (elist){
+        Expr* call = $$;
+        call->elist = elist;
+        call->method = true;
+        call->name = $2->name; // $id.name
+        $$ = call;
+    }
+
+}
 
 
 lvalue{
