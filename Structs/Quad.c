@@ -1,5 +1,5 @@
 #include "Quad.h"
-#include "SymTable.h"
+//#include "SymTable.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -404,6 +404,33 @@ unsigned programVarOffset = 0;
 unsigned functionLocalOffset = 0;
 unsigned formalArgOffset = 0;
 unsigned scopeSpaceCounter = 1;
+
+unsigned currspaceoffset (){
+    switch(currscopespace()){
+        case programvar     : return programVarOffset;
+        case functionlocal  : return functionLocalOffset;
+        case formalarg      : return formalArgOffset;
+        default: assert(0);
+    }
+}
+
+void inccurrscopeoffset(){
+    switch(currscopespace()){
+        case programvar     : ++programVarOffset; break;
+        case functionlocal  : ++functionLocalOffset; break;
+        case formalarg      : ++formalArgOffset; break;
+        default: assert(0);
+    }
+}
+
+void enterscopespace(){
+    ++scopeSpaceCounter;
+}
+
+void exitscopespace(){
+    assert(scopeSpaceCounter>1);
+    --scopeSpaceCounter;
+}
 
 enum scopespace_t currscopespace(void) {
 	if (scopeSpaceCounter == 1) return programvar;

@@ -2,14 +2,14 @@
 
 //
 
-expr -> expr + expr {
+expr -> expr + expr { //added
     Expr* expr0 = (Expr*) 0;
     expr0 = newexpr(arithexpr_e);
     expr0->sym = newtemp();
     $$ = expr0;
     emit(add,$1,$3,$$);
 }
-lvalue ASSIGN expr {
+lvalue ASSIGN expr { //added
     Expr* assign_ret;
     if($1->type == tableitem_e){
         emit(tablesetelem,$1,$1->index,$3);// that is: lvalue[index] = expr
@@ -25,8 +25,7 @@ lvalue ASSIGN expr {
     $$ = assign_ret;
 }
 
-primary -> lvalue
-{
+primary -> lvalue{ //added
     Expr* primary = emit_iftableitem($1);
     $$ = primary; 
 }
@@ -34,7 +33,7 @@ primary -> lvalue
 tableitem -> lvalue.id{
     $tableitem = member_item($lvalue,id.name);
 }
-call{
+calls{
 
     call -> call (elist){
         Expr* call = make_call($1,$3); // (call , elist)
@@ -86,20 +85,34 @@ call{
 lvalue{
     lvalue -> ID {
         //symbol = lookup...
-        $lvalue = lvalue_expr(var_e);
-        $lvalue->sym = symbol;
+        if sym = nil then {
+            sym = newsymbol(id.name);
+            sym.space = currscopespace();
+            sym.offset = currscopeoffset();
+            inccurrscopeoffset();
+        }
+        lvalue.sval = lvalue_expr(sym);
+//        $lvalue = lvalue_expr(var_e);
+//        $lvalue->sym = symbol;
+
     }
 
     lvalue ->LOCAL ID {
         //symbol = lookup...
-        $lvalue = lvalue_expr(var_e);
-        $lvalue->sym = symbol;
+        if sym = nil then {
+            sym = newsymbol(id.name);
+            sym.space = currscopespace();
+            sym.offset = currscopeoffset();
+            inccurrscopeoffset();
+        }
+        lvalue.sval = lvalue_expr(sym);
+//        $lvalue = lvalue_expr(var_e);
+//        $lvalue->sym = symbol;
     }
 
     lvalue ->DCOLON ID {
         //symbol = lookup...
-        $lvalue = lvalue_expr(var_e);
-        $lvalue->sym = symbol;
+        // TBD
     }
 }
 

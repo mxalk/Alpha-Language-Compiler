@@ -1,47 +1,36 @@
 CC=gcc
-CCFLAGS=-O0 -o out 
-LIBS= ./Structs/Stack.c ./Structs/Queue.c ./Structs/SymTable.c ./Structs/Quad.c
+CCFLAGS=-O0 -o $@
+SHELL:=/bin/sh
+STRUCTS := Structs
+OBJ := obj
+
+SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c
+OBJECTS := $(patsubst $(STRUCTS)/%.c, $(OBJ)/%.o, $(SOURCES))
+
 
 all: clean out
 
-out: parser flex
-	$(CC) $(CCFLAGS) $(LIBS) parser.c scanner.c
+out: $(OBJECTS) parser.o scanner.o
+	$(CC) $^ $(CCFLAGS) 
 
-parser: 
+$(OBJ)/%.o: $(STRUCTS)/%.c 
+	$(CC) -I$(STRUCTS) -c $< -o $@
+
+# out: parser flex
+# 	$(CC) $(CCFLAGS) $(LIBS) parser.c scanner.c
+
+parser.o: parser.c
+	$(CC) -I$(STRUCTS) -c $< -o $@
+
+scanner.o: scanner.c
+	$(CC) -I$(STRUCTS) -c $< -o $@
+
+parser.c: parser.y
 	bison --yacc --defines=parser.h --output=parser.c -v parser.y 
 
-a.out:	flex
-	gcc scanner.c $(LIBS) -o al
-	./al test6.txt
-
-flex:
+scanner.c: scanner.l
 	flex -o scanner.c scanner.l
 
 clean:
-	$(RM) al scanner.c parser.c parser.h parser.output
-
-t_success:	all
-	./out testfiles/working/Anonymous.asc
-	./out testfiles/working/Block.asc
-	./out testfiles/working/Circle.asc
-	./out testfiles/working/GlobalAndLocal.asc
-	./out testfiles/working/Grammar.asc
-	./out testfiles/working/Random.asc
-	./out testfiles/working/ShadowedNameOffunctions.asc
-	./out testfiles/working/Simple.asc
-	#./out testfiles/working/Tree.asc # x
-
-t_error:	all
-	#./out testfiles/errors/Error0.asc 
-	# ./out testfiles/errors/Error1.asc
-	#./out testfiles/errors/Error2.asc
-	#./out testfiles/errors/Error3.asc
-	#./out testfiles/errors/Error4.asc
-	# ./out testfiles/errors/Error5.asc
-	# ./out testfiles/errors/Error6.asc 
-	# ./out testfiles/errors/Error7.asc
-	# ./out testfiles/errors/Error8.asc
-	# ./out testfiles/errors/Error9.asc 
-	 #./out testfiles/errors/Error10.asc
-	# ./out testfiles/errors/Error11.asc
-	# ./out testfiles/errors/Error12.asc
+	clear
+	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output

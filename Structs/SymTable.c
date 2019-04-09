@@ -1,12 +1,11 @@
 #include "SymTable.h"
-#include "Stack.h"
-#include "Queue.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define alpha_yyerror(x) fprintf(stderr,x);
 
-extern int alpha_yyerror (const char* yaccProvidedMessage);
+// extern int alpha_yyerror (const char* yaccProvidedMessage);
 
 char *typeNames[] = {"LOCAL", "GLOBAL", "LIBFUNC", "USRFUNC", "FORMAL"};
 
