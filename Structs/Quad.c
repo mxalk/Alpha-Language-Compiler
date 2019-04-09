@@ -43,6 +43,25 @@ const char *iopcodeNames[] = {
 	"TABLESETELEM"
 };
 
+const char *expr_tNames[] = {
+    "variable",
+	"table item",
+
+	"program function",
+	"library function",
+
+	"arithmetic expression",
+	"boolean expression",
+	"assign expression",
+	"new table",
+
+	"constatnt number",
+	"constant boolean",
+	"constant string",
+
+	"nil"
+};
+
 SymbolTableRecord *new_temp() {
     int no = temp_no, digits = 0;
     do {
@@ -112,6 +131,10 @@ void expand() {
     total += EXPAND_SIZE;
 }
 
+void emit_error(Iopcode iopcode, Expr *arg) {
+    printf("Cannot perform \'%s\' with argument of type \'%s\'\n", iopcodeNames[iopcode], expr_tNames[arg->type]);
+}
+
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
     
     if (currQuad == total) expand();
@@ -127,7 +150,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
     switch (iopcode) {
 
         case assign:
-            assert(result->type == var_e);
+            assert(result->type == assignexpr_e);
             printf("%15s ", result->sym->name);
             switch (arg1->type) {
                 case var_e:
@@ -142,12 +165,12 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
                 case conststring_e:
                     printf("%15s ", arg1->strConst);
                     break;
-                default: assert(0);
+                default: emit_error(iopcode, arg1);
             }
             break;
 
 	    case add:
-            assert(result->type == var_e);
+            assert(result->type == arithexpr_e);
             printf("%15s ", result->sym->name);
             switch (arg1->type) {
                 case var_e:
@@ -162,22 +185,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
                 case conststring_e:
                     printf("%15s ", arg1->strConst);
                     break;
-                default: assert(0);
-            }
-            switch (arg2->type) {
-                case var_e:
-                    printf("%15s ", arg2->sym->name);
-                    break;
-                case constbool_e:
-                    printf("%15s ", arg2->boolConst?"TRUE":"FALSE");
-                    break;
-                case constnum_e:
-                    printf("%15d ", arg2->numConst);
-                    break;
-                case conststring_e:
-                    printf("%15s ", arg2->strConst);
-                    break;
-                default: assert(0);
+                default: emit_error(iopcode, arg1);
             }
             break;
 
@@ -197,6 +205,32 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
             break;
 
 	    case and:
+            assert(result->type == boolexpr_e);
+            printf("%15s ", result->sym->name);
+            switch (arg1->type) {
+                case var_e:
+                    printf("%15s ", arg1->sym->name);
+                    break;
+                case tableitem_e:
+                    printf("%15s ", arg1->sym->name);
+                    break;
+                case programfunc_e:
+                    printf("%15s ", "TRUE");
+                    break;
+                case libraryfunc_e:
+                    printf("%15s ", "TRUE");
+                    break;
+                case constbool_e:
+                    printf("%15s ", arg1->boolConst?"TRUE":"FALSE");
+                    break;
+                case constnum_e:
+                    printf("%15d ", arg1->numConst);
+                    break;
+                case conststring_e:
+                    printf("%15s ", arg1->strConst);
+                    break;
+                default: assert(0);
+            }
             break;
 
 	    case or:
@@ -263,7 +297,7 @@ Expr *emit_iftableitem(Expr *e) {
     return result;
 }
 
-Expr *member_item(Expr *lvalue,char *name) {
+Expr *member_item(Expr *lvalue, char *name) {
     lvalue = emit_iftableitem(lvalue);
     Expr *item = new_expr(tableitem_e);
     item->sym = lvalue->sym;

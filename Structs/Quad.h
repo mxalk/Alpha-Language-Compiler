@@ -71,6 +71,7 @@ struct quad {
 };
 
 extern const char *iopcodeNames[];
+extern const char *expr_tNames[];
 
 typedef enum scopespace_t {
     programvar,
