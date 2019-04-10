@@ -36,7 +36,9 @@ SymbolTableRecord* dummy2;
 }
 %type <expression> lvalue
 %type <expression> expr
-%type <stringValue> member
+%type <expression> member
+%type <expression> primary
+
 
 
 %token <stringValue> ID
@@ -84,11 +86,25 @@ stmt_star:			stmt stmt_star {printf("stmt_star ->  stmt and stmt_star\n");}
 			| {printf("stmt_star ->  nothing\n");};
 
 expr:			assignexpr  {printf("expr ->  assignexpr\n");}
-			|expr PLUS expr {printf("expr ->  expr + expr\n");}
+			|expr PLUS expr {
+				printf("expr ->  expr + expr %d\n",alpha_yylineno);
+				Expr* expr0 =NULL;// (Expr*) 0;
+    		expr0 = new_expr(arithexpr_e);
+    		expr0->sym = new_temp();
+    		emit(add,$1,$3,expr0,NULL,alpha_yylineno);
+    		$$ = expr0;
+			}
 			|expr MINUS expr {printf("expr ->  expr - expr\n");}
 			|expr MUL expr {printf("expr ->  expr * expr\n");}
 			|expr DIV expr {printf("expr ->  expr / expr\n");}
-			|expr PERC expr {printf("expr ->  expr PERC expr\n");}
+			|expr PERC expr {printf("expr ->  expr PERC expr\n");
+					Expr* expr0 =NULL;// (Expr*) 0;
+					expr0 = new_expr(arithexpr_e);
+					expr0->sym = new_temp();
+					emit(mod,$1,$3,expr0,NULL,alpha_yylineno);
+					$$ = expr0;	
+				
+			}
 			|expr GREATER expr {printf("expr ->  expr > expr\n");}
 			|expr GREATER_E expr {printf("expr ->  expr >= expr\n");}
 			|expr LESS expr {printf("expr ->  expr < expr\n");}
@@ -149,7 +165,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 
 assignexpr:		lvalue{
 					fprintf(stderr,"%s %d %d %d\n",alpha_yylval.stringValue,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
-					dummy = lookup($1,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
+					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
 					if( dummy != NULL){
 						//if(dummy->scope == 0){
 							if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
@@ -159,16 +175,34 @@ assignexpr:		lvalue{
 							}
 						//}
 					}
-			} ASSIGN expr ;
+					
+			} ASSIGN expr {
+				Expr* assign_ret;
+					if($1->type == tableitem_e){
+							emit(tablesetelem,$1,$1->index,$4,NULL,alpha_yylineno);// that is: lvalue[index] = expr
+							assign_ret = emit_iftableitem ($1);
+					// Will always emit. 
+							assign_ret->type = assignexpr_e;
+					}else {
+							emit(assign,$4,(Expr*)0,$1,NULL,alpha_yylineno);// that is: lvalue = expr
+							assign_ret = new_expr(assignexpr_e);
+							assign_ret->sym = new_temp();
+							emit(assign, $1, (Expr*) 0, assign_ret,NULL,alpha_yylineno);
+					}
+					// $$ = assign_ret;
+			};
 
-primary:		lvalue	{printf("primary ->  lvalue\n");}
+primary:		lvalue	{printf("primary ->  lvalue\n");
+						Expr* primary = emit_iftableitem($1);
+						$$ = primary; 
+					}
 			|call {printf("primary ->  call\n");}
 			|objectdef {printf("primary ->  objectdef\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;}
 			|const {printf("primary ->  const\n");};
 
 lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
-				$$ = $1;
+				// $$ = $1;
 				Scope* curr_scope = (Scope *)Stack_get(GSS, GSS->size - getScope() - 1);
 				int expected =0;// curr_scope->isFunction?1:0;
 				fprintf(stderr,"%d %s\n",getScope(),alpha_yylval.stringValue);
@@ -179,6 +213,16 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 					else
 						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
 				}
+				Symbol *sym= NULL;
+				//lookup TBI
+				if(sym == NULL){
+					sym = new_symbol(alpha_yylval.stringValue);
+					sym->space = currscopespace();
+					sym->offset = currscopeoffset();
+					inccurrscopeoffset();
+				}
+				Expr* lvalue = lvalue_expr(sym);
+				$$ = lvalue;
 			}
 			|LOCAL ID {
 				$$ = $2;
@@ -187,6 +231,16 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 				else
 					insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
+				Symbol *sym= NULL;
+					//lookup TBI
+					if(sym == NULL){
+						sym = new_symbol(alpha_yylval.stringValue);
+						sym->space = currscopespace();
+						sym->offset = currscopeoffset();
+						inccurrscopeoffset();
+					}
+					Expr* lvalue = lvalue_expr(sym);
+					$$ = lvalue;
 			}
 			|DCOLON ID {
 					$$ = $2;

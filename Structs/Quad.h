@@ -1,5 +1,16 @@
 #pragma once
 #include "SymTable.h"
+typedef enum scopespace_t {
+    programvar,
+    functionlocal,
+    formalarg
+} Scopespace_t;
+
+typedef enum symbol_t {
+	var_s,
+	programfunc_s,
+	libraryfunc_s
+} Symbol_t;
 typedef enum iopcode_t {
 	assign,
 	add,
@@ -50,11 +61,19 @@ typedef enum expr_t {
 // extern struct expr; 
 // extern struct quad;
 typedef struct expr Expr;
+typedef struct symbol Symbol;
 typedef struct quad Quad;
-
+struct symbol{
+	Symbol_t type;
+	char* name;
+	Scopespace_t space;
+	unsigned offset;
+	unsigned scope;
+	unsigned line;
+};
 struct expr {
 	Expr_t type;
-	SymbolTableRecord *sym;
+	Symbol *sym;
 	Expr *index;
 	double numConst;
 	char *strConst;
@@ -73,17 +92,7 @@ struct quad {
 extern const char *iopcodeNames[];
 extern const char *expr_tNames[];
 
-typedef enum scopespace_t {
-    programvar,
-    functionlocal,
-    formalarg
-} Scopespace_t;
 
-typedef enum symbol_t {
-	var_s,
-	programfunc_s,
-	libraryfunc_s
-} Symbol_t;
 
 // -----
 
@@ -93,12 +102,12 @@ extern unsigned functionLocalOffset;
 extern unsigned formalArgOffset;
 extern unsigned scopeSpaceCounter;
 
-SymbolTableRecord *new_temp();
+Symbol *new_temp();
 
 void reset_temp();
 
 Expr *new_expr(Expr_t type);
-Expr* lvalue_expr (SymbolTableRecord* sym);
+Expr* lvalue_expr (Symbol* sym);
 
 Expr *newexpr_conststring(const char* name);
 
@@ -112,3 +121,6 @@ Expr *emit_iftableitem(Expr *e);
 Expr *member_item(Expr *lvalue,char *name);
 
 enum scopespace_t currscopespace(void);
+unsigned currscopeoffset ();
+void inccurrscopeoffset();
+Symbol * new_symbol(const char* name);

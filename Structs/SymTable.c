@@ -118,6 +118,7 @@ SymbolTableRecord* insert(char *name, enum SymType type, unsigned int scope, uns
         GST[hash_index] = record;
         //assert(scope == GSS->size -1);
         Queue_enqueue(((Scope *)Stack_get(GSS, GSS->size-1-scope))->queue, record);
+        return record;
 }
 
 

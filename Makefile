@@ -1,5 +1,5 @@
 CC=gcc
-CCFLAGS=-O0 -o $@
+CCFLAGS= -o $@
 SHELL:=/bin/sh
 STRUCTS := Structs
 OBJ := obj
@@ -34,6 +34,9 @@ scanner.c: scanner.l
 clean:
 	clear
 	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output
+
+test: all
+	./out antest.txt
 
 t_success:	all
 	./out testfiles/working/Anonymous.asc

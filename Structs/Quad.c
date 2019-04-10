@@ -62,7 +62,7 @@ const char *expr_tNames[] = {
 	"nil"
 };
 
-SymbolTableRecord *new_temp() {
+Symbol *new_temp() {
     int no = temp_no, digits = 0;
     do {
         no = no/10;
@@ -73,7 +73,10 @@ SymbolTableRecord *new_temp() {
     sprintf(name+4, "%u", temp_no);
     // itoa(temp_no, name+4, 10);
     temp_no++;
-    return insert(name, LCL, getScope(), 0);        
+    insert(name, LCL, getScope(), 0);        
+    Symbol* new_sym = (Symbol*) malloc(sizeof(Symbol));
+    new_sym->name = name;
+    return new_sym;
 }
 
 void reset_temp() {
@@ -86,7 +89,7 @@ Expr *new_expr(Expr_t type) {
     return expression;
 }
 
-Expr* lvalue_expr (SymbolTableRecord* sym){
+Expr* lvalue_expr (Symbol* sym){
     assert(sym);
     Expr * e = (Expr*)malloc(sizeof(Expr));
     memset(e,0,sizeof(Expr));
@@ -138,7 +141,6 @@ void emit_error(Iopcode iopcode, Expr *arg) {
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
     
     if (currQuad == total) expand();
-
     Quad *p = quads+currQuad++;
     p->arg1 = arg1;
     p->arg2 = arg2;
@@ -405,7 +407,13 @@ unsigned functionLocalOffset = 0;
 unsigned formalArgOffset = 0;
 unsigned scopeSpaceCounter = 1;
 
-unsigned currspaceoffset (){
+Symbol * new_symbol(const char* name){
+    Symbol* new_sym = (Symbol*)malloc(sizeof(Symbol));
+    new_sym->name = strdup(name);
+    return new_sym;
+}
+
+unsigned currscopeoffset (){
     switch(currscopespace()){
         case programvar     : return programVarOffset;
         case functionlocal  : return functionLocalOffset;
