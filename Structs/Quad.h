@@ -124,3 +124,4 @@ enum scopespace_t currscopespace(void);
 unsigned currscopeoffset ();
 void inccurrscopeoffset();
 Symbol * new_symbol(const char* name);
+Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2);

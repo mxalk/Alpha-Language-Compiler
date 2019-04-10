@@ -402,6 +402,30 @@ Expr *member_item(Expr *lvalue, char *name) {
     item->index = newexpr_conststring(name);
 }
 
+//dialeksi 11, diafania 5
+Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    { 
+
+    Expr * valid_expr;
+
+    if(e1->type == programfunc_e || e1->type ==  libraryfunc_e || e1->type ==  boolexpr_e
+    || e1->type == newtable_e    || e1->type ==  constbool_e   || e1->type ==  conststring_e 
+    || e1->type ==  nil_e
+    || e2->type == programfunc_e || e2->type ==  libraryfunc_e || e2->type ==  boolexpr_e
+    || e2->type == newtable_e    || e2->type ==  constbool_e   || e2->type ==  conststring_e 
+    || e2->type ==  nil_e) 
+    {
+        return NULL;
+    }
+
+    if ((e1->type == constnum_e) && (e2->type == constnum_e)) {
+        valid_expr = new_expr(constnum_e);
+    }
+
+    /*analoga tin pra3i 8a prepei na tin ektelesi kai na epistepsei
+    to antistoixo expr */
+    
+}
+
 unsigned programVarOffset = 0;
 unsigned functionLocalOffset = 0;
 unsigned formalArgOffset = 0;
