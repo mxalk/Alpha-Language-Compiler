@@ -38,6 +38,7 @@ SymbolTableRecord* dummy2;
 %type <expression> expr
 %type <expression> member
 %type <expression> primary
+%type <expression> assignexpr
 
 
 
@@ -89,10 +90,10 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			|expr PLUS expr {
 				printf("expr ->  expr + expr %d\n",alpha_yylineno);
 				Expr* expr0 =NULL;// (Expr*) 0;
-    		expr0 = new_expr(arithexpr_e);
-    		expr0->sym = new_temp();
-    		emit(add,$1,$3,expr0,NULL,alpha_yylineno);
-    		$$ = expr0;
+				expr0 = new_expr(arithexpr_e);
+				expr0->sym = new_temp();
+				emit(add,$1,$3,expr0,0,alpha_yylineno);
+				$$ = expr0;
 			}
 			|expr MINUS expr {
 				printf("expr ->  expr - expr\n");
@@ -104,7 +105,7 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 					Expr* expr0 =NULL;// (Expr*) 0;
 					expr0 = new_expr(arithexpr_e);
 					expr0->sym = new_temp();
-					emit(mod,$1,$3,expr0,NULL,alpha_yylineno);
+					emit(mod,$1,$3,expr0,0,alpha_yylineno);
 					$$ = expr0;	
 				
 			}
@@ -180,19 +181,19 @@ assignexpr:		lvalue{
 					}
 					
 			} ASSIGN expr {
-				Expr* assign_ret;
+					Expr* assign_ret;
 					if($1->type == tableitem_e){
-							emit(tablesetelem,$1,$1->index,$4,NULL,alpha_yylineno);// that is: lvalue[index] = expr
+							emit(tablesetelem,$1,$1->index,$4,0,alpha_yylineno);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);
 					// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					}else {
-							emit(assign,$4,(Expr*)0,$1,NULL,alpha_yylineno);// that is: lvalue = expr
+							emit(assign,$4,(Expr*)0,$1,0,alpha_yylineno);// that is: lvalue = expr
 							assign_ret = new_expr(assignexpr_e);
 							assign_ret->sym = new_temp();
-							emit(assign, $1, (Expr*) 0, assign_ret,NULL,alpha_yylineno);
+							emit(assign, $1, (Expr*) 0, assign_ret,0,alpha_yylineno);
 					}
-					// $$ = assign_ret;
+					$$ = assign_ret;
 			};
 
 primary:		lvalue	{printf("primary ->  lvalue\n");
@@ -216,8 +217,8 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 					else
 						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
 				}
-				Symbol *sym= NULL;
-				//lookup TBI
+				SymbolTableRecord *sym= dummy;
+				//lookup TBI//solved
 				if(sym == NULL){
 					sym = new_symbol(alpha_yylval.stringValue);
 					sym->space = currscopespace();
@@ -234,16 +235,16 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 				else
 					insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
-				Symbol *sym= NULL;
-					//lookup TBI
-					if(sym == NULL){
-						sym = new_symbol(alpha_yylval.stringValue);
-						sym->space = currscopespace();
-						sym->offset = currscopeoffset();
-						inccurrscopeoffset();
-					}
-					Expr* lvalue = lvalue_expr(sym);
-					$$ = lvalue;
+				SymbolTableRecord *sym= dummy;
+				//lookup TBI//solved
+				if(sym == NULL){
+					sym = new_symbol(alpha_yylval.stringValue);
+					sym->space = currscopespace();
+					sym->offset = currscopeoffset();
+					inccurrscopeoffset();
+				}
+				Expr* lvalue = lvalue_expr(sym);
+				$$ = lvalue;
 			}
 			|DCOLON ID {
 					$$ = $2;
@@ -444,5 +445,6 @@ int main (int argc, char** argv) {
 
 		//printGSS();
     display();
+    printQuads();
     return 0;
 }

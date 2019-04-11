@@ -15,6 +15,18 @@ typedef enum SymType{
         FORMAL
 } SymType;
 
+typedef enum scopespace_t {
+    programvar,
+    functionlocal,
+    formalarg
+} Scopespace_t;
+
+typedef enum symbol_t {
+	var_s,
+	programfunc_s,
+	libraryfunc_s
+} Symbol_t;
+
 typedef struct SymbolTableRecord
 {
         char *name;
@@ -24,6 +36,9 @@ typedef struct SymbolTableRecord
         unsigned int line;
         unsigned char **args; //func
         unsigned int active;
+        Symbol_t stype;
+	Scopespace_t space;
+	unsigned offset;
 }SymbolTableRecord;
 
 typedef struct Scope {

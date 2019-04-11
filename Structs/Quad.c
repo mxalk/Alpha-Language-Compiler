@@ -62,7 +62,7 @@ const char *expr_tNames[] = {
 	"nil"
 };
 
-Symbol *new_temp() {
+SymbolTableRecord *new_temp() {
     int no = temp_no, digits = 0;
     do {
         no = no/10;
@@ -73,9 +73,9 @@ Symbol *new_temp() {
     sprintf(name+4, "%u", temp_no);
     // itoa(temp_no, name+4, 10);
     temp_no++;
-    insert(name, LCL, getScope(), 0);        
-    Symbol* new_sym = (Symbol*) malloc(sizeof(Symbol));
-    new_sym->name = name;
+            
+    SymbolTableRecord* new_sym = insert(name, LCL, getScope(), 0);
+    // new_sym->name = name;
     return new_sym;
 }
 
@@ -89,13 +89,13 @@ Expr *new_expr(Expr_t type) {
     return expression;
 }
 
-Expr* lvalue_expr (Symbol* sym){
+Expr* lvalue_expr (SymbolTableRecord* sym){
     assert(sym);
     Expr * e = (Expr*)malloc(sizeof(Expr));
     memset(e,0,sizeof(Expr));
     e->next = (Expr*)0;
     e->sym = sym;
-    switch(sym->type){
+    switch(sym->stype){
         case var_s:         e->type = var_e; break;
         case programfunc_s: e->type = programfunc_e; break;
         case libraryfunc_s: e->type = libraryfunc_e; break;
@@ -124,6 +124,7 @@ Expr *newexpr_conststring(const char* name){
 
 // dialexi 9, diafania 41
 void expand() {
+    unsigned i = currQuad;
     assert(total==currQuad);
     Quad* p = (Quad*)malloc(NEW_SIZE);
     if (quads) {
@@ -132,6 +133,9 @@ void expand() {
     }
     quads = p;
     total += EXPAND_SIZE;
+    for(; i<total;i++){
+        quads[i].op = -1;
+    }
 }
 
 void emit_error(Iopcode iopcode, Expr *arg) {
@@ -139,7 +143,7 @@ void emit_error(Iopcode iopcode, Expr *arg) {
 }
 
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
-    
+    printf("tried emit %s \'%s\' %s at line %d\n",iopcodeNames[iopcode],expr_tNames[result->type],result->sym->name,line);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->arg1 = arg1;
@@ -150,6 +154,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
 }
 
 void printQuads() {
+    printf("=========QUADS=========\n");
     int qi;
     Quad q;
     Iopcode iopcode;
@@ -157,7 +162,7 @@ void printQuads() {
     Expr *expressions[2];
     for (qi=0; qi<currQuad; qi++) {
         q = quads[qi];
-
+        if(q.op == -1)continue;
         iopcode = q.op;
         arg1 = q.arg1;
         arg2 = q.arg2;
@@ -452,8 +457,8 @@ unsigned functionLocalOffset = 0;
 unsigned formalArgOffset = 0;
 unsigned scopeSpaceCounter = 1;
 
-Symbol * new_symbol(const char* name){
-    Symbol* new_sym = (Symbol*)malloc(sizeof(Symbol));
+SymbolTableRecord * new_symbol(const char* name){
+    SymbolTableRecord* new_sym = (SymbolTableRecord*)malloc(sizeof(SymbolTableRecord));
     new_sym->name = strdup(name);
     return new_sym;
 }

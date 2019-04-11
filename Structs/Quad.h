@@ -1,16 +1,6 @@
 #pragma once
 #include "SymTable.h"
-typedef enum scopespace_t {
-    programvar,
-    functionlocal,
-    formalarg
-} Scopespace_t;
 
-typedef enum symbol_t {
-	var_s,
-	programfunc_s,
-	libraryfunc_s
-} Symbol_t;
 typedef enum iopcode_t {
 	assign,
 	add,
@@ -61,19 +51,10 @@ typedef enum expr_t {
 // extern struct expr; 
 // extern struct quad;
 typedef struct expr Expr;
-typedef struct symbol Symbol;
 typedef struct quad Quad;
-struct symbol{
-	Symbol_t type;
-	char* name;
-	Scopespace_t space;
-	unsigned offset;
-	unsigned scope;
-	unsigned line;
-};
 struct expr {
 	Expr_t type;
-	Symbol *sym;
+	SymbolTableRecord *sym;
 	Expr *index;
 	union Value {
 		double numConst;
@@ -104,12 +85,12 @@ extern unsigned functionLocalOffset;
 extern unsigned formalArgOffset;
 extern unsigned scopeSpaceCounter;
 
-Symbol *new_temp();
+SymbolTableRecord *new_temp();
 
 void reset_temp();
 
 Expr *new_expr(Expr_t type);
-Expr* lvalue_expr (Symbol* sym);
+Expr* lvalue_expr (SymbolTableRecord* sym);
 
 Expr *newexpr_conststring(const char* name);
 
@@ -125,6 +106,6 @@ Expr *member_item(Expr *lvalue,char *name);
 enum scopespace_t currscopespace(void);
 unsigned currscopeoffset ();
 void inccurrscopeoffset();
-Symbol * new_symbol(const char* name);
+SymbolTableRecord * new_symbol(const char* name);
 
 Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2);
