@@ -179,13 +179,13 @@ void printQuads() {
                             printf("%15s", expressions[i]->sym->name);
                             break;
                         case constbool_e:
-                            printf("%15s", expressions[i]->boolConst?"TRUE":"FALSE");
+                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
                             break;
                         case constnum_e:
-                            printf("%15d", expressions[i]->numConst);
+                            printf("%15d", expressions[i]->value.numConst);
                             break;
                         case conststring_e:
-                            printf("%15s", expressions[i]->strConst);
+                            printf("%15s", expressions[i]->value.strConst);
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
@@ -207,7 +207,7 @@ void printQuads() {
                             printf("%15s", expressions[i]->sym->name);
                             break;
                         case constnum_e:
-                            printf("%15d", expressions[i]->numConst);
+                            printf("%15d", expressions[i]->value.numConst);
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
@@ -250,13 +250,13 @@ void printQuads() {
                             printf("%15s", "TRUE");
                             break;
                         case constbool_e:
-                            printf("%15s", expressions[i]->boolConst?"TRUE":"FALSE");
+                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
                             break;
                         case constnum_e:
-                            printf("%15d", expressions[i]->numConst);
+                            printf("%15d", expressions[i]->value.numConst);
                             break;
                         case conststring_e:
-                            printf("%15s", expressions[i]->strConst);
+                            printf("%15s", expressions[i]->value.strConst);
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
@@ -281,13 +281,13 @@ void printQuads() {
                         printf("%15s", "TRUE");
                         break;
                     case constbool_e:
-                        printf("%15s", arg1->boolConst?"TRUE":"FALSE");
+                        printf("%15s", arg1->value.boolConst?"TRUE":"FALSE");
                         break;
                     case constnum_e:
-                        printf("%15d", arg1->numConst);
+                        printf("%15d", arg1->value.numConst);
                         break;
                     case conststring_e:
-                        printf("%15s", arg1->strConst);
+                        printf("%15s", arg1->value.strConst);
                         break;
                     default: emit_error(iopcode, arg1);
                 }
@@ -314,7 +314,7 @@ void printQuads() {
                             printf("%15s", expressions[i]->sym->name);
                             break;
                         case constnum_e:
-                            printf("%15d", expressions[i]->numConst);
+                            printf("%15d", expressions[i]->value.numConst);
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
@@ -366,13 +366,13 @@ void printQuads() {
                             printf("%15s", "TRUE");
                             break;
                         case constbool_e:
-                            printf("%15s", expressions[i]->boolConst?"TRUE":"FALSE");
+                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
                             break;
                         case constnum_e:
-                            printf("%15d", expressions[i]->numConst);
+                            printf("%15d", expressions[i]->value.numConst);
                             break;
                         case conststring_e:
-                            printf("%15s", expressions[i]->strConst);
+                            printf("%15s", expressions[i]->value.strConst);
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
@@ -414,16 +414,37 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
     || e2->type == newtable_e    || e2->type ==  constbool_e   || e2->type ==  conststring_e 
     || e2->type ==  nil_e) 
     {
+        printf("invalid Expressions\n");
         return NULL;
     }
 
     if ((e1->type == constnum_e) && (e2->type == constnum_e)) {
+        
         valid_expr = new_expr(constnum_e);
-    }
-
-    /*analoga tin pra3i 8a prepei na tin ektelesi kai na epistepsei
-    to antistoixo expr */
     
+        switch (iop)
+        {
+            case add:
+                valid_expr->value.numConst = e1->value.numConst + e2->value.numConst;
+                break;
+            case sub:
+                valid_expr->value.numConst = e1->value.numConst - e2->value.numConst;
+                break;
+            case divi:
+                valid_expr->value.numConst = e1->value.numConst / e2->value.numConst;
+                break;
+            case mod:
+                valid_expr->value.numConst = (long) e1->value.numConst % (long) e2->value.numConst;
+                break;
+            case mul:
+                valid_expr->value.numConst = e1->value.numConst * e2->value.numConst;
+                break;
+            default:
+                printf("invalid Iopcode\n");
+                return NULL;
+        }
+        return valid_expr;
+    }   
 }
 
 unsigned programVarOffset = 0;

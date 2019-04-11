@@ -94,7 +94,10 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
     		emit(add,$1,$3,expr0,NULL,alpha_yylineno);
     		$$ = expr0;
 			}
-			|expr MINUS expr {printf("expr ->  expr - expr\n");}
+			|expr MINUS expr {
+				printf("expr ->  expr - expr\n");
+				$$ = valid_arithop(add,$1,$3);
+			}
 			|expr MUL expr {printf("expr ->  expr * expr\n");}
 			|expr DIV expr {printf("expr ->  expr / expr\n");}
 			|expr PERC expr {printf("expr ->  expr PERC expr\n");
