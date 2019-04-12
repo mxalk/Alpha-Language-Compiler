@@ -243,14 +243,10 @@ void printQuads() {
                     printf(" ");
                     switch (expressions[i]->type) {
                         case var_e:
-                            printf("%15s", expressions[i]->sym->name);
-                            break;
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
                         case programfunc_e:
-                            printf("%15s", "TRUE");
-                            break;
                         case libraryfunc_e:
                             printf("%15s", "TRUE");
                             break;
@@ -274,14 +270,10 @@ void printQuads() {
                 printf(" ");
                 switch (arg1->type) {
                     case var_e:
-                        printf("%15s", arg1->sym->name);
-                        break;
                     case tableitem_e:
                         printf("%15s", arg1->sym->name);
                         break;
                     case programfunc_e:
-                        printf("%15s", "TRUE");
-                        break;
                     case libraryfunc_e:
                         printf("%15s", "TRUE");
                         break;
@@ -300,17 +292,11 @@ void printQuads() {
 
             case if_eq:
             case if_noteq:
-                assert(result->type == boolexpr_e);
-                printf(" %15u", q.label);
-
-                break;
-
             case if_lesseq:
             case if_gratereq:
             case if_less:
             case if_greater:
-                assert(result->type == boolexpr_e);
-                printf(" %15s", result->sym->name);
+                printf(" %15u", q.label);
                 for (i=0; i<2; i++) {
                     printf(" ");
                     switch (expressions[i]->type) {
@@ -330,6 +316,27 @@ void printQuads() {
                 break;
 
             case param:
+                printf(" ");
+                switch (arg1->type) {
+                    case var_e:
+                        printf("%15s", arg1->sym->name);
+                        break;
+                    case tableitem_e:
+                        printf("%15s", arg1->sym->name);
+                        break;
+                    case programfunc_e:
+                    case libraryfunc_e:
+                        printf("%15s", "TRUE");
+                        break;
+                    case constbool_e:
+                        printf("%15s", arg1->value.boolConst?"TRUE":"FALSE");
+                        break;
+                    case constnum_e:
+                        printf("%15d", arg1->value.numConst);
+                        break;
+                    case conststring_e:
+                        printf("%15s", arg1->value.strConst);
+                        break;
                 break;
 
             case ret:
@@ -410,7 +417,7 @@ Expr *member_item(Expr *lvalue, char *name) {
 //dialeksi 11, diafania 5
 Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    { 
 
-    Expr * valid_expr;
+    Expr * valid_expr = NULL;
 
     if(e1->type == programfunc_e || e1->type ==  libraryfunc_e || e1->type ==  boolexpr_e
     || e1->type == newtable_e    || e1->type ==  constbool_e   || e1->type ==  conststring_e 
@@ -428,7 +435,6 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
         valid_expr = new_expr(constnum_e);
     
         switch (iop)
-        {
             case add:
                 valid_expr->value.numConst = e1->value.numConst + e2->value.numConst;
                 break;
@@ -451,6 +457,8 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
         return valid_expr;
     }   
 }
+
+//         SYMBOLS
 
 unsigned programVarOffset = 0;
 unsigned functionLocalOffset = 0;
@@ -486,8 +494,8 @@ void enterscopespace(){
 }
 
 void exitscopespace(){
-    assert(scopeSpaceCounter>1);
-    --scopeSpaceCounter;
+    assert(scopeSpaceCounter>2);
+    scopeSpaceCounter-=2;
 }
 
 enum scopespace_t currscopespace(void) {
