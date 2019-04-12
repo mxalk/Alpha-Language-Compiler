@@ -29,14 +29,14 @@ typedef enum symbol_t {
 
 typedef struct SymbolTableRecord
 {
-        char *name;
-        struct SymbolTableRecord *next;
-        SymType type;
-        unsigned int scope;
-        unsigned int line;
-        unsigned char **args; //func
-        unsigned int active;
-        Symbol_t stype;
+    char *name;
+    struct SymbolTableRecord *next;
+    SymType type;
+    unsigned int scope;
+    unsigned int line;
+    unsigned char **args; //func
+    unsigned int active;
+    Symbol_t stype;
 	Scopespace_t space;
 	unsigned offset;
 }SymbolTableRecord;

@@ -207,44 +207,27 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 
 lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
 				// $$ = $1;
-				Scope* curr_scope = (Scope *)Stack_get(GSS, GSS->size - getScope() - 1);
+				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				int expected =0;// curr_scope->isFunction?1:0;
 				fprintf(stderr,"%d %s\n",getScope(),alpha_yylval.stringValue);
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,expected,0);
-				if(dummy==NULL){
-					if(getScope())
-						insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
-					else
-						insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
-				}
-				SymbolTableRecord *sym= dummy;
-				//lookup TBI//solved
-				if(sym == NULL){
-					sym = new_symbol(alpha_yylval.stringValue);
-					sym->space = currscopespace();
-					sym->offset = currscopeoffset();
+				if (dummy==NULL) {
+					dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
+					dummy->space = currscopespace();
+					dummy->offset = currscopeoffset();
 					inccurrscopeoffset();
 				}
-				Expr* lvalue = lvalue_expr(sym);
-				$$ = lvalue;
+				$$ = lvalue_expr(dummy);
 			}
 			|LOCAL ID {
-				$$ = $2;
+				$$ = $2; // ?
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0);
-				if(getScope())
-					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
-				else
-					insert(alpha_yylval.stringValue,GLBL,getScope(),alpha_yylineno);
-				SymbolTableRecord *sym= dummy;
-				//lookup TBI//solved
-				if(sym == NULL){
-					sym = new_symbol(alpha_yylval.stringValue);
-					sym->space = currscopespace();
-					sym->offset = currscopeoffset();
-					inccurrscopeoffset();
-				}
-				Expr* lvalue = lvalue_expr(sym);
-				$$ = lvalue;
+				// ki an uparxei hdh local? de prepei na einai opws panw if dummy == NULL ?
+				dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
+				dummy->space = currscopespace();
+				dummy->offset = currscopeoffset();
+				inccurrscopeoffset();
+				$$ = lvalue_expr(dummy);
 			}
 			|DCOLON ID {
 					$$ = $2;
@@ -257,7 +240,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 			|member {printf("lvalue ->  member\n");};
 
 member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.stringValue);
-				increaseScope(0);
+				increaseScope(0); // giati increase scope?
 				$$ = $3;
 				dummy =	lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0);
 				if(dummy==NULL){
@@ -300,7 +283,7 @@ objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");}
 indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");};
 
 indexedelem:		CURL_O expr{
-				Scope* curr_scope = (Scope *)Stack_get(GSS, GSS->size - getScope() - 1);
+				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				// printf("%d %s\n",expected,alpha_yylval.stringValue);
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0);
 				if(dummy==NULL){

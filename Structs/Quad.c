@@ -210,7 +210,7 @@ void printQuads() {
                 for (i=0; i<2; i++) {
                     printf(" ");
                     switch (expressions[i]->type) {
-                        case var_e: break;
+                        case var_e:
                         case arithexpr_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -238,7 +238,7 @@ void printQuads() {
                 }
                 break;
 
-            case and:break;
+            case and:
             case or:
                 assert(result->type == boolexpr_e);
                 printf(" %15s", result->sym->name);
@@ -249,7 +249,7 @@ void printQuads() {
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
-                        case programfunc_e:break;
+                        case programfunc_e:
                         case libraryfunc_e:
                             printf("%15s", "TRUE");
                             break;
@@ -293,8 +293,33 @@ void printQuads() {
                 }
                 break;
 
-            case if_eq:break;
+            case if_eq:
             case if_noteq:
+                printf(" %15u", q.label);
+                for (i=0; i<2; i++) {
+                    printf(" ");
+                    switch (expressions[i]->type) {
+                        case var_e:
+                        case tableitem_e:
+                            printf("%15s", expressions[i]->sym->name);
+                            break;
+                        case programfunc_e:
+                        case libraryfunc_e:
+                            printf("%15s", "TRUE");
+                            break;
+                        case constbool_e:
+                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
+                            break;
+                        case constnum_e:
+                            printf("%15d", expressions[i]->value.numConst);
+                            break;
+                        case conststring_e:
+                            printf("%15s", expressions[i]->value.strConst);
+                            break;
+                        default: emit_error(iopcode, expressions[i]);
+                    }
+                break;
+
             case if_lesseq:
             case if_gratereq:
             case if_less:
@@ -316,6 +341,14 @@ void printQuads() {
                 break;
 
             case call:
+                printf(" ");
+                switch (arg1->type) {
+                    case programfunc_e:
+                    case libraryfunc_e:
+                        printf("%15s", arg1->sym->name);
+                        break;
+                    default: emit_error(iopcode, arg1);
+                }
                 break;
 
             case param:
@@ -344,20 +377,20 @@ void printQuads() {
                 break;
 
             case ret:
-                printf(" %15s", result->sym->name);
+                printf(" %15s", arg1->sym->name);
                 break;
 
             case getretval:
                 break;
 
             case funcstart:
-                assert(result->type == programfunc_e);
-                printf(" %15s", result->sym->name);
+                assert(arg1->type == programfunc_e);
+                printf(" %15s", arg1->sym->name);
                 break;
 
             case funcend:
-                assert(result->type == programfunc_e);
-                printf(" %15s", result->sym->name);
+                assert(arg1->type == programfunc_e);
+                printf(" %15s", arg1->sym->name);
                 break;
 
             case tablecreate:
@@ -438,7 +471,7 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
         
         valid_expr = new_expr(constnum_e);
     
-        switch (iop){
+        switch (iop) {
             case add:
                 valid_expr->value.numConst = e1->value.numConst + e2->value.numConst;
                 break;
@@ -469,11 +502,13 @@ unsigned functionLocalOffset = 0;
 unsigned formalArgOffset = 0;
 unsigned scopeSpaceCounter = 1;
 
-SymbolTableRecord * new_symbol(const char* name){
-    SymbolTableRecord* new_sym = (SymbolTableRecord*)malloc(sizeof(SymbolTableRecord));
-    new_sym->name = strdup(name);
-    return new_sym;
-}
+
+// implemented in SymTable.c
+// SymbolTableRecord * new_symbol(const char* name){
+//     SymbolTableRecord* new_sym = (SymbolTableRecord*)malloc(sizeof(SymbolTableRecord));
+//     new_sym->name = strdup(name);
+//     return new_sym;
+// }
 
 unsigned currscopeoffset (){
     switch(currscopespace()){

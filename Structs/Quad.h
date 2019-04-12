@@ -119,6 +119,6 @@ Expr *member_item(Expr *lvalue,char *name);
 Scopespace_t currscopespace(void);
 unsigned currscopeoffset ();
 void inccurrscopeoffset();
-SymbolTableRecord * new_symbol(const char* name);
+// SymbolTableRecord * new_symbol(const char* name);
 
 Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2);
