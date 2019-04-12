@@ -144,7 +144,9 @@ void emit_error(Iopcode iopcode, Expr *arg) {
 
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
 
-    printf("tried emit %s \'%s\' with res %s, at line %d\n",iopcodeNames[iopcode],expr_tNames[result->type],result->sym->name,line);
+    char* name1 = arg1!=NULL?(arg1->sym!=NULL?arg1->sym->name:"undef"):" ";
+    char* name2 = arg2!=NULL?(arg2->sym!=NULL?arg2->sym->name:"undef"):" ";
+    printf("\033[0;32mEmit(\'%s\',%s) [ %s, %s, %s ] [at line %d]\n\033[0m",expr_tNames[result->type],iopcodeNames[iopcode],name1,name2,result->sym->name,line);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->op = iopcode;
@@ -164,8 +166,8 @@ void printQuads() {
     Expr *expressions[2];
     for (qi=0; qi<currQuad; qi++) {
         q = quads[qi];
-        printf("%d %d\n",qi,q.op);
         if(q.op == -1)continue;
+        printf("%d_op[%d]",qi,q.op);
         iopcode = q.op;
         arg1 = q.arg1;
         arg2 = q.arg2;
@@ -178,10 +180,14 @@ void printQuads() {
         switch (iopcode) {
 
             case assign:
-                assert(result->type == assignexpr_e);
-                printf(" %15s", result->sym->name);
+                //assert(result->type == assignexpr_e);
+                // printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
                     printf(" ");
+                    if(expressions[i]==NULL){
+                            printf("\033[0;31mlkia sto print\n\033[0m");
+                            continue;
+                    }
                     switch (expressions[i]->type) {
                         case var_e:
                             printf("%15s", expressions[i]->sym->name);
@@ -197,16 +203,17 @@ void printQuads() {
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
-                }
+                
+                printf(" %15s", result->sym->name);
                 break;
-
+                }
             case add:
             case sub:
             case mul:
             case divi:
             case mod:
-                assert(result->type == arithexpr_e);
-                printf(" %15s", result->sym->name);
+                // assert(result->type == arithexpr_e);
+                
                 for (i=0; i<2; i++) {
                     printf(" ");
                     switch (expressions[i]->type) {
@@ -220,6 +227,7 @@ void printQuads() {
                         default: emit_error(iopcode, expressions[i]);
                     }
                 }
+                printf(" %15s", result->sym->name);
                 break;
                 
             case uminus:

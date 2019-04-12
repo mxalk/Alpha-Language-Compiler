@@ -5,7 +5,7 @@
 #include "./Structs/SymTable.h"
 #include "./Structs/Stack.h"
 #include "./Structs/Quad.h"
-#define debug 0
+#define debug 1
 #define errors_halt 1
 #define exit(x) if(errors_halt)exit(x)
 #define printf(...) if(debug)printf(__VA_ARGS__);
@@ -29,9 +29,9 @@ SymbolTableRecord* dummy2;
 %start program
 
 %union{
-  char *stringValue;
-  int intValue;
-  float floatValue;
+  	char *stringValue;
+  	int intValue;
+  	float floatValue;
 	struct expr *expression;
 }
 %type <expression> lvalue
@@ -40,7 +40,7 @@ SymbolTableRecord* dummy2;
 %type <expression> primary
 %type <expression> assignexpr
 %type <expression> const
-
+%type <expression> term
 
 
 %token <stringValue> ID 
@@ -63,9 +63,6 @@ SymbolTableRecord* dummy2;
 %left  OR
 %right ASSIGN
 
-%right EXP
-
-
 %destructor { free($$);  }ID
 %%
 
@@ -74,8 +71,8 @@ SymbolTableRecord* dummy2;
 program:	stmt_star {printf("program ->  statements\n");};
 
 stmt: 		expr SEMI {printf("stmt ->  expr SEMI\n");}
-      |ifstmt {printf("stmt ->  ifstmst\n");}
-      |whilestmt {printf("stmt ->  whilestmt\n");}
+      			|ifstmt {printf("stmt ->  ifstmst\n");}
+      			|whilestmt {printf("stmt ->  whilestmt\n");}
 			|forstmt {printf("stmt ->  forstmt\n");}
 			|returnstmt {printf("stmt ->  returnstmt\n");}
 			|BREAK SEMI {if(!in_loop) alpha_yyerror("use of break outside loop"); printf("stmt ->  break SEMI \n");}
@@ -118,7 +115,9 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			|expr NEQUALS expr {printf("expr ->  expr != expr\n");}
 			|expr AND expr {printf("expr ->  expr and expr\n");}
 			|expr OR expr {printf("expr ->  expr or expr\n");}
-			|term {printf("expr ->  term\n");};
+			|term {printf("expr ->  term\n");
+				$$ = $1;
+			};
 
 term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
 			|MINUS expr {printf("term ->  - expr \n");}
@@ -166,7 +165,9 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
           				
 				}	
 			}
-			|primary {printf("term ->  primary\n");};
+			|primary {printf("term ->  primary\n");
+				$$ = $1;
+			};
 
 assignexpr:		lvalue{
 					fprintf(stderr,"%s %d %d %d\n",alpha_yylval.stringValue,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
@@ -188,10 +189,10 @@ assignexpr:		lvalue{
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					}else {
-							emit(assign,$4,(Expr*)0,$1,0,alpha_yylineno);// that is: lvalue = expr
+							emit(assign,$4,NULL,$1,0,alpha_yylineno);// that is: lvalue = expr
 							assign_ret = new_expr(assignexpr_e);
 							assign_ret->sym = new_temp();
-							emit(assign, $1, (Expr*) 0, assign_ret,0,alpha_yylineno);
+							emit(assign, $1, NULL, assign_ret,0,alpha_yylineno);
 					}
 					$$ = assign_ret;
 			};
@@ -203,7 +204,9 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 			|call {printf("primary ->  call\n");}
 			|objectdef {printf("primary ->  objectdef\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;}
-			|const {printf("primary ->  const\n");};
+			|const {printf("primary ->  const\n");
+				$$ = $1;
+			};
 
 lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
 				// $$ = $1;
