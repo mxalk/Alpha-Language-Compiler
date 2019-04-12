@@ -249,7 +249,7 @@ void printQuads() {
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
-                        case programfunc_e:
+                        case programfunc_e:break;
                         case libraryfunc_e:
                             printf("%15s", "TRUE");
                             break;
@@ -340,6 +340,7 @@ void printQuads() {
                     case conststring_e:
                         printf("%15s", arg1->value.strConst);
                         break;
+                }
                 break;
 
             case ret:
@@ -437,7 +438,7 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
         
         valid_expr = new_expr(constnum_e);
     
-        switch (iop)
+        switch (iop){
             case add:
                 valid_expr->value.numConst = e1->value.numConst + e2->value.numConst;
                 break;
@@ -501,7 +502,7 @@ void exitscopespace(){
     scopeSpaceCounter-=2;
 }
 
-enum scopespace_t currscopespace(void) {
+Scopespace_t currscopespace(void) {
 	if (scopeSpaceCounter == 1) return programvar;
 	if (!(scopeSpaceCounter % 2)) return formalarg;
 	return functionlocal;
