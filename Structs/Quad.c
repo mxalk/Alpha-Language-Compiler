@@ -162,7 +162,7 @@ void printQuads() {
     Iopcode iopcode;
     Expr *arg1, *arg2, *result;
     Expr *expressions[2];
-    for (qi=currQuad-1; qi>=0; qi--) {
+    for (qi=0; qi<currQuad; qi++) {
         q = quads[qi];
         printf("%d %d\n",qi,q.op);
         if(q.op == -1)continue;
