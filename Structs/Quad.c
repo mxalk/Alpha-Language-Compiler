@@ -143,9 +143,11 @@ void emit_error(Iopcode iopcode, Expr *arg) {
 }
 
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
-    printf("tried emit %s \'%s\' %s at line %d\n",iopcodeNames[iopcode],expr_tNames[result->type],result->sym->name,line);
+
+    printf("tried emit %s \'%s\' with res %s, at line %d\n",iopcodeNames[iopcode],expr_tNames[result->type],result->sym->name,line);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
+    p->op = iopcode;
     p->arg1 = arg1;
     p->arg2 = arg2;
     p->result = result;
@@ -154,14 +156,15 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
 }
 
 void printQuads() {
-    printf("=========QUADS=========\n");
+    printf("========== QUADS (lastQuad/total: %d/%d) ==========\n",currQuad,total);
     int qi;
     Quad q;
     Iopcode iopcode;
     Expr *arg1, *arg2, *result;
     Expr *expressions[2];
-    for (qi=0; qi<currQuad; qi++) {
+    for (qi=currQuad-1; qi>=0; qi--) {
         q = quads[qi];
+        printf("%d %d\n",qi,q.op);
         if(q.op == -1)continue;
         iopcode = q.op;
         arg1 = q.arg1;
@@ -207,7 +210,7 @@ void printQuads() {
                 for (i=0; i<2; i++) {
                     printf(" ");
                     switch (expressions[i]->type) {
-                        case var_e:
+                        case var_e: break;
                         case arithexpr_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -235,7 +238,7 @@ void printQuads() {
                 }
                 break;
 
-            case and:
+            case and:break;
             case or:
                 assert(result->type == boolexpr_e);
                 printf(" %15s", result->sym->name);
@@ -290,7 +293,7 @@ void printQuads() {
                 }
                 break;
 
-            case if_eq:
+            case if_eq:break;
             case if_noteq:
             case if_lesseq:
             case if_gratereq:

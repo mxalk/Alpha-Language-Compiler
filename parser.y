@@ -39,11 +39,12 @@ SymbolTableRecord* dummy2;
 %type <expression> member
 %type <expression> primary
 %type <expression> assignexpr
+%type <expression> const
 
 
 
-%token <stringValue> ID
-%token <intValue> INTNUM
+%token <stringValue> ID 
+%token <intValue> INTNUM 
 %token <floatValue> REALNUM
 %token <stringValue> STRING
 %token LINECOMM BLOCKCOMM IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL 
@@ -184,8 +185,7 @@ assignexpr:		lvalue{
 					Expr* assign_ret;
 					if($1->type == tableitem_e){
 							emit(tablesetelem,$1,$1->index,$4,0,alpha_yylineno);// that is: lvalue[index] = expr
-							assign_ret = emit_iftableitem ($1);
-					// Will always emit. 
+							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					}else {
 							emit(assign,$4,(Expr*)0,$1,0,alpha_yylineno);// that is: lvalue = expr
@@ -355,12 +355,36 @@ funcdef:		FUNCTION {
 			
 block:			CURL_O{increaseScope(0);}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");};
 
-const:			INTNUM {printf("const ->  INTNUM\n");}
-			|REALNUM {printf("const ->  REALNUM\n");}
-			|STRING {printf("const ->  STRING\n");}
-			|NIL {printf("const ->  NIL\n");}
-			|TRUE {printf("const ->  TRUE\n");}
-			|FALSE {printf("const ->  FALSE\n");};
+const:			INTNUM {
+							printf("const ->  INTNUM\n");
+							Expr* tmp = new_expr(constnum_e);
+							tmp->value.numConst = alpha_yylval.intValue;
+							$$ = tmp;
+							}
+			|REALNUM {printf("const ->  REALNUM\n");
+							Expr* tmp = new_expr(constnum_e);
+							tmp->value.numConst = alpha_yylval.floatValue;
+							$$ = tmp;
+							}
+			|STRING {printf("const ->  STRING\n");
+							Expr* tmp = new_expr(conststring_e);
+							tmp->value.strConst = alpha_yylval.stringValue;
+							$$ = tmp;
+							}
+			|NIL {printf("const ->  NIL\n");
+							Expr* tmp = new_expr(nil_e);
+							$$ = tmp;
+							}
+			|TRUE {printf("const ->  TRUE\n");
+							Expr* tmp = new_expr(constbool_e);
+							tmp->value.numConst = 1;
+							$$ = tmp;
+						}
+			|FALSE {printf("const ->  FALSE\n");
+							Expr* tmp = new_expr(constbool_e);
+							tmp->value.numConst = 0;
+							$$ = tmp;
+						};
 
 idlist:	ID{
 	dummy = NULL;
