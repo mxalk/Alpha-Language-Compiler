@@ -318,6 +318,7 @@ void printQuads() {
                             break;
                         default: emit_error(iopcode, expressions[i]);
                     }
+                }
                 break;
 
             case if_lesseq:
