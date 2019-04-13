@@ -38,7 +38,8 @@ typedef enum iopcode_t {
 	funcend,
 	tablecreate,
 	tablegetelem,
-	tablesetelem
+	tablesetelem,
+	jmp
 } Iopcode;
 
 typedef enum expr_t {

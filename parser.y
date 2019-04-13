@@ -51,17 +51,17 @@ SymbolTableRecord* dummy2;
 %token CURL_O CURL_C BRAC_O BRAC_C ANGL_O ANGL_C SEMI COMMA COLON DCOLON DOT DOTDOT 
 %token ASSIGN PLUS MINUS MUL DIV PERC EQUALS NEQUALS INCR DECR GREATER LESS GREATER_E LESS_E
 
-%left  ANGL_O ANGL_C
-%left  BRAC_O BRAC_C
-%left  DOT DOTDOT
-%right NOT INCR DECR UMINUS 
-%left  MUL DIV PERC 
-%left  PLUS MINUS
-%nonassoc GREATER LE GREATER_E LESS LESS_E
-%nonassoc EQUALS NEQUALS
-%left  AND
-%left  OR
 %right ASSIGN
+%left  OR
+%left  AND
+%nonassoc EQUALS NEQUALS
+%nonassoc GREATER LE GREATER_E LESS LESS_E
+%left  PLUS MINUS
+%left  MUL DIV PERC 
+%right NOT INCR DECR UMINUS
+%left  DOT DOTDOT
+%left  BRAC_O BRAC_C
+%left  ANGL_O ANGL_C
 
 %destructor { free($$);  }ID
 %%
@@ -87,8 +87,7 @@ stmt_star:			stmt stmt_star {printf("stmt_star ->  stmt and stmt_star\n");}
 expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			|expr PLUS expr {
 				printf("expr ->  expr + expr %d\n",alpha_yylineno);
-				Expr* expr0 =NULL;// (Expr*) 0;
-				expr0 = new_expr(arithexpr_e);
+				Expr* expr0 = new_expr(arithexpr_e);
 				expr0->sym = new_temp();
 				emit(add,$1,$3,expr0,0,alpha_yylineno);
 				$$ = expr0;
@@ -97,15 +96,23 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 				printf("expr ->  expr - expr\n");
 				$$ = valid_arithop(add,$1,$3);
 			}
-			|expr MUL expr {printf("expr ->  expr * expr\n");}
-			|expr DIV expr {printf("expr ->  expr / expr\n");}
+			|expr MUL expr {printf("expr ->  expr * expr\n");
+					Expr* expr0 = new_expr(arithexpr_e);
+					expr0->sym = new_temp();
+					emit(mul,$1,$3,expr0,0,alpha_yylineno);
+					$$ = expr0;	
+			}
+			|expr DIV expr {printf("expr ->  expr / expr\n");
+					Expr* expr0 = new_expr(arithexpr_e);
+					expr0->sym = new_temp();
+					emit(divi,$1,$3,expr0,0,alpha_yylineno);
+					$$ = expr0;	
+			}
 			|expr PERC expr {printf("expr ->  expr PERC expr\n");
-					Expr* expr0 =NULL;// (Expr*) 0;
-					expr0 = new_expr(arithexpr_e);
+					Expr* expr0 = new_expr(arithexpr_e);
 					expr0->sym = new_temp();
 					emit(mod,$1,$3,expr0,0,alpha_yylineno);
 					$$ = expr0;	
-				
 			}
 			|expr GREATER expr {printf("expr ->  expr > expr\n");}
 			|expr GREATER_E expr {printf("expr ->  expr >= expr\n");}
@@ -119,8 +126,17 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 				$$ = $1;
 			};
 
-term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");}
-			|MINUS expr {printf("term ->  - expr \n");}
+term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
+				$$ = $2;
+			}
+			|MINUS expr {printf("term ->  - expr \n");
+				if($2->type==constbool_e ||	$2->type==conststring_e || $2->type==nil_e || $2->type==newtable_e ||$2->type==programfunc_e ||$2->type==libraryfunc_e ||	$2->type==boolexpr_e)alpha_yyerror("Illegal Expression to unary -");
+				Expr* new_e;
+				new_e = new_expr(arithexpr_e);
+				new_e->sym = new_temp();
+				emit(uminus, $2, NULL,new_e,0,alpha_yylineno);
+				$$ = new_e;
+			}
 			|NOT expr {printf("term ->  not expr \n");}
 			|lvalue{
 				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
@@ -184,11 +200,11 @@ assignexpr:		lvalue{
 					
 			} ASSIGN expr {
 					Expr* assign_ret;
-					if($1->type == tableitem_e){
+					if ($1->type == tableitem_e) {
 							emit(tablesetelem,$1,$1->index,$4,0,alpha_yylineno);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
-					}else {
+					} else {
 							emit(assign,$4,NULL,$1,0,alpha_yylineno);// that is: lvalue = expr
 							assign_ret = new_expr(assignexpr_e);
 							assign_ret->sym = new_temp();
@@ -223,7 +239,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				$$ = lvalue_expr(dummy);
 			}
 			|LOCAL ID {
-				$$ = $2; // ?
+				// $$ = $2; // ?
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0);
 				// ki an uparxei hdh local? de prepei na einai opws panw if dummy == NULL ?
 				dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
@@ -233,7 +249,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				$$ = lvalue_expr(dummy);
 			}
 			|DCOLON ID {
-					$$ = $2;
+					// $$ = $2;
 				printf("lvalue ->  DCOLON ID\n");
 				if(lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,1)==NULL){
 						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
@@ -244,7 +260,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 
 member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.stringValue);
 				increaseScope(0); // giati increase scope?
-				$$ = $3;
+				// $$ = $3;
 				dummy =	lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0);
 				if(dummy==NULL){
 						insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
@@ -254,7 +270,7 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.st
 			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
 			|call DOT ID {printf("member ->  call . ID = %s\n", alpha_yylval.stringValue);
 				increaseScope(0);
-				$$ = $3;
+				// $$ = $3;
 				dummy =	lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0);
 				if(dummy==NULL){
 						insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
