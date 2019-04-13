@@ -11,6 +11,9 @@ scanner.c
 parser.c
 parser.h 
 
+# ignore object files
+*.o
+
 \.vscode/*
 
 out

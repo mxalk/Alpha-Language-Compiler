@@ -139,7 +139,7 @@ void expand() {
 }
 
 void emit_error(Iopcode iopcode, Expr *arg) {
-    fprintf(stderr, "\nCannot perform \'%s\' with argument of type \'%s\'\n", iopcodeNames[iopcode], expr_tNames[arg->type]);
+    fprintf(stderr, "Cannot perform \'%s\' with argument of type \'%s\'\n", iopcodeNames[iopcode], expr_tNames[arg->type]);
 }
 
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
@@ -159,6 +159,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
 
 void printQuads() {
     printf("========== QUADS (lastQuad/total: %d/%d) ==========\n",currQuad,total);
+    printf("%6s %15s %15s %15s %15s\n", "[QUAD]", "[OP]", "[RESULT/LABEL]", "[ARG1]", "[ARG2]");
     int qi;
     Quad q;
     Iopcode iopcode;
@@ -167,7 +168,6 @@ void printQuads() {
     for (qi=0; qi<currQuad; qi++) {
         q = quads[qi];
         if(q.op == -1)continue;
-        printf("%d_op[%d]",qi,q.op);
         iopcode = q.op;
         arg1 = q.arg1;
         arg2 = q.arg2;
@@ -175,38 +175,53 @@ void printQuads() {
         expressions[0] = arg1;
         expressions[1] = arg2;
         int i;
+        
+        // printf(" ");
+        // if (arg1)
+        //     printf("\'%s\'", expr_tNames[arg1->type]);
+        // else
+        //     printf("NULL");
+        // printf(" ");
+        // if (arg2)
+        //     printf("\'%s\'", expr_tNames[arg2->type]);
+        // else
+        //     printf("NULL");
+        // printf(" ");
+        // if (result)
+        //     printf("\'%s\'", expr_tNames[result->type]);
+        // else
+        //     printf("NULL");
+        // printf("\n");
 
-        printf("%15s", iopcodeNames[iopcode]);
+        printf("%5d:%15s", qi, iopcodeNames[iopcode]);
         switch (iopcode) {
 
             case assign:
                 //assert(result->type == assignexpr_e);
-                // printf(" %15s", result->sym->name);
-                for (i=0; i<2; i++) {
-                    printf(" ");
-                    if(expressions[i]==NULL){
-                            printf("\033[0;31mlkia sto print\n\033[0m");
-                            continue;
-                    }
-                    switch (expressions[i]->type) {
-                        case var_e:
-                            printf("%15s", expressions[i]->sym->name);
-                            break;
-                        case constbool_e:
-                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
-                            break;
-                        case constnum_e:
-                            printf("%15d", expressions[i]->value.numConst);
-                            break;
-                        case conststring_e:
-                            printf("%15s", expressions[i]->value.strConst);
-                            break;
-                        default: emit_error(iopcode, expressions[i]);
-                    }
+                printf(" %15s", result->sym->name);
+                printf(" ");
+                if(arg1==NULL){
+                        printf("\033[0;31mlkia sto print\n\033[0m");
+                        continue;
+                }
+                switch (arg1->type) {
+                    case var_e:
+                        printf("%15s", arg1->sym->name);
+                        break;
+                    case constbool_e:
+                        printf("%15s", arg1->value.boolConst?"TRUE":"FALSE");
+                        break;
+                    case constnum_e:
+                        printf("%15d", arg1->value.numConst);
+                        break;
+                    case conststring_e:
+                        printf("%15s", arg1->value.strConst);
+                        break;
+                    default: emit_error(iopcode, arg1);
+                }
                 
                 printf(" %15s", result->sym->name);
                 break;
-                }
             case add:
             case sub:
             case mul:
