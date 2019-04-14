@@ -200,6 +200,7 @@ void printQuads() {
                 switch (arg1->type) {
                     case var_e:
                     case boolexpr_e:
+                    case assignexpr_e:
                     case arithexpr_e:
                         printf("%15s", arg1->sym->name);
                         break;
@@ -262,6 +263,7 @@ void printQuads() {
                     printf(" ");
                     switch (expressions[i]->type) {
                         case var_e:
+                        case boolexpr_e:
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -316,6 +318,8 @@ void printQuads() {
                     printf(" ");
                     switch (expressions[i]->type) {
                         case var_e:
+                        case boolexpr_e:
+                        case assignexpr_e:
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;

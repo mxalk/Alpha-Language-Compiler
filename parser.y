@@ -43,6 +43,7 @@ SymbolTableRecord* dummy2;
 %type <expression> term
 %type <iop> lop
 %type <iop> aop
+%type <iop> bop
 
 %token <stringValue> ID 
 %token <intValue> INTNUM 
@@ -101,13 +102,20 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 				emit(jump,NULL,NULL,NULL,nextQuad()+1);
 				emit(assign, newexpr_constbool(1),NULL, result,0); // arg2 = NULL , label = NULL on assign OR aop
 				$$ = result;
-			}
-			|term {printf("expr ->  term\n");
+			}|
+			expr bop expr{
+				Expr* result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit($2, $1 , $3, result,0);
+				$$ = result;
+			}|term {printf("expr ->  term\n");
 				$$ = $1;
 			};
 aop:	PLUS{$$ = add;}|MINUS{$$ = sub;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;};
 
 lop:	GREATER{ $$ = if_greater;}|GREATER_E{$$ = if_gratereq;} | LESS {$$ = if_less;}|LESS_E {$$ = if_lesseq;}| EQUALS {$$ = if_eq;} | NEQUALS {$$ = if_noteq;};
+
+bop:	AND{$$ = and;} | OR{$$ = or;};
 
 term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = $2;
