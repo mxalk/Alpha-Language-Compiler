@@ -12,6 +12,7 @@ CYAN="\033[0;36m"
 NC="\033[0m" # No Color
 
 all: clean_start $(DIR) out
+	@echo -n ${NC}
 
 out: $(OBJECTS) parser.o scanner.o
 	@echo -n ${CYAN}
@@ -51,11 +52,13 @@ scanner.c: scanner.l
 	@echo -n ${NC}
 
 clean_start:
+	@echo -n ${NC}
 	clear
 	@echo "=========================== Compilation_Started ==========================="
 	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output
 
 clean:
+	@echo -n ${NC}
 	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output
 	rmdir obj/
 
