@@ -59,6 +59,26 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                 if (record != NULL) break;
                 if (scope->isFunction) wasFunction = 1;
         }
+        if(func_def){
+                i=GSS->size-1;
+                scope = (Scope *)Stack_get(GSS, i);
+                node = scope->queue->head;
+                while (node != NULL) {
+                        iter = (SymbolTableRecord *) node->content;
+                        if (strcmp(iter->name, name)==0) {
+                                record = iter;
+                                break;
+                        }
+                        node = node->next;
+                }
+        }
+        if(record != NULL){
+                if(record->type == LIBFUNC && func_def){
+                        char *buffer = (char*)malloc(50+strlen(name));
+                        sprintf(buffer, "library function cannot be shadowed with func: \'%s\'", name);
+                        alpha_yyerror(buffer);
+                }
+        }
         //  printGSS();
         // printRecord(record);
         if(!func_def){

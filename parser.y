@@ -57,7 +57,7 @@ SymbolTableRecord* dummy2;
 %left  OR
 %left  AND
 %nonassoc EQUALS NEQUALS
-%nonassoc GREATER LE GREATER_E LESS LESS_E
+%nonassoc GREATER GREATER_E LESS LESS_E
 %left  PLUS MINUS
 %left  MUL DIV PERC 
 %right NOT INCR DECR UMINUS
@@ -88,7 +88,7 @@ stmt_star:			stmt stmt_star {printf("stmt_star ->  stmt and stmt_star\n");}
 
 expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			|expr aop expr {
-				printf("expr ->  expr + expr %d\n",alpha_yylineno);
+				printf("expr ->  expr op expr %d\n",alpha_yylineno);
 				Expr* expr0 = new_expr(arithexpr_e);
 				expr0->sym = new_temp();
 				emit($2,$1,$3,expr0,0);
@@ -111,7 +111,7 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			}|term {printf("expr ->  term\n");
 				$$ = $1;
 			};
-aop:	PLUS{$$ = add;}|MINUS{$$ = sub;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;};
+aop:	PLUS{$$ = add;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;}|MINUS{$$ = sub;};
 
 lop:	GREATER{ $$ = if_greater;}|GREATER_E{$$ = if_gratereq;} | LESS {$$ = if_less;}|LESS_E {$$ = if_lesseq;}| EQUALS {$$ = if_eq;} | NEQUALS {$$ = if_noteq;};
 
@@ -128,7 +128,9 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				emit(uminus, $2, NULL,new_e,0);
 				$$ = new_e;
 			}
-			|NOT expr {printf("term ->  not expr \n");}
+			|NOT expr {printf("term ->  not expr \n");
+			
+			}
 			|lvalue{
 				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
 				if(dummy == NULL){

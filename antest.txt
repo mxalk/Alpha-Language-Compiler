@@ -1,1 +1,1 @@
-x = (((a =  y > 2) == TRUE) and TRUE ) or FALSE; 
+x = (((a =  y > -2) == TRUE) and TRUE ) or FALSE; 
