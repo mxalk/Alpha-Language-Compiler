@@ -380,12 +380,12 @@ const:			INTNUM {
 							}
 			|TRUE {printf("const ->  TRUE\n");
 							Expr* tmp = new_expr(constbool_e);
-							tmp->value.numConst = 1;
+							tmp->value.boolConst = 1;
 							$$ = tmp;
 						}
 			|FALSE {printf("const ->  FALSE\n");
 							Expr* tmp = new_expr(constbool_e);
-							tmp->value.numConst = 0;
+							tmp->value.boolConst = 0;
 							$$ = tmp;
 						};
 
