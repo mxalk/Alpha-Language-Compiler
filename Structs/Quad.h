@@ -30,6 +30,7 @@ typedef enum iopcode_t {
 	if_gratereq,
 	if_less,
 	if_greater,
+	jump,
 	call,
 	param,
 	ret,
@@ -107,15 +108,16 @@ Expr *new_expr(Expr_t type);
 Expr* lvalue_expr (SymbolTableRecord* sym);
 
 Expr *newexpr_conststring(const char* name);
-
+Expr *newexpr_constbool(const unsigned n);
 // dialexi 9, diafania 41
 void expand();
 
-void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line);
+void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label);
 
 Expr *emit_iftableitem(Expr *e);
 
 Expr *member_item(Expr *lvalue,char *name);
+unsigned nextQuad();
 
 Scopespace_t currscopespace(void);
 unsigned currscopeoffset ();

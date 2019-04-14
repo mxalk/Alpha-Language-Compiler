@@ -32,6 +32,7 @@ const char *iopcodeNames[] = {
 	"IF_GREATEREQ",
 	"IF_LESS",
 	"IF_GREATER",
+    "JUMP",
 	"CALL",
 	"PARAM",
 	"RETURN",
@@ -119,7 +120,15 @@ Expr* make_call(Expr* lvalue, Expr* elist){ //elist = arg list
 Expr *newexpr_conststring(const char* name){
     Expr *expression = (Expr *) malloc(sizeof(Expr));
     expression->type = conststring_e;
+    expression->value.strConst = strdup(name);
     // expression->index = //;
+    return expression;
+}
+
+Expr *newexpr_constbool(const unsigned n){
+    Expr *expression = (Expr *) malloc(sizeof(Expr));
+    expression->type = constbool_e;
+    expression->value.boolConst =(char)n;
     return expression;
 }
 
@@ -143,11 +152,11 @@ void emit_error(Iopcode iopcode, Expr *arg) {
     fprintf(stderr, "Cannot perform \'%s\' with argument of type \'%s\'\n", iopcodeNames[iopcode], expr_tNames[arg->type]);
 }
 
-void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label, unsigned line) {
+void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label) {
 
-    char* name1 = arg1!=NULL?(arg1->sym!=NULL?arg1->sym->name:"undef"):" ";
-    char* name2 = arg2!=NULL?(arg2->sym!=NULL?arg2->sym->name:"undef"):" ";
-    printf("\033[0;32mEmit(\'%s\',%s) [ %s, %s, %s ] [at line %d]\n\033[0m",expr_tNames[result->type],iopcodeNames[iopcode],name1,name2,result->sym->name,line);
+    // printf("%d\n",iopcode);
+    // alpha_yyerror(iopcode);
+    printf("\033[0;32mtried emit(%s)  [at line %d]\n\033[0m",iopcodeNames[iopcode],currQuad);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->op = iopcode;
@@ -155,7 +164,11 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label,
     p->arg2 = arg2;
     p->result = result;
     p->label = label;
-    p->line = line;
+    p->line = currQuad-1;
+}
+
+unsigned nextQuad(){
+    return currQuad+1;
 }
 
 void printQuads() {
@@ -186,6 +199,7 @@ void printQuads() {
                 printf(" ");
                 switch (arg1->type) {
                     case var_e:
+                    case boolexpr_e:
                     case arithexpr_e:
                         printf("%15s", arg1->sym->name);
                         break;
@@ -343,6 +357,10 @@ void printQuads() {
                 }
                 break;
 
+            case jump:
+                printf(" %15u", q.label);
+                break;
+
             case call:
                 printf(" ");
                 switch (arg1->type) {
@@ -443,7 +461,7 @@ Expr *emit_iftableitem(Expr *e) {
     if (e->type != tableitem_e) return e;
     Expr *result = new_expr(var_e);
     result->sym = new_temp();
-    emit(tablegetelem, e, e->index, result, 0, 0);
+    emit(tablegetelem, e, e->index, result, 0);
     return result;
 }
 
