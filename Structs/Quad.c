@@ -110,9 +110,11 @@ Expr* make_call(Expr* lvalue, Queue* elist){ //elist = arg list
     Expr* func = emit_iftableitem(lvalue);
     int i = 0;
     //for each in reverse elist do
-    printf("elist->size %d\n",elist->size);
-    for(i = 0 ; i <elist->size; i++){
-        emit(param,NULL,NULL,Queue_get(elist,i),0);
+    if(elist!=NULL){
+        printf("elist->size %d\n",elist->size);
+        for(i = 0 ; i <elist->size; i++){
+            emit(param,NULL,NULL,Queue_get(elist,i),0);
+        }
     }
     emit(call,NULL,NULL,func,0);
     Expr* result = new_expr(var_e);

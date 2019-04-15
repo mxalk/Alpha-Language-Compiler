@@ -226,7 +226,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 						Expr* primary = emit_iftableitem($1);
 						$$ = primary; 
 					}
-			|call {printf("primary ->  call\n");}
+			|call {printf("primary ->  call\n");$$=$1;}
 			|objectdef {printf("primary ->  objectdef\n");}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;
 				Expr* prim = new_expr(programfunc_e);
@@ -314,7 +314,6 @@ call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");
 					curr_elist = NULL;
 			}
 			|lvalue callsuffix {
-				printf("call ->  lvalue callsuffix \n");
 				af_t* callsuffix = $2;
 				// callsuffix->elist = Queue_init();
 				if(callsuffix->method){
@@ -324,6 +323,7 @@ call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");
 					Queue_enqueue(callsuffix->elist,(Expr*)self);
 				}
 				$$ = make_call($1,callsuffix->elist);
+				printf("call ->  lvalue callsuffix \n");
 				curr_elist = NULL;
 
 			}
