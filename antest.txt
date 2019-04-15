@@ -1,1 +1,6 @@
-x = (((a =  y > -2) == true) and false ) or false; 
+//x = (((a =  y > -2) == true) and false ) or false; 
+
+//x = f(y)(a,b);
+//f(y);
+
+sprite..move(dx,dy);

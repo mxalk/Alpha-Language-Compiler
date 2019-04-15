@@ -13,6 +13,7 @@ int alpha_yylex(void);
 extern int alpha_yylineno;
 extern char* alpha_yytext;
 extern FILE* alpha_yyin;
+Queue* curr_elist = NULL;
 unsigned int arg_scope = 0;
 unsigned int anon_funct_count = 0;
 unsigned int isLamda = 0;
@@ -33,7 +34,11 @@ SymbolTableRecord* dummy2;
   	float floatValue;
 		struct expr *expression;
 		unsigned int iop;
+		struct alpha_func_t* afunc;
+		struct Queue* queue;
+		struct SymbolTableRecord* symbol;
 }
+%type <symbol> funcdef
 %type <expression> lvalue
 %type <expression> expr
 %type <expression> member
@@ -41,9 +46,17 @@ SymbolTableRecord* dummy2;
 %type <expression> assignexpr
 %type <expression> const
 %type <expression> term
+%type <expression> call
 %type <iop> lop
 %type <iop> aop
 %type <iop> bop
+%type <afunc> normcall
+%type <afunc> methodcall
+%type <afunc> callsuffix
+%type <queue> elist
+%type <queue> exprs
+
+
 
 %token <stringValue> ID 
 %token <intValue> INTNUM 
@@ -129,7 +142,10 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = new_e;
 			}
 			|NOT expr {printf("term ->  not expr \n");
-			
+				Expr* term = new_expr(arithexpr_e);
+				term->sym = new_temp();
+				emit(not,$2,NULL,term,0);
+				$$ = term;
 			}
 			|lvalue{
 				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
@@ -212,7 +228,11 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 					}
 			|call {printf("primary ->  call\n");}
 			|objectdef {printf("primary ->  objectdef\n");}
-			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;}
+			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;
+				Expr* prim = new_expr(programfunc_e);
+				prim->sym = $2;
+				$$ = prim;
+			}
 			|const {printf("primary ->  const\n");
 				$$ = $1;
 			};
@@ -267,7 +287,16 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.st
 				Expr* tableitem = member_item($1,$3);
 				$$ = tableitem;
 			}
-			|lvalue BRAC_O expr BRAC_C  {printf("member ->  lvalue [ expr ]\n");}
+			|lvalue BRAC_O expr BRAC_C  {
+				printf("member ->  lvalue [ expr ]\n");
+				Expr* obj = $1,*item=NULL;
+				obj = emit_iftableitem(obj);
+				item = new_expr (tableitem_e);
+				item->sym = obj->sym;
+				item->index = $3; // The index is the expression.
+				$$ = item;
+				
+				}
 			|call DOT ID {printf("member ->  call . ID = %s\n", alpha_yylval.stringValue);
 				// increaseScope(0);
 				// // $$ = $3;
@@ -279,23 +308,73 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.st
 			}
 			|call BRAC_O expr BRAC_C {printf("member ->  call [ expr ]\n");};
 
-call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");}
+call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");
+					Expr* call = make_call($1,$3);
+					$$ = call;
+					curr_elist = NULL;
+			}
 			|lvalue callsuffix {
-				printf("call ->  lvalue callsuffix \n");}
-			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");};
+				printf("call ->  lvalue callsuffix \n");
+				af_t* callsuffix = $2;
+				// callsuffix->elist = Queue_init();
+				if(callsuffix->method){
+					Expr* lval = $1;
+					Expr* self= lval;
+					lval = emit_iftableitem(member_item(self,callsuffix->name));
+					Queue_enqueue(callsuffix->elist,(Expr*)self);
+				}
+				$$ = make_call($1,callsuffix->elist);
+				curr_elist = NULL;
 
-callsuffix:		normcall {printf("callsuffix ->  normcall\n");}
-			|methodcall {printf("callsuffix ->  methodcall\n");};
+			}
+			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");
+				Expr* func = new_expr(programfunc_e);
+				func->sym = $2;
+				Expr* call =  make_call(func,$5);
+				$$ = call;
+				curr_elist = NULL;
+			};
 
-normcall:		ANGL_O elist ANGL_C {printf("normcall ->  ( elist )\n");};
+callsuffix:		normcall {printf("callsuffix ->  normcall\n");$$ = $1;}
+			|methodcall {printf("callsuffix ->  methodcall\n");$$ = $1;};
 
-methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID=%s ( elist )\n",alpha_yylval.stringValue);};
+normcall:		ANGL_O elist ANGL_C {printf("normcall ->  ( elist )\n");
+			af_t* norm = (af_t*)malloc(sizeof(af_t));
+			norm->elist = $elist;
+			norm->method = 0;
+			norm->name = NULL;
+			$$ = norm;
+};
 
-elist:		expr exprs {printf("elist ->  expr exprs\n");}
-			|	{printf("elist ->  nothing\n");};
+methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID=%s ( elist )\n",alpha_yylval.stringValue);
+			af_t* meth = (af_t*)malloc(sizeof(af_t));
+		meth->elist = $elist;
+		meth->method = 1;
+		meth->name = strdup($ID);
+		$$ = meth;
+};
 
-exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");}
-			| {printf("exprs ->  nothing\n");};
+elist:		expr exprs {printf("elist ->  expr exprs\n");
+					if(curr_elist==NULL)curr_elist = Queue_init();
+					printf("(0) %d\n",curr_elist->size);
+
+					Queue_enqueue(curr_elist,$1);
+
+					printf("(1) %d\n",curr_elist->size);
+					
+					$$ = curr_elist;
+			}
+			|	{printf("elist ->  nothing\n");printf("(2)\n");};
+
+exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");
+					if(curr_elist==NULL)curr_elist = Queue_init();
+					printf("(3) %d\n",curr_elist->size);
+					Queue_enqueue(curr_elist,$2);
+					$$ = curr_elist;
+			}
+			| {printf("exprs ->  nothing\n");
+				printf("(4) \n");
+			};
 
 objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");}
 			|BRAC_O indexed BRAC_C  {printf("objectdef ->  [ indexed ]\n");};

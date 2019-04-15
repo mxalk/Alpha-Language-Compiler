@@ -106,14 +106,18 @@ Expr* lvalue_expr (SymbolTableRecord* sym){
     return e;
 }
 
-Expr* make_call(Expr* lvalue, Expr* elist){ //elist = arg list
+Expr* make_call(Expr* lvalue, Queue* elist){ //elist = arg list
     Expr* func = emit_iftableitem(lvalue);
+    int i = 0;
     //for each in reverse elist do
-    // emit(param,arg);
-    // emit(call,func);
+    printf("elist->size %d\n",elist->size);
+    for(i = 0 ; i <elist->size; i++){
+        emit(param,NULL,NULL,Queue_get(elist,i),0);
+    }
+    emit(call,NULL,NULL,func,0);
     Expr* result = new_expr(var_e);
     result->sym = new_temp();
-    // emit(getretval,result);
+    emit(getretval,NULL,NULL,result,0);
     return result; 
 }
 
@@ -367,36 +371,37 @@ void printQuads() {
 
             case call:
                 printf(" ");
-                switch (arg1->type) {
+                switch (result->type) {
+                    case var_e:
                     case programfunc_e:
                     case libraryfunc_e:
-                        printf("%15s", arg1->sym->name);
+                        printf("%15s", result->sym->name);
                         break;
-                    default: emit_error(iopcode, arg1);
+                    default: emit_error(iopcode, result);
                 }
                 break;
 
             case param:
                 printf(" ");
-                switch (arg1->type) {
+                switch (result->type) {
                     case var_e:
-                        printf("%15s", arg1->sym->name);
+                        printf("%15s", result->sym->name);
                         break;
                     case tableitem_e:
-                        printf("%15s", arg1->sym->name);
+                        printf("%15s", result->sym->name);
                         break;
                     case programfunc_e:
                     case libraryfunc_e:
                         printf("%15s", "TRUE");
                         break;
                     case constbool_e:
-                        printf("%15s", arg1->value.boolConst?"TRUE":"FALSE");
+                        printf("%15s", result->value.boolConst?"TRUE":"FALSE");
                         break;
                     case constnum_e:
-                        printf("%15f", arg1->value.numConst);
+                        printf("%15f", result->value.numConst);
                         break;
                     case conststring_e:
-                        printf("%15s", arg1->value.strConst);
+                        printf("%15s", result->value.strConst);
                         break;
                 }
                 break;
@@ -406,6 +411,12 @@ void printQuads() {
                 break;
 
             case getretval:
+             printf(" ");
+                switch (result->type) {
+                        case var_e:
+                            printf("%15s", result->sym->name);
+                            break;
+                }
                 break;
 
             case funcstart:

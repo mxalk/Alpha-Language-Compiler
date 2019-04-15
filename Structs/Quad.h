@@ -66,6 +66,14 @@ typedef enum expr_t {
 // extern struct quad;
 typedef struct expr Expr;
 typedef struct quad Quad;
+typedef struct alpha_func_t af_t;
+
+
+struct alpha_func_t{
+	Queue* elist;
+	char* name;
+	unsigned method;
+};
 
 struct expr {
 	Expr_t type;
@@ -111,6 +119,7 @@ Expr *newexpr_conststring(const char* name);
 Expr *newexpr_constbool(const unsigned n);
 // dialexi 9, diafania 41
 void expand();
+Expr* make_call(Expr* lvalue, Queue* elist); //elist = arg list
 
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label);
 
