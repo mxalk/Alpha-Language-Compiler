@@ -194,7 +194,7 @@ void printQuads() {
         expressions[1] = arg2;
         int i;
 
-        printf("%5d:%15s", qi, iopcodeNames[iopcode]);
+        printf("%5d:%15s", qi+1, iopcodeNames[iopcode]);
         switch (iopcode) {
 
             case assign:

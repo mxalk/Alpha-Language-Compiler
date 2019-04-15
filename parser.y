@@ -110,9 +110,9 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 				Expr* result;
 				result = new_expr(boolexpr_e);
 				result->sym = new_temp();
-				emit($2, $1 , $3,NULL, nextQuad()+2);
+				emit($2, $1 , $3,NULL, nextQuad()+3);
 				emit(assign, newexpr_constbool(0),NULL, result,0);
-				emit(jump,NULL,NULL,NULL,nextQuad()+1);
+				emit(jump,NULL,NULL,NULL,nextQuad()+2);
 				emit(assign, newexpr_constbool(1),NULL, result,0); // arg2 = NULL , label = NULL on assign OR aop
 				$$ = result;
 			}|
