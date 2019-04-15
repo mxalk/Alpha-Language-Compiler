@@ -1,6 +1,9 @@
-test().x = 1;
+//test().x = 1;
 
 //x = f(y)(a,b);
 //f(y);
 
-//sprite..move(dx,dy);
+//sprite..move(f(sprite..move(x>2)),dy);
+// x = (((a =  y > -2) == true) and false ) or false; 
+
+if (x > 5) { x = 20 ;} else x = 10;

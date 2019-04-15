@@ -55,6 +55,10 @@ SymbolTableRecord* dummy2;
 %type <afunc> callsuffix
 %type <queue> elist
 %type <queue> exprs
+%type <iop>ifprefix
+%type <iop>elseprefix
+%type <iop>whilestart
+%type <iop>whilecond
 
 
 
@@ -311,7 +315,7 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.st
 call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");
 					Expr* call = make_call($1,$3);
 					$$ = call;
-					curr_elist = NULL;
+					curr_elist = NULL; 
 			}
 			|lvalue callsuffix {
 				af_t* callsuffix = $2;
@@ -518,16 +522,48 @@ ids: COMMA ID{
 	}
 		| {printf("ids ->  nothing\n");};
 
-ifstmt:			IF ANGL_O expr ANGL_C stmt {printf("ifstmt ->  if ( expr ) stmt \n");}
-            |IF ANGL_O expr ANGL_C stmt ELSE stmt {printf("ifstmt ->  if ( expr ) stmt else stmt \n");};
+ifprefix: IF ANGL_O expr ANGL_C {
+		emit(if_eq, $expr, newexpr_constbool(1), NULL, nextQuad()+2);
+		$ifprefix = nextQuad();
+		emit(jump, NULL, NULL, NULL, 0);
+	};
 
-whilestmt:		WHILE ANGL_O expr ANGL_C {in_loop++;}
-						  stmt {printf("whilestmt ->  while ( expr ) stmt \n"); in_loop--;};
+elseprefix: ELSE {
+	$elseprefix = nextQuad();
+	emit(jump, NULL, NULL, NULL, 0);
+};
 
-forstmt:		FOR ANGL_O elist SEMI expr SEMI elist ANGL_C {in_loop++;}
+ifstmt:	ifprefix stmt {
+		patchlabel($ifprefix, nextQuad());
+	}| ifprefix stmt elseprefix stmt {
+		patchlabel($ifprefix, $elseprefix+1);
+		patchlabel($elseprefix, nextQuad());
+	};
+
+whilestart: WHILE {
+	$whilestart = nextQuad();
+};
+
+whilecond: ANGL_O expr ANGL_C {
+	emit(if_eq, $expr, newexpr_constbool (1), NULL, nextQuad()+2);
+	$whilecond = nextQuad();
+	emit(jump, NULL, NULL, NULL, 0); 
+	in_loop++;
+};
+
+whilestmt: whilestart whilecond stmt {
+	printf("whilestmt ->  while ( expr ) stmt \n");
+	// emit(jump, $whilestart);
+	// patchlabel($whilecond, nextQuad());
+	// patchlabel($stmt.breaklist, nextQuad());	// FIX
+	// patchlabel($stmt.contlist, $whilestart);	//FIX
+	in_loop--;
+};
+
+forstmt: FOR ANGL_O elist SEMI expr SEMI elist ANGL_C {in_loop++;}
 						stmt {printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n"); in_loop--;};
 
-returnstmt:		RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
+returnstmt: RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
 
 %%
 

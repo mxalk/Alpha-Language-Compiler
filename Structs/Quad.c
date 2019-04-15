@@ -177,6 +177,10 @@ unsigned nextQuad(){
     return currQuad+1;
 }
 
+void patchlabel(unsigned int topatch, unsigned int tojump) {
+    quads[topatch-1].label = tojump;
+}
+
 void printQuads() {
     printf("========== QUADS (lastQuad/total: %d/%d) ==========\n",currQuad,total);
     printf("%6s %15s %15s %15s %15s\n", "[QUAD]", "[OP]", "[RESULT/LABEL]", "[ARG1]", "[ARG2]");
@@ -413,10 +417,9 @@ void printQuads() {
                 break;
 
             case getretval:
-             printf(" ");
                 switch (result->type) {
                         case var_e:
-                            printf("%15s", result->sym->name);
+                            printf(" %15s", result->sym->name);
                             break;
                 }
                 break;

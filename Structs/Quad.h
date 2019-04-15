@@ -127,6 +127,7 @@ Expr *emit_iftableitem(Expr *e);
 
 Expr *member_item(Expr *lvalue,char *name);
 unsigned nextQuad();
+void patchlabel(unsigned int, unsigned int);
 
 Scopespace_t currscopespace(void);
 unsigned currscopeoffset ();
