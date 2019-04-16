@@ -138,6 +138,13 @@ Expr *newexpr_constbool(const unsigned n){
     return expression;
 }
 
+Expr *newexpr_constnum(const double n){
+    Expr *expression = (Expr *) malloc(sizeof(Expr));
+    expression->type = constnum_e;
+    expression->value.numConst =n;
+    return expression;
+}
+
 // dialexi 9, diafania 41
 void expand() {
     unsigned i = currQuad;
@@ -232,7 +239,7 @@ void printQuads() {
             case mul:
             case divi:
             case mod:
-                assert(result->type == arithexpr_e);
+                // assert(result->type == arithexpr_e);
                 printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
                     printf(" ");
@@ -390,9 +397,9 @@ void printQuads() {
             case param:
                 printf(" ");
                 switch (result->type) {
+                    case arithexpr_e:
+                    case assignexpr_e:
                     case var_e:
-                        printf("%15s", result->sym->name);
-                        break;
                     case tableitem_e:
                         printf("%15s", result->sym->name);
                         break;
@@ -438,7 +445,7 @@ void printQuads() {
                 break;
 
             case tablegetelem:
-                assert(result->type == var_e);
+                // assert(result->type == var_e);
                 printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
                     printf(" ");
@@ -467,8 +474,37 @@ void printQuads() {
                         default: emit_error(iopcode, expressions[i]);
                     }
                 }
+                break;
 
             case tablesetelem:
+                printf(" %15s", result->sym->name);
+                    for (i=0; i<2; i++) {
+                        printf(" ");
+                        switch (expressions[i]->type) {
+                            case var_e:
+                                printf("%15s", expressions[i]->sym->name);
+                                break;
+                            case tableitem_e:
+                                printf("%15s", expressions[i]->sym->name);
+                                break;
+                            case programfunc_e:
+                                printf("%15s", "TRUE");
+                                break;
+                            case libraryfunc_e:
+                                printf("%15s", "TRUE");
+                                break;
+                            case constbool_e:
+                                printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
+                                break;
+                            case constnum_e:
+                                printf("%15f", expressions[i]->value.numConst);
+                                break;
+                            case conststring_e:
+                                printf("%15s", expressions[i]->value.strConst);
+                                break;
+                            default: emit_error(iopcode, expressions[i]);
+                        }
+                    }
                 break;
             
             default: assert(0);

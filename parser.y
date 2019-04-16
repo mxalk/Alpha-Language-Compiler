@@ -47,6 +47,7 @@ SymbolTableRecord* dummy2;
 %type <expression> const
 %type <expression> term
 %type <expression> call
+%type <expression> objectdef
 %type <iop> lop
 %type <iop> aop
 %type <iop> bop
@@ -162,18 +163,46 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					alpha_yyerror("Illegal instruction++ on function  \n");
           				
 				}
-			} INCR {printf("term ->   lvalue ++ \n");}
+			} INCR {printf("term ->   lvalue ++ \n");
+				Expr* term = new_expr(var_e);
+				Expr* value;
+				term->sym = new_temp();
+				if($1->type == tableitem_e){
+					value = emit_iftableitem($1);
+					emit(assign,value,NULL,term,0);
+					emit(add,value,newexpr_constnum(1),value,0);
+					emit(tablesetelem,$1,$1->index,value,0);
+				}else{
+					emit(assign,$1,NULL,term,0);
+					emit(add,$1,newexpr_constnum(1),$1,0);
+				}
+				$$ = term;
+			}
 			|INCR lvalue {printf("term ->  ++ lvalue\n");
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
-				if(dummy == NULL){
-					printf("%s\n",alpha_yylval.stringValue);
-					alpha_yyerror("Illegal ++instruction on undefined variable \n");
-          				
-				}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
-					printf("%s\n",alpha_yylval.stringValue);
-					alpha_yyerror("Illegal ++instruction on function  \n");
-          				
-				}}
+					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
+					if(dummy == NULL){
+						printf("%s\n",alpha_yylval.stringValue);
+						alpha_yyerror("Illegal ++instruction on undefined variable \n");
+										
+					}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
+						printf("%s\n",alpha_yylval.stringValue);
+						alpha_yyerror("Illegal ++instruction on function  \n");
+										
+					}
+					Expr* term;
+					Expr* value;
+					if($2->type == tableitem_e){
+						term = emit_iftableitem($2);
+						emit(add,term,newexpr_constnum(1),term,0);
+						emit(tablesetelem,$2,$2->index,term,0);
+					}else{
+						emit(add,$2,newexpr_constnum(1),$2,0);
+						term = new_expr(arithexpr_e);
+						term->sym = new_temp();
+						emit(assign,$2,NULL,term,0);
+					}
+					$$ = term;
+				}
 			|lvalue{
 				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
 				if(dummy == NULL){
@@ -183,7 +212,21 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					alpha_yyerror("Illegal instruction-- on function  \n");
           				
 				}
-			} DECR {printf("term ->  lvalue -- \n");}
+			} DECR {printf("term ->  lvalue -- \n");
+				Expr* term = new_expr(var_e);
+				Expr* value;
+				term->sym = new_temp();
+				if($1->type == tableitem_e){
+					value = emit_iftableitem($1);
+					emit(assign,value,NULL,term,0);
+					emit(sub,value,newexpr_constnum(1),value,0);
+					emit(tablesetelem,$1,$1->index,value,0);
+				}else{
+					emit(assign,$1,NULL,term,0);
+					emit(sub,$1,newexpr_constnum(1),$1,0);
+				}
+				$$ = term;
+			}
 			|DECR lvalue {printf("term ->  -- lvalue \n");
 				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
 				if(dummy == NULL){
@@ -193,6 +236,19 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					alpha_yyerror("Illegal --instruction on function  ");
           				
 				}	
+				Expr* term;
+					Expr* value;
+					if($2->type == tableitem_e){
+						term = emit_iftableitem($2);
+						emit(sub,term,newexpr_constnum(1),term,0);
+						emit(tablesetelem,$2,$2->index,term,0);
+					}else{
+						emit(sub,$2,newexpr_constnum(1),$2,0);
+						term = new_expr(arithexpr_e);
+						term->sym = new_temp();
+						emit(assign,$2,NULL,term,0);
+					}
+					$$ = term;
 			}
 			|primary {printf("term ->  primary\n");
 				$$ = $1;
@@ -214,7 +270,7 @@ assignexpr:		lvalue{
 			} ASSIGN expr {
 					Expr* assign_ret;
 					if ($1->type == tableitem_e) {
-							emit(tablesetelem,$1,$1->index,$4,0);// that is: lvalue[index] = expr
+							emit(tablesetelem,$1->index,$4->index,$1,0);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					} else {
@@ -350,8 +406,8 @@ normcall:		ANGL_O elist ANGL_C {printf("normcall ->  ( elist )\n");
 			$$ = norm;
 };
 
-methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID=%s ( elist )\n",alpha_yylval.stringValue);
-			af_t* meth = (af_t*)malloc(sizeof(af_t));
+methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID ( elist )\n");
+		af_t* meth = (af_t*)malloc(sizeof(af_t));
 		meth->elist = $elist;
 		meth->method = 1;
 		meth->name = strdup($ID);
@@ -380,8 +436,31 @@ exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");
 				printf("(4) \n");
 			};
 
-objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");}
-			|BRAC_O indexed BRAC_C  {printf("objectdef ->  [ indexed ]\n");};
+objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");
+		Expr* t = new_expr(newtable_e);
+		int i;
+		Queue* elist = $2;
+		t->sym = new_temp();
+		emit(tablecreate,t,NULL,NULL,0);
+		int iter = 0;
+		if(elist!=NULL){
+        printf("elist->size %d\n",elist->size);
+        for(i = 0 ; i <elist->size; i++){
+            emit(tablesetelem,t,newexpr_constnum(iter++),Queue_get(elist,i),0);
+        }
+    }
+		$$ = t;
+}
+			|BRAC_O indexed BRAC_C  {printf("objectdef ->  [ indexed ]\n");
+				Expr* t = new_expr(newtable_e);
+				t->sym = new_temp();
+				emit(tablecreate, t,NULL,NULL,0);;
+				// for each <x,y> in $indexeddo
+				// for(i = 0 ; i <elist->size; i++){
+				// 	emit(tablesetelem, t, Queue_get(elist,i), y);
+				// }
+				$$ = t;
+			};
 
 indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");};
 
