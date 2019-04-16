@@ -268,8 +268,8 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 			};
 
 assignexpr:		lvalue{
-					fprintf(stderr,"%s %d %d %d\n",alpha_yylval.stringValue,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
-					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
+					// fprintf(stderr,"%s %d %d %d\n",alpha_yylval.stringValue,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
+					dummy = lookup($lvalue->sym->name,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
 					if( dummy != NULL){
 						//if(dummy->scope == 0){
 							if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
@@ -346,7 +346,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				Expr* dcolon = lvalue_expr(dummy);
 				$$ = dcolon;
 				}
-			|member {printf("lvalue ->  member\n");};
+			|member {printf("lvalue ->  member\n"); $$ = emit_iftableitem($1);;};
 
 member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.stringValue);
 				// increaseScope(0); // giati increase scope? // exw arxisei na to afairw arakse
@@ -368,9 +368,10 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.st
 				item->sym = obj->sym;
 				item->index = $3; // The index is the expression.
 				$$ = item;
-				
 				}
 			|call DOT ID {printf("member ->  call . ID = %s\n", alpha_yylval.stringValue);
+				// Expr* tableitem = member_item($1,$3);
+				// $$ = tableitem;
 				// increaseScope(0);
 				// // $$ = $3;
 				// dummy =	lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0);
