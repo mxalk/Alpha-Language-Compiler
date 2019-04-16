@@ -509,10 +509,13 @@ void printQuads() {
                 break;
 
             case tablesetelem:
+                printf(" i%d",result->type);
                 printf(" %15s", result->sym->name);
                     for (i=0; i<2; i++) {
                         printf(" ");
                         switch (expressions[i]->type) {
+                            case boolexpr_e:
+                            case assignexpr_e:
                             case newtable_e:
                             case var_e:
                                 printf("%15s", expressions[i]->sym->name);

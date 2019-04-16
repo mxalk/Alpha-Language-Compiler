@@ -13,7 +13,10 @@ int alpha_yylex(void);
 extern int alpha_yylineno;
 extern char* alpha_yytext;
 extern FILE* alpha_yyin;
+Queue* global_elist;
+Queue* global_indexed_q;
 Queue* curr_elist = NULL;
+Queue* curr_indexed = NULL;
 unsigned int arg_scope = 0;
 unsigned int anon_funct_count = 0;
 unsigned int isLamda = 0;
@@ -37,6 +40,10 @@ SymbolTableRecord* dummy2;
 		struct alpha_func_t* afunc;
 		struct Queue* queue;
 		struct SymbolTableRecord* symbol;
+		struct Pair{
+			struct expr* x;
+			struct expr* y;
+		}*pair;
 }
 %type <symbol> funcdef
 %type <expression> lvalue
@@ -56,6 +63,8 @@ SymbolTableRecord* dummy2;
 %type <afunc> callsuffix
 %type <queue> elist
 %type <queue> exprs
+%type <queue> indexed
+%type <pair> indexedelem
 %type <iop>ifprefix
 %type <iop>elseprefix
 %type <iop>whilestart
@@ -416,24 +425,26 @@ methodcall:		DOTDOT ID ANGL_O elist ANGL_C {printf("methodcall ->  .. ID ( elist
 
 elist:		expr exprs {printf("elist ->  expr exprs\n");
 					if(curr_elist==NULL)curr_elist = Queue_init();
-					printf("(0) %d\n",curr_elist->size);
+					// printf("(0) %d\n",curr_elist->size);
 
 					Queue_enqueue(curr_elist,$1);
 
-					printf("(1) %d\n",curr_elist->size);
-					
-					$$ = curr_elist;
+					// printf("(1) %d\n",curr_elist->size);
+					$$ = Queue_get(global_elist,global_elist->size-1);
+					curr_elist	=  NULL;
 			}
-			|	{printf("elist ->  nothing\n");printf("(2)\n");};
+			|	{printf("elist ->  nothing\n");/*printf("(2)\n");*/};
 
 exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");
 					if(curr_elist==NULL)curr_elist = Queue_init();
-					printf("(3) %d\n",curr_elist->size);
+					// printf("(3) %d\n",curr_elist->size);
 					Queue_enqueue(curr_elist,$2);
 					$$ = curr_elist;
 			}
 			| {printf("exprs ->  nothing\n");
-				printf("(4) \n");
+				if(curr_elist==NULL)curr_elist = Queue_init();
+				Queue_enqueue(global_elist,curr_elist);
+				// printf("(4) \n");
 			};
 
 objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");
@@ -453,16 +464,23 @@ objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");
 }
 			|BRAC_O indexed BRAC_C  {printf("objectdef ->  [ indexed ]\n");
 				Expr* t = new_expr(newtable_e);
+				int i ;
 				t->sym = new_temp();
 				emit(tablecreate, t,NULL,NULL,0);;
 				// for each <x,y> in $indexeddo
-				// for(i = 0 ; i <elist->size; i++){
-				// 	emit(tablesetelem, t, Queue_get(elist,i), y);
-				// }
+				Queue* indexed = $2;
+				for(i = 0 ; i <indexed->size; i++){
+					emit(tablesetelem, t, ((struct Pair*)Queue_get(indexed,i))->x, ((struct Pair*)Queue_get(indexed,i))->y,0);
+				}
 				$$ = t;
 			};
 
-indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");};
+indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");
+				Queue_enqueue(curr_indexed,$1);
+
+				$$ = Queue_get(global_indexed_q,global_indexed_q->size-1);
+				curr_indexed = NULL;
+};
 
 indexedelem:		CURL_O expr{
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
@@ -471,11 +489,29 @@ indexedelem:		CURL_O expr{
 				if(dummy==NULL){
 					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 				}
+			} COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");
+				if(curr_indexed == NULL){
+					curr_indexed = Queue_init();
+					Queue_enqueue(global_indexed_q,curr_indexed);
 
-			} COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");};
+				}
+				struct Pair* new_pair = (struct Pair*)malloc(sizeof(struct Pair));
+				new_pair->x = $2;
+				new_pair->y = $5;
+				printf("i(0)\n");	
+				$$ = new_pair;
+				printf("i(0.5)\n");
+				Queue_enqueue(curr_indexed,new_pair);
+			};
 
-indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm ->  , indexedelem indexedelem_comm\n");}
-			| {printf("indexedelem_comm ->  nothing\n");};
+indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm ->  , indexedelem indexedelem_comm\n");
+				printf("i(2)\n");	
+
+			}
+			| {printf("indexedelem_comm ->  nothing\n");
+							printf("i(1)\n");	
+
+			};
 
 
 funcdef:		FUNCTION {
@@ -653,6 +689,8 @@ int alpha_yyerror (const char* yaccProvidedMessage){
 
 
 int main (int argc, char** argv) {
+		global_elist = Queue_init();
+		global_indexed_q = Queue_init();
     sym_init();
     if (argc > 1) {
       if (!(alpha_yyin = fopen(argv[1], "r"))) {
