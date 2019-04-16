@@ -270,7 +270,7 @@ assignexpr:		lvalue{
 			} ASSIGN expr {
 					Expr* assign_ret;
 					if ($1->type == tableitem_e) {
-							emit(tablesetelem,$1->index,$4->index,$1,0);// that is: lvalue[index] = expr
+							emit(tablesetelem,$1,$1->index,$4,0);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					} else {
@@ -287,7 +287,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 						$$ = primary; 
 					}
 			|call {printf("primary ->  call\n");$$=$1;}
-			|objectdef {printf("primary ->  objectdef\n");}
+			|objectdef {printf("primary ->  objectdef\n"); $$ = $1;}
 			|ANGL_O funcdef ANGL_C {printf("primary ->  ( funcdef )\n");isLamda = 1;
 				Expr* prim = new_expr(programfunc_e);
 				prim->sym = $2;

@@ -10,4 +10,5 @@
 //f (x+1, x=2);
 //sprite..move(f(sprite..move(x>2)),dy); // it works finally
 //circle = [ {"pi" : pi = 3.14159265359}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
-t.a.b.c = x;
+//t.a.b.c = x;
+a["b"] = x;
