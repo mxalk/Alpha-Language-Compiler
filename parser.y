@@ -20,7 +20,6 @@ Queue* curr_indexed = NULL;
 unsigned int arg_scope = 0;
 unsigned int anon_funct_count = 0;
 unsigned int isLamda = 0;
-unsigned int in_loop = 0;
 SymbolTableRecord* func_for_args = NULL;
 SymbolTableRecord* dummy;
 SymbolTableRecord* dummy2;
@@ -73,6 +72,7 @@ SymbolTableRecord* dummy2;
 %type <iop>elseprefix
 %type <iop>whilestart
 %type <iop>whilecond
+%type <loop>loopstmt
 
 
 
@@ -108,8 +108,6 @@ stmt: 		expr SEMI {printf("stmt ->  expr SEMI\n");}
       			|whilestmt {printf("stmt ->  whilestmt\n");}
 			|forstmt {printf("stmt ->  forstmt\n");}
 			|returnstmt {printf("stmt ->  returnstmt\n");}
-			|BREAK SEMI {if(!in_loop) alpha_yyerror("use of break outside loop"); printf("stmt ->  break SEMI \n");}
-			|CONTINUE SEMI {if(!in_loop) alpha_yyerror("use of continue outside loop"); printf("stmt ->  continue SEMI\n");}
 			|block {printf("stmt ->  block\n");}
 			|funcdef {printf("stmt ->  funcdef\n");}
 			|SEMI {printf("stmt ->  SEMI\n");};
@@ -526,7 +524,10 @@ funcdef:		FUNCTION {
 				char* name = strdup(strcat(funct_name,num));
 				func_for_args = insert(name,USRFUNC,getScope(),alpha_yylineno);
 				
-			} ANGL_O {increaseScope(1);} idlist ANGL_C CURL_O stmt_star CURL_C {decreaseScope();printf("funcdef ->  function ( idlist ) block \n");}
+			} ANGL_O {increaseScope(1);} idlist ANGL_C CURL_O stmt_star CURL_C {decreaseScope();printf("funcdef ->  function ( idlist ) block \n");
+				
+			
+			}
 			|FUNCTION ID{
 				dummy=NULL;
 				char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
@@ -659,28 +660,51 @@ ifstmt:	ifprefix stmt {
 		patchlabel($elseprefix, nextQuad());
 	};
 
+loopstmt: stmt // FIX HERE TO ACCEPT STMT AND LOOPSTMT AGAIN FOR MANY BREAKS
+	|BREAK SEMI loopstmt{
+		printf("stmt ->  break SEMI\n");
+		$$ = $3;
+		if (!$$) {
+			$$ = malloc(sizeof(struct Loop));
+			$$->breaklist = Queue_init();
+			$$->contlist = Queue_init();
+		}
+		Queue_enqueue($$->breaklist, nextQuad());
+		emit(jump, NULL, NULL, NULL, 0);
+	}
+	|CONTINUE SEMI loopstmt{
+		printf("stmt ->  break SEMI\n");
+		$$ = $3;
+		if (!$$) {
+			$$ = malloc(sizeof(struct Loop));
+			$$->breaklist = Queue_init();
+			$$->contlist = Queue_init();
+		}
+		Queue_enqueue($$->contlist, nextQuad());
+		emit(jump, NULL, NULL, NULL, 0);
+	};
+
 whilestart: WHILE {
-	$whilestart = nextQuad();
-};
+		$whilestart = nextQuad();
+	};
 
 whilecond: ANGL_O expr ANGL_C {
-	emit(if_eq, $expr, newexpr_constbool (1), NULL, nextQuad()+2);
-	$whilecond = nextQuad();
-	emit(jump, NULL, NULL, NULL, 0); 
-	in_loop++;
-};
+		emit(if_eq, $expr, newexpr_constbool (1), NULL, nextQuad()+2);
+		$whilecond = nextQuad();
+		emit(jump, NULL, NULL, NULL, 0);
+	};
 
-whilestmt: whilestart whilecond stmt {
-	printf("whilestmt ->  while ( expr ) stmt \n");
-	// emit(jump, $whilestart);
-	// patchlabel($whilecond, nextQuad());
-	// patchlabel($stmt.breaklist, nextQuad());	// FIX
-	// patchlabel($stmt.contlist, $whilestart);	//FIX
-	in_loop--;
-};
+whilestmt: whilestart whilecond loopstmt {
+		printf("whilestmt ->  while ( expr ) stmt \n");
+		emit(jump, NULL, NULL, NULL, $whilestart);
+		patchlabel($whilecond, nextQuad());
+		patchlabellist($loopstmt->breaklist, nextQuad());
+		patchlabellist($loopstmt->contlist, $whilestart);
+	};
 
-forstmt: FOR ANGL_O elist SEMI expr SEMI elist ANGL_C {in_loop++;}
-						stmt {printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n"); in_loop--;};
+forstmt: FOR ANGL_O elist SEMI expr SEMI elist ANGL_C stmt {
+		printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n");
+	};
 
 returnstmt: RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
 
