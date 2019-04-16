@@ -188,6 +188,11 @@ void patchlabel(unsigned int topatch, unsigned int tojump) {
     quads[topatch-1].label = tojump;
 }
 
+void patchlabellist(Queue *topatch, unsigned int tojump) {
+    int i;
+    while (i = (int) Queue_dequeue(topatch)) quads[i].label = tojump;
+}
+
 void printQuads() {
     printf("========== QUADS (lastQuad/total: %d/%d) ==========\n",currQuad,total);
     printf("%6s %15s %15s %15s %15s\n", "[QUAD]", "[OP]", "[RESULT/LABEL]", "[ARG1]", "[ARG2]");
@@ -264,7 +269,7 @@ void printQuads() {
                 switch (arg1->type) {
                     case var_e:
                     case arithexpr_e:
-                        printf("15s", arg1->sym->name);
+                        printf("%15s", arg1->sym->name);
                         break;
                     case constnum_e:
                         printf("%15f", arg1->value.numConst);
@@ -635,4 +640,20 @@ Scopespace_t currscopespace(void) {
 	if (scopeSpaceCounter == 1) return programvar;
 	if (!(scopeSpaceCounter % 2)) return formalarg;
 	return functionlocal;
+}
+
+void resetformalargsoffset(){
+    formalArgOffset = 0;
+}
+void resetfunctionlocalsoffset(){
+    functionLocalOffset = 0;
+}
+
+void restorecurrscopeoffset(unsigned n){
+    switch(currscopespace()){
+        case programvar     : programVarOffset = n; break;
+        case functionlocal  : functionLocalOffset = n; break;
+        case formalarg      : formalArgOffset = n; break;
+        default: assert(0);
+    }
 }

@@ -9,10 +9,15 @@
 //if (x > 5) { x = 20 ;} else x = 10;
 //f (x+1, x=2);
 //sprite..move(f(sprite..move(x>2)),dy); // it works finally
-circle = [ {"pi" : ++pi}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
+//circle = [ {"pi" : ++pi}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
 //t.a.b.c = x;
 //a["b"] = x;
 //t = [ ++i, i = 1821, --i, i = 8 ];
-//c = [[[x,y],b,e],d,f,[l,a]];
+c = [[[x,y],b,e],d,f,[l,a]];
 
-//f = [x,[]];
+f = [x,[]];
+x=0;
+//while(x<5) {
+  //  x++;
+    //if (x==3) break;
+//}
