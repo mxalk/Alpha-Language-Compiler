@@ -417,6 +417,7 @@ void printQuads() {
                     case conststring_e:
                         printf("%15s", result->value.strConst);
                         break;
+                    default: emit_error(iopcode, result);
                 }
                 break;
 
@@ -426,9 +427,10 @@ void printQuads() {
 
             case getretval:
                 switch (result->type) {
-                        case var_e:
-                            printf(" %15s", result->sym->name);
-                            break;
+                    case var_e:
+                        printf(" %15s", result->sym->name);
+                        break;
+                    default: emit_error(iopcode, result);
                 }
                 break;
 
@@ -443,21 +445,16 @@ void printQuads() {
                 break;
 
             case tablecreate:
-
                // printf(" %15s", result->sym->name);
                 for (i=0; i<1; i++) {
                     printf(" ");
                     switch (expressions[i]->type) {
                         case newtable_e:
                         case var_e:
-                            printf("%15s", expressions[i]->sym->name);
-                            break;
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
                         case programfunc_e:
-                            printf("%15s", "TRUE");
-                            break;
                         case libraryfunc_e:
                             printf("%15s", "TRUE");
                             break;
@@ -483,14 +480,10 @@ void printQuads() {
                     switch (expressions[i]->type) {
                         case newtable_e:
                         case var_e:
-                            printf("%15s", expressions[i]->sym->name);
-                            break;
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
                         case programfunc_e:
-                            printf("%15s", "TRUE");
-                            break;
                         case libraryfunc_e:
                             printf("%15s", "TRUE");
                             break;
@@ -509,40 +502,36 @@ void printQuads() {
                 break;
 
             case tablesetelem:
-                printf(" i%d",result->type);
+                assert(result->type==newtable_e);
                 printf(" %15s", result->sym->name);
-                    for (i=0; i<2; i++) {
-                        printf(" ");
-                        switch (expressions[i]->type) {
-                            case boolexpr_e:
-                            case assignexpr_e:
-                            case newtable_e:
-                            case var_e:
-                                printf("%15s", expressions[i]->sym->name);
-                                break;
-                            case tableitem_e:
-                                printf("%15s", expressions[i]->sym->name);
-                                break;
-                            case programfunc_e:
-                                printf("%15s", "TRUE");
-                                break;
-                            case libraryfunc_e:
-                                printf("%15s", "TRUE");
-                                break;
-                            case constbool_e:
-                                printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
-                                break;
-                            case constnum_e:
-                                printf("%15f", expressions[i]->value.numConst);
-                                break;
-                            case conststring_e:
-                                printf("%15s", expressions[i]->value.strConst);
-                                break;
-                            default: emit_error(iopcode, expressions[i]);
-                        }
+                for (i=0; i<2; i++) {
+                    printf(" ");
+                    switch (expressions[i]->type) {
+                        case arithexpr_e:
+                        case boolexpr_e:
+                        case assignexpr_e:
+                        case newtable_e:
+                        case var_e:
+                        case tableitem_e:
+                            printf("%15s", expressions[i]->sym->name);
+                            break;
+                        case programfunc_e:
+                        case libraryfunc_e:
+                            printf("%15s", "TRUE");
+                            break;
+                        case constbool_e:
+                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
+                            break;
+                        case constnum_e:
+                            printf("%15f", expressions[i]->value.numConst);
+                            break;
+                        case conststring_e:
+                            printf("%15s", expressions[i]->value.strConst);
+                            break;
+                        default: emit_error(iopcode, expressions[i]);
                     }
+                }
                 break;
-            
             default: assert(0);
         }
         printf("\n");

@@ -44,6 +44,10 @@ SymbolTableRecord* dummy2;
 			struct expr* x;
 			struct expr* y;
 		}*pair;
+		struct Loop{
+			struct Queue *breaklist;
+			struct Queue *contlist;
+		}*loop;
 }
 %type <symbol> funcdef
 %type <expression> lvalue
@@ -469,8 +473,8 @@ objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");
 				emit(tablecreate, t,NULL,NULL,0);;
 				// for each <x,y> in $indexeddo
 				Queue* indexed = $2;
-				for(i = 0 ; i <indexed->size; i++){
-					emit(tablesetelem, t, ((struct Pair*)Queue_get(indexed,i))->x, ((struct Pair*)Queue_get(indexed,i))->y,0);
+				for(i = 0 ; i <indexed->size-1; i++){
+					emit(tablesetelem, ((struct Pair*)Queue_get(indexed,i))->x, ((struct Pair*)Queue_get(indexed,i))->y,t,0);
 				}
 				$$ = t;
 			};
