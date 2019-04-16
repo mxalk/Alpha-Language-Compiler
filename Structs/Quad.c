@@ -218,6 +218,7 @@ void printQuads() {
                     case var_e:
                     case boolexpr_e:
                     case assignexpr_e:
+                    case newtable_e:
                     case arithexpr_e:
                         printf("%15s", arg1->sym->name);
                         break;
@@ -442,6 +443,36 @@ void printQuads() {
                 break;
 
             case tablecreate:
+
+               // printf(" %15s", result->sym->name);
+                for (i=0; i<1; i++) {
+                    printf(" ");
+                    switch (expressions[i]->type) {
+                        case newtable_e:
+                        case var_e:
+                            printf("%15s", expressions[i]->sym->name);
+                            break;
+                        case tableitem_e:
+                            printf("%15s", expressions[i]->sym->name);
+                            break;
+                        case programfunc_e:
+                            printf("%15s", "TRUE");
+                            break;
+                        case libraryfunc_e:
+                            printf("%15s", "TRUE");
+                            break;
+                        case constbool_e:
+                            printf("%15s", expressions[i]->value.boolConst?"TRUE":"FALSE");
+                            break;
+                        case constnum_e:
+                            printf("%15f", expressions[i]->value.numConst);
+                            break;
+                        case conststring_e:
+                            printf("%15s", expressions[i]->value.strConst);
+                            break;
+                        default: emit_error(iopcode, expressions[i]);
+                    }
+                }
                 break;
 
             case tablegetelem:
@@ -450,6 +481,7 @@ void printQuads() {
                 for (i=0; i<2; i++) {
                     printf(" ");
                     switch (expressions[i]->type) {
+                        case newtable_e:
                         case var_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -481,6 +513,7 @@ void printQuads() {
                     for (i=0; i<2; i++) {
                         printf(" ");
                         switch (expressions[i]->type) {
+                            case newtable_e:
                             case var_e:
                                 printf("%15s", expressions[i]->sym->name);
                                 break;

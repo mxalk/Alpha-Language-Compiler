@@ -11,4 +11,5 @@
 //sprite..move(f(sprite..move(x>2)),dy); // it works finally
 //circle = [ {"pi" : pi = 3.14159265359}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
 //t.a.b.c = x;
-a["b"] = x;
+//a["b"] = x;
+t = [ ++i, i = 1821, --i, i = 8 ];
