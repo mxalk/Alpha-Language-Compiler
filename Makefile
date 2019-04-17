@@ -1,5 +1,5 @@
 CC=gcc
-CCFLAGS= -o $@
+CCFLAGS= -o $@ -g
 SHELL:=/bin/sh
 STRUCTS := Structs
 OBJ := obj

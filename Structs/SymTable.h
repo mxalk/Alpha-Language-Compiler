@@ -39,6 +39,8 @@ typedef struct SymbolTableRecord
     Symbol_t stype;
 	Scopespace_t space;
 	unsigned offset;
+	unsigned iaddress;
+	unsigned totallocals;
 }SymbolTableRecord;
 
 typedef struct Scope {
@@ -51,7 +53,7 @@ struct SymbolTableRecord **GlobalSymbolTable;
 
 
 SymbolTableRecord* insert(char *name, SymType type, unsigned int scope, unsigned int line);
-struct SymbolTableRecord *lookup(char *name, SymType type, unsigned int line,unsigned int expected,unsigned int func_def);
+struct SymbolTableRecord *lookup(char *name, SymType type, unsigned int line,unsigned int expected,unsigned int func_def,unsigned local);
 struct SymbolTableRecord *lookupGlobal(char *name, SymType type, unsigned int line, unsigned int expected);
 int hash_f(struct SymbolTableRecord *record);
 void display();

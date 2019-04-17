@@ -440,12 +440,12 @@ void printQuads() {
                 break;
 
             case funcstart:
-                assert(arg1->type == programfunc_e);
+                // assert(arg1->type == programfunc_e);
                 printf(" %15s", arg1->sym->name);
                 break;
 
             case funcend:
-                assert(arg1->type == programfunc_e);
+                // assert(arg1->type == programfunc_e);
                 printf(" %15s", arg1->sym->name);
                 break;
 
@@ -507,7 +507,7 @@ void printQuads() {
                 break;
 
             case tablesetelem:
-                assert(result->type==newtable_e);
+                // assert(result->type==newtable_e);
                 printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
                     printf(" ");
@@ -632,8 +632,8 @@ void enterscopespace(){
 }
 
 void exitscopespace(){
-    assert(scopeSpaceCounter>2);
-    scopeSpaceCounter-=2;
+    assert(scopeSpaceCounter>1);
+    scopeSpaceCounter-=1;
 }
 
 Scopespace_t currscopespace(void) {

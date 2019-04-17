@@ -26,7 +26,7 @@ int hash_f(SymbolTableRecord *record)
 
         //expected == 1 , we need to use the var
         //expected == 0 , we want to declare the var
-SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsigned int expected, unsigned int func_def)
+SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsigned int expected, unsigned int func_def, unsigned local)
 {
         SymbolTableRecord *record = (SymbolTableRecord *)malloc(sizeof(SymbolTableRecord));
         record->name = name;
@@ -56,7 +56,7 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                         }
                         node = node->next;
                 }
-                if (record != NULL) break;
+                if (record != NULL || local) break;
                 if (scope->isFunction) wasFunction = 1;
         }
         if(func_def){

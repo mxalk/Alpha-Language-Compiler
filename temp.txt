@@ -158,3 +158,62 @@ const{
             $$ = const0;
     }
 }
+
+
+
+funcdef:		FUNCTION {
+				char funct_name[1024];
+				char num[1024];
+				strcpy(funct_name,"$f_anon");
+				sprintf(num,"%d",anon_funct_count++);
+				char* name = strdup(strcat(funct_name,num));
+				dummy=NULL;
+				dummy = insert(name,USRFUNC,getScope(),alpha_yylineno);
+				dummy->iaddress = nextQuad();
+				Expr* funcpref = lvalue_expr(dummy);
+				emit(funcstart,funcpref,NULL,NULL,dummy->iaddress);
+				Stack_append(global_func_stack,(unsigned int*)functionLocalOffset); // ?
+				enterscopespace();
+				resetformalargsoffset();
+				$2 = funcpref;
+
+			} ANGL_O {enterscopespace();increaseScope(1);} idlist{resetfunctionlocalsoffset();} ANGL_C CURL_O block CURL_C 
+			{
+				decreaseScope();
+				exitscopespace();
+				$2->sym->totallocals = functionLocalOffset;
+				functionLocalOffset = Stack_pop(global_func_stack);
+				printf("funcdef ->  function ( idlist ) block \n");
+				emit(funcend,$2)
+			}
+			|FUNCTION ID{
+				dummy=NULL;
+				char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
+				int sc = getScope();
+				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0,1);
+				if(dummy!=NULL){
+					if (dummy->type==LIBFUNC) {
+						sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror(buffer);
+					}
+					else if(dummy->type==USRFUNC){
+						sprintf(buffer, "Function already defined as USERFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror(buffer);
+					}else if(dummy->scope == 0 && getScope()>0){
+						func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+					}
+					else{
+						sprintf(buffer, "Function definition on existing var \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror(buffer);
+					}
+
+				}else{
+					func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+				}
+			} ANGL_O{enterscopespace();increaseScope(1);} idlist {resetfunctionlocalsoffset();} ANGL_C CURL_O block CURL_C 
+			{
+				decreaseScope();
+				exitscopespace();
+				printf("funcdef ->  function ID ( idlist ) block\n");
+					
+			};

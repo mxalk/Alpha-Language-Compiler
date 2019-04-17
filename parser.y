@@ -17,6 +17,7 @@ Queue* global_elist;
 Queue* global_indexed_q;
 Queue* curr_elist = NULL;
 Queue* curr_indexed = NULL;
+Stack* global_func_stack;
 unsigned int arg_scope = 0;
 unsigned int anon_funct_count = 0;
 unsigned int isLamda = 0;
@@ -49,6 +50,8 @@ SymbolTableRecord* dummy2;
 		}*loop;
 }
 %type <symbol> funcdef
+%type <symbol> funcname
+%type <expression> funcprefix
 %type <expression> lvalue
 %type <expression> expr
 %type <expression> member
@@ -164,7 +167,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = term;
 			}
 			|lvalue{
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
 				if(dummy == NULL){
 					printf("%s\n",alpha_yylval.stringValue);
 					alpha_yyerror("Illegal instruction++ on undefined variable \n");
@@ -190,7 +193,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = term;
 			}
 			|INCR lvalue {printf("term ->  ++ lvalue\n");
-					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
+					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
 					if(dummy == NULL){
 						printf("%s\n",alpha_yylval.stringValue);
 						alpha_yyerror("Illegal ++instruction on undefined variable \n");
@@ -215,7 +218,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					$$ = term;
 				}
 			|lvalue{
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
 				if(dummy == NULL){
 					alpha_yyerror("Illegal instruction-- on undefined variable \n");
           				
@@ -239,7 +242,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = term;
 			}
 			|DECR lvalue {printf("term ->  -- lvalue \n");
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0); //type(arg:#4) is not important when we are expecting this var
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
 				if(dummy == NULL){
 					alpha_yyerror("Illegal --instruction on undefined variable ");
           				
@@ -267,7 +270,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 
 assignexpr:		lvalue{
 					// fprintf(stderr,"%s %d %d %d\n",alpha_yylval.stringValue,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
-					dummy = lookup($lvalue->sym->name,LCL,alpha_yylineno,0,0); //type(arg:#4) is not important when we are expecting this var
+					dummy = lookup($lvalue->sym->name,LCL,alpha_yylineno,0,0,0); //type(arg:#4) is not important when we are expecting this var
 					if( dummy != NULL){
 						//if(dummy->scope == 0){
 							if( dummy->type == USRFUNC || dummy->type == LIBFUNC ){
@@ -313,7 +316,8 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				int expected =0;// curr_scope->isFunction?1:0;
 				fprintf(stderr,"%d %s\n",getScope(),alpha_yylval.stringValue);
-				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,expected,0);
+				$1;
+				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,expected,0,0);
 				if (dummy==NULL) {
 					dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
 					dummy->space = currscopespace();
@@ -324,11 +328,12 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
 			}
 			|LOCAL ID {
 				// $$ = $2; // ?
-				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0);
+				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,1);
 				// ki an uparxei hdh local? de prepei na einai opws panw if dummy == NULL ?
 				dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
 				dummy->space = currscopespace();
 				dummy->offset = currscopeoffset();
+				$2;
 				inccurrscopeoffset();
 				$$ = lvalue_expr(dummy);
 			}
@@ -342,6 +347,7 @@ lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of
                 				alpha_yyerror(buffer);
 				}
 				Expr* dcolon = lvalue_expr(dummy);
+				$2;
 				$$ = dcolon;
 				}
 			|member {printf("lvalue ->  member\n"); $$ = emit_iftableitem($1);;};
@@ -488,7 +494,7 @@ indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexede
 indexedelem:		CURL_O expr{
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				// printf("%d %s\n",expected,alpha_yylval.stringValue);
-				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0);
+				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,0);
 				if(dummy==NULL){
 					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 				}
@@ -517,48 +523,76 @@ indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm 
 			};
 
 
-funcdef:		FUNCTION {
+funcdef: funcprefix funcargs funcbody{
+	printf("%d\n",scopeSpaceCounter);
+	exitscopespace();
+	$1->sym->totallocals = functionLocalOffset;
+	functionLocalOffset = Stack_pop(global_func_stack);
+	$$ = $1;
+	emit(funcend,$1,NULL,NULL,0);
+	inccurrscopeoffset();
+};
+
+funcprefix: FUNCTION funcname{
+	SymbolTableRecord* func = $2;
+	func->iaddress = nextQuad();
+	// alpha_yyerror("GEIA");
+	Expr* funcpref = lvalue_expr(func);
+	emit(funcstart,funcpref,NULL,NULL,0);
+	Stack_append(global_func_stack,(unsigned*)functionLocalOffset);
+	enterscopespace();
+	resetformalargsoffset();
+	$$ = funcpref;
+};
+
+funcname: ID {
+				dummy=NULL;
+				//char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
+				int sc = getScope();
+				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0,1,0);
+				if(dummy!=NULL){
+					if (dummy->type==LIBFUNC) {
+						//sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror("Function defined as LIB");
+					}
+					else if(dummy->type==USRFUNC){
+						//sprintf(buffer, "Function already defined as USERFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror("Function defined as USRFUNC");
+					}else if(dummy->scope == 0 && getScope()>0){
+						func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+					}
+					else{
+						//sprintf(buffer, "Function definition on existing var \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
+						alpha_yyerror("Function definition error");
+					}
+
+				}else{
+					dummy = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+				}
+				$$ = dummy;
+				increaseScope(1);
+} | {
 				char funct_name[1024];
 				char num[1024];
 				strcpy(funct_name,"$f_anon");
 				sprintf(num,"%d",anon_funct_count++);
 				char* name = strdup(strcat(funct_name,num));
-				func_for_args = insert(name,USRFUNC,getScope(),alpha_yylineno);
-				
-			} ANGL_O {increaseScope(1);} idlist ANGL_C CURL_O stmt_star CURL_C {decreaseScope();printf("funcdef ->  function ( idlist ) block \n");
-				
-			
-			}
-			|FUNCTION ID{
 				dummy=NULL;
-				char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
-				int sc = getScope();
-				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0,1);
-				if(dummy!=NULL){
-					if (dummy->type==LIBFUNC) {
-						sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
-						alpha_yyerror(buffer);
-					}
-					else if(dummy->type==USRFUNC){
-						sprintf(buffer, "Function already defined as USERFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
-						alpha_yyerror(buffer);
-					}else if(dummy->scope == 0 && getScope()>0){
-						func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
-					}
-					else{
-						sprintf(buffer, "Function definition on existing var \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
-						alpha_yyerror(buffer);
-					}
+				dummy = insert(name,USRFUNC,getScope(),alpha_yylineno);
+				$$ = dummy;
+				increaseScope(1);
+};
 
-				}else{
-					func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
-				}
-			} ANGL_O{increaseScope(1);} idlist  ANGL_C CURL_O stmt_star CURL_C 
-			{
-				decreaseScope();
-				printf("funcdef ->  function ID ( idlist ) block\n");
-					
-			};
+funcargs: ANGL_O idlist ANGL_C{
+	enterscopespace();
+	resetfunctionlocalsoffset();
+};
+
+funcbody: block {
+	decreaseScope();
+	exitscopespace();
+};
+
 			
 block:			CURL_O{increaseScope(0);}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");};
 
@@ -596,7 +630,7 @@ const:			INTNUM {
 idlist:	ID{
 	dummy = NULL;
 	int sc = getScope();
-	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0);
+	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
 
 	if(dummy==NULL){
 		printf("-->%s\n",alpha_yylval.stringValue);
@@ -621,7 +655,7 @@ idlist:	ID{
 ids: COMMA ID{
 		dummy = NULL;
 	int sc = getScope();
-	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0);
+	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
 
 	if(dummy==NULL){
 		printf("-->%s\n",alpha_yylval.stringValue);
@@ -720,6 +754,7 @@ int alpha_yyerror (const char* yaccProvidedMessage){
 int main (int argc, char** argv) {
 		global_elist = Queue_init();
 		global_indexed_q = Queue_init();
+		global_func_stack = Stack_init();
     sym_init();
     if (argc > 1) {
       if (!(alpha_yyin = fopen(argv[1], "r"))) {
