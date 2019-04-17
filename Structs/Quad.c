@@ -403,6 +403,7 @@ void printQuads() {
             case param:
                 printf(" ");
                 switch (result->type) {
+                    case boolexpr_e:
                     case arithexpr_e:
                     case assignexpr_e:
                     case var_e:
