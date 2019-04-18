@@ -85,7 +85,8 @@ struct expr {
 		unsigned char boolConst;
 	} value;
 	Expr *next;
-	Queue *partialeval;
+	Queue *truelist;
+	Queue *falselist;
 };
 struct quad {
 	Iopcode op;

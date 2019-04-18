@@ -33,22 +33,16 @@
     //    c = a + b;
    //     function(){
   //              local c = 1;
- //               return d;
-//        }
+ //               return d;        }
 
 //} 
-
-//while(a){
-//        a = f(a);
-//        if(a)
-//                break;
-//        else
-//                continue;
-        
-//        continue;
-//        break;
-//}
-
+/*
+function f() {
+        x++;
+        return print("LALA");
+}
+*/
+/*
 while(x and y or f()== true) {
    f(z++);
     if (x==3) {

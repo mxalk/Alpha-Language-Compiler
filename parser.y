@@ -887,6 +887,7 @@ returnstmt:
 			alpha_yyerror("return outside function");
 		}	
 		printf("returnstmt ->  return expr ; \n");
+		if (!$2) printf("THGAMHSAME\n");
 		emit(ret, NULL, NULL, $2, 0);
 	};
 
