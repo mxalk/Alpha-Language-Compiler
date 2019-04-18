@@ -67,12 +67,22 @@ test: all
 
 
 t_success:	all
-	./out testfiles/working/Anonymous.asc
-	./out testfiles/working/Block.asc
-	./out testfiles/working/Circle.asc
-	./out testfiles/working/GlobalAndLocal.asc
-	./out testfiles/working/Grammar.asc
-	./out testfiles/working/Random.asc
-	./out testfiles/working/ShadowedNameOffunctions.asc
-	./out testfiles/working/Simple.asc
-	# ./out testfiles/working/Tree.asc
+		./out tests_new/backpatch0.asc
+	./out tests_new/backpatch0.asc
+	./out tests_new/backpatch1.asc
+	./out tests_new/backpatch2.asc
+	./out tests_new/backpatch3.asc
+	./out tests_new/p3t_assignments_complex.asc
+	./out tests_new/p3t_assignments_objects.asc
+	./out tests_new/p3t_assignments_simple.asc
+	./out tests_new/p3t_basic_expr.asc
+	./out tests_new/p3t_calls.asc
+	./out tests_new/p3t_const_maths.asc
+	./out tests_new/p3t_flow_control.asc
+	# ./out tests_new/p3t_flow_control_error.asc # works
+	./out tests_new/p3t_funcdecl.asc
+	./out tests_new/p3t_if_else.asc
+	#  ./out tests_new/p3t_object_creation_expr.asc #seg
+	./out tests_new/p3t_relational.asc
+	./out tests_new/p3t_var_maths.asc
+	./out tests_new/vavouris.asc

@@ -494,7 +494,8 @@ elist:		expr exprs {printf("elist ->  expr exprs\n");
 					$$ = Queue_get(global_elist,global_elist->size-1);
 					curr_elist	=  NULL;
 			}
-			|	{printf("elist ->  nothing\n");/*printf("(2)\n");*/};
+			|	{printf("elist ->  nothing\n");/*printf("(2)\n");*/
+			$$ = NULL;};
 
 exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");
 					if(curr_elist==NULL)curr_elist = Queue_init();
@@ -546,10 +547,10 @@ indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexede
 indexedelem:		CURL_O expr{
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				// printf("%d %s\n",expected,alpha_yylval.stringValue);
-				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,0);
-				if(dummy==NULL){
-					insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
-				}
+				// dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,0);
+				// if(dummy==NULL){
+					// insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
+				// }
 			} COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");
 				if(curr_indexed == NULL){
 					curr_indexed = Queue_init();
@@ -798,8 +799,10 @@ whilestmt: whilestart whilecond loopstmt {
 		printf("whilestmt ->  while ( expr ) stmt \n");
 		emit(jump, NULL, NULL, NULL, $whilestart);
 		patchlabel($whilecond, nextQuad());
-		if ($loopstmt->breaklist) patchlabellist($loopstmt->breaklist, nextQuad());
-		if ($loopstmt->contlist) patchlabellist($loopstmt->contlist, $whilestart);
+		if ($loopstmt){
+			if ($loopstmt->breaklist) patchlabellist($loopstmt->breaklist, nextQuad());
+			if ($loopstmt->contlist) patchlabellist($loopstmt->contlist, $whilestart);
+		}
 	};
 
 
@@ -824,15 +827,11 @@ forstmt: forprefix N elist ANGL_C N loopstmt N {
 	patchlabel($2, nextQuad());
 	patchlabel($5, $forprefix.test);
 	patchlabel($7, $2 +1);
-	if ($loopstmt->breaklist) {
-		printf("===================================lala================break \n");
-		patchlabellist($loopstmt->breaklist, nextQuad());
-	}	
-	if ($loopstmt->contlist){
-			printf("=================================lala==================cont\n");
-		  patchlabellist($loopstmt->contlist, $2 +1);
+	if ($loopstmt) {
+		if ($loopstmt->breaklist) patchlabellist($loopstmt->breaklist, nextQuad());
+		if ($loopstmt->contlist) patchlabellist($loopstmt->contlist, $2 +1);
 	}
-		printf("forstmt ends %d\n",alpha_yylineno);
+	printf("forstmt ends %d\n",alpha_yylineno);
 	// $$ = $6;
 };
 
@@ -849,8 +848,7 @@ returnstmt:
 			alpha_yyerror("return outside function");
 		}	
 		printf("returnstmt ->  return expr ; \n");
-		 //emit(ret, NULL, NULL, $2, 0);
-		// ----------------------------------------------------------------------------------------------------------- FIX
+		 emit(ret, NULL, NULL, $2, 0);
 	};
 
 %%

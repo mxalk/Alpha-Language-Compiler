@@ -88,6 +88,8 @@ void reset_temp() {
 Expr *new_expr(Expr_t type) {
     Expr *expression = (Expr *) malloc(sizeof(Expr));
     expression->type = type;
+    expression->truelist= NULL;
+    expression->falselist = NULL;
     return expression;
 }
 
@@ -110,7 +112,7 @@ Expr* make_call(Expr* lvalue, Queue* elist){ //elist = arg list
     Expr* func = emit_iftableitem(lvalue);
     int i = 0;
     //for each in reverse elist do
-    if(elist!=NULL){
+    if(elist){
         printf("elist->size %d\n",elist->size);
         for(i = 0 ; i <elist->size; i++){
             emit(param,NULL,NULL,Queue_get(elist,i),0);
@@ -169,7 +171,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label)
 
     // printf("%d\n",iopcode);
     // alpha_yyerror(iopcode);
-    printf("\033[0;32mtried emit(%s)  [at line %d]\n\033[0m",iopcodeNames[iopcode],currQuad+1);
+    printf("\033[0;32mEmit(%s)  [quad %d]\n\033[0m",iopcodeNames[iopcode],currQuad+1);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->op = iopcode;
@@ -185,16 +187,20 @@ unsigned nextQuad(){
 }
 
 void patchlabel(unsigned int topatch, unsigned int tojump) {
+    printf("===== Patching quad %d with label %d\n", topatch, tojump);
     quads[topatch-1].label = tojump;
+    printf("===== OK\n");
 }
 
 void patchlabellist(Queue *topatch, unsigned int tojump) {
     int* i;
-    printf("SIZEEEEEEEEEE %d\n", topatch->size);
+    if (!topatch) return;
+    printf("===== Patch quads: %u\n", topatch->size);
     while (i = (int *) Queue_dequeue(topatch)) {
-        printf("=====patched quad %d with label %d\n", (*i), tojump);
+        printf("===== Patching quad %d with label %d\n", (*i), tojump);
         quads[*i -1].label = tojump;
         free(i);
+        printf("===== OK\n");
     }
 }
 
@@ -208,7 +214,7 @@ void printQuads() {
     Expr *expressions[2];
     for (qi=0; qi<currQuad; qi++) {
         q = quads[qi];
-        if(q.op == -1)continue;
+        if(q.op == -1)continue;//./out tests_new/p3t_object_creation_expr.asc 
         iopcode = q.op;
         arg1 = q.arg1;
         arg2 = q.arg2;
@@ -228,6 +234,7 @@ void printQuads() {
                     case boolexpr_e:
                     case assignexpr_e:
                     case newtable_e:
+                    case programfunc_e:
                     case arithexpr_e:
                         printf("%15s", arg1->sym->name);
                         break;
@@ -291,6 +298,7 @@ void printQuads() {
                     switch (expressions[i]->type) {
                         case var_e:
                         case boolexpr_e:
+                        case assignexpr_e:
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -313,7 +321,6 @@ void printQuads() {
                 break;
                 
             case not:
-                assert(result->type == boolexpr_e);
                 printf(" %15s", result->sym->name);
                 printf(" ");
                 switch (arg1->type) {
@@ -347,6 +354,7 @@ void printQuads() {
                         case var_e:
                         case boolexpr_e:
                         case assignexpr_e:
+                        case arithexpr_e:
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -377,6 +385,7 @@ void printQuads() {
                     printf(" ");
                     switch (expressions[i]->type) {
                         case var_e:
+                        case boolexpr_e:
                         case arithexpr_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -530,7 +539,7 @@ void printQuads() {
                 // assert(result->type==newtable_e);
                 printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
-                    printf(" ");
+                    //assert(expressions[i]);
                     switch (expressions[i]->type) {
                         case arithexpr_e:
                         case boolexpr_e:
@@ -559,7 +568,7 @@ void printQuads() {
                 break;
             default: assert(0);
         }
-        printf("\n");
+        printf("\n"); 
     }
 }
 
@@ -576,6 +585,7 @@ Expr *member_item(Expr *lvalue, char *name) {
     Expr *item = new_expr(tableitem_e);
     item->sym = lvalue->sym;
     item->index = newexpr_conststring(name);
+    return item;
 }
 
 //dialeksi 11, diafania 5

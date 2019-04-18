@@ -85,6 +85,8 @@ struct expr {
 		unsigned char boolConst;
 	} value;
 	Expr *next;
+	Queue *truelist;
+	Queue *falselist;
 };
 struct quad {
 	Iopcode op;
@@ -98,7 +100,10 @@ struct quad {
 extern const char *iopcodeNames[];
 extern const char *expr_tNames[];
 
+
+
 // -----
+
 
 extern unsigned programVarOffset;
 extern unsigned functionLocalOffset;
@@ -110,18 +115,18 @@ SymbolTableRecord *new_temp();
 void reset_temp();
 
 Expr *new_expr(Expr_t type);
-Expr *lvalue_expr (SymbolTableRecord* sym);
+Expr* lvalue_expr (SymbolTableRecord* sym);
+
 Expr *newexpr_conststring(const char* name);
 Expr *newexpr_constbool(const unsigned n);
 Expr *newexpr_constnum(const double n);
-
+// dialexi 9, diafania 41
 void expand();
 Expr* make_call(Expr* lvalue, Queue* elist); //elist = arg list
 void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label);
 Expr *emit_iftableitem(Expr *e);
 Expr *member_item(Expr *lvalue,char *name);
 unsigned nextQuad();
-void printQuads();
 void patchlabel(unsigned int, unsigned int);
 void patchlabellist(Queue *, unsigned int);
 
@@ -133,5 +138,5 @@ void resetformalargsoffset();
 void enterscopespace();
 void exitscopespace();
 // SymbolTableRecord * new_symbol(const char* name);
-
+void printQuads();
 Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2);
