@@ -22,22 +22,25 @@
 //   if (x==3) break;
 //}
 
-//for (x=0; x<10; x++) {
-//        print("LALA1");
-//        continue;
-//        break;
-//        continue;
-//}
+for (x=0; x<10; x++) {
+        print("LALA1");
+        continue;
+        break;
+        continue;
+}
+/*
+function id(a,b){
+        c = a + b;
+        function(){
+                local c = 1;
+                return;
+        }
 
-//function id(a,b){
-    //    c = a + b;
-   //     function(){
-  //              local c = 1;
- //               return d;
-//        }
+}
+k = 7;
+*/
 
-//}
-
+/*
 while(a){
         a = f(a);
         if(a)
@@ -52,4 +55,4 @@ while(a){
 while(x<5) {
    x++;
     if (x==3) break;
-}
+}*/

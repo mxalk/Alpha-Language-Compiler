@@ -216,7 +216,6 @@ void printQuads() {
         expressions[0] = arg1;
         expressions[1] = arg2;
         int i;
-
         printf("%5d:%15s", qi+1, iopcodeNames[iopcode]);
         switch (iopcode) {
 
@@ -433,7 +432,22 @@ void printQuads() {
                 break;
 
             case ret:
-                printf(" %15s", arg1->sym->name);
+                if (!result) break;
+                switch (result->type){
+                    case var_e:
+                        printf(" %15s", result->sym->name);
+                        break;
+                    case constbool_e:
+                        printf("%15s", result->value.boolConst?"TRUE":"FALSE");
+                        break;
+                    case constnum_e:
+                        printf("%15f", result->value.numConst);
+                        break;
+                    case conststring_e:
+                        printf("%15s", result->value.strConst);
+                        break;
+                    default: emit_error(iopcode, result);
+                }
                 break;
 
             case getretval:

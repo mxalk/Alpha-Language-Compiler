@@ -68,6 +68,7 @@ unsigned int in_function = 0;
 %type <expression> term
 %type <expression> call
 %type <expression> objectdef
+%type <expression> returnstmt
 %type <iop> lop
 %type <iop> aop
 %type <iop> bop
@@ -362,7 +363,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 				$$ = $1;
 			};
 
-lvalue:			ID {printf("lvalue -> ID \n") ; /*scope lookup and decide what type of var it is*/
+lvalue:			ID {printf("lvalue -> ID= \n") ; /*scope lookup and decide what type of var it is*/
 				// $$ = $1;
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				int expected =0;// curr_scope->isFunction?1:0;
@@ -424,7 +425,7 @@ member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.st
 				item->index = $3; // The index is the expression.
 				$$ = item;
 				}
-			|call DOT ID {printf("member ->  call . ID = %s\n", alpha_yylval.stringValue);
+			|call DOT ID {printf("member ->  call . ID:%d = %s\n",$3 ,alpha_yylval.stringValue);
 				// Expr* tableitem = member_item($1,$3);
 				// $$ = tableitem;
 				// increaseScope(0);
@@ -573,12 +574,11 @@ indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm 
 
 			};
 
-
 funcdef: funcprefix funcargs funcbody{
 	printf("%d\n",scopeSpaceCounter);
 	exitscopespace();
 	$1->sym->totallocals = functionLocalOffset;
-	functionLocalOffset = Stack_pop(global_func_stack);
+	functionLocalOffset = (unsigned int) Stack_pop(global_func_stack);
 	$$ = $1;
 	emit(funcend,$1,NULL,NULL,0);
 	inccurrscopeoffset();
@@ -587,7 +587,6 @@ funcdef: funcprefix funcargs funcbody{
 funcprefix: FUNCTION funcname{
 	SymbolTableRecord* func = $2;
 	func->iaddress = nextQuad();
-	// alpha_yyerror("GEIA");
 	Expr* funcpref = lvalue_expr(func);
 	emit(funcstart,funcpref,NULL,NULL,0);
 	Stack_append(global_func_stack,(unsigned*)functionLocalOffset);
@@ -600,6 +599,7 @@ funcname: ID {
 				dummy=NULL;
 				//char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
+				printf("funcname -> ID:%d \n",$1);
 				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0,1,0);
 				if(dummy!=NULL){
 					if (dummy->type==LIBFUNC) {
@@ -694,7 +694,7 @@ idlist:	ID{
 	dummy = NULL;
 	int sc = getScope();
 	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
-
+	printf("idlist -> ID:%d\n",$1);
 	if(dummy==NULL){
 		printf("-->%s\n",alpha_yylval.stringValue);
 		insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
@@ -719,7 +719,7 @@ ids: COMMA ID{
 		dummy = NULL;
 	int sc = getScope();
 	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
-
+	printf("ids -> COMMA ID:%d\n",$2);
 	if(dummy==NULL){
 		printf("-->%s\n",alpha_yylval.stringValue);
 		insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
@@ -842,14 +842,14 @@ returnstmt:
 			alpha_yyerror("return outside function");
 		}	
 		printf("returnstmt ->  return ; \n");	
-		// emit(ret, NULL, NULL, NULL, 0);}
+		 emit(ret, NULL, NULL, NULL, 0);
 	}
 	|RETURN expr SEMI {
 		if(in_function == 0) {
 			alpha_yyerror("return outside function");
 		}	
 		printf("returnstmt ->  return expr ; \n");
-		// emit(ret, NULL, NULL, $2, 0);
+		 //emit(ret, NULL, NULL, $2, 0);
 		// ----------------------------------------------------------------------------------------------------------- FIX
 	};
 
