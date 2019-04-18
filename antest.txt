@@ -29,27 +29,51 @@
 //        continue;
 //}
 
-//function id(a,b){
+//function id(a,b){ // me auto edo dokimase gia to return
     //    c = a + b;
    //     function(){
   //              local c = 1;
  //               return d;
 //        }
 
+//} 
+
+//while(a){
+//        a = f(a);
+//        if(a)
+//                break;
+//        else
+//                continue;
+        
+//        continue;
+//        break;
 //}
 
-while(a){
-        a = f(a);
-        if(a)
-                break;
-        else
-                continue;
-        
-        continue;
-        break;
+while(x and y or f()== true) {
+   f(z++);
+    if (x==3) {
+            if (f() == true) {break;}
+            g();
+    } else if (x == 2) continue;
+    x++;
 }
-
-while(x<5) {
-   x++;
-    if (x==3) break;
+/*
+if (y = (a or b) and c and false or (g = z())) {
+        x = 10;
+} else if (y == TRUE) {
+        x = 5;
+        if (h == 30 and not c) {
+                x = 15;
+        }
 }
+*/
+/*
+if (FALSE or a and b and (y = g()) and d or e) {
+        print("LALA");
+}
+*/
+/*
+if (h == 30 and not c) { // EDW EXOUME THEMA, kanei (30 and !c)
+        x = 15;
+}
+*/

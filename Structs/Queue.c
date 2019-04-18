@@ -92,6 +92,20 @@ Queue *Queue_merge(Queue *queue1, Queue *queue2) {
         if (!queue1) return NULL;
         return queue1;
     }
+    Queue_Node *node;
+    while (node = Queue_dequeue(queue2)) Queue_enqueue(queue1, node);
+    free(queue2);
+    return queue1;
+}
+
+Queue *Queue_merge_fast(Queue *queue1, Queue *queue2) { // HAS SOME ERROR
+    if (!queue1) {
+        if (!queue2) return NULL;
+        return queue2;
+    } else if (!queue2) {
+        if (!queue1) return NULL;
+        return queue1;
+    }
     Queue_Node *node = queue2->head;
     if (!queue2->size) {
         free(queue2);

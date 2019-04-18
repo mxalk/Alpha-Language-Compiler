@@ -55,6 +55,10 @@ unsigned int in_function = 0;
 			unsigned int test;
 			unsigned int enter;
 		}for_quads;
+		struct PartEval {
+			unsigned int q;
+			struct Queue *partialeval;
+		}parteval;
 }
 %type <symbol> funcdef
 %type <symbol> funcname
@@ -78,10 +82,10 @@ unsigned int in_function = 0;
 %type <queue> exprs
 %type <queue> indexed
 %type <pair> indexedelem
-%type <iop>ifprefix
+%type <parteval>ifprefix
 %type <iop>elseprefix
 %type <iop>whilestart
-%type <iop>whilecond
+%type <parteval>whilecond
 %type <loop_lists> stmt
 %type <loop_lists> stmt_star
 %type <loop_lists> block
@@ -168,31 +172,48 @@ stmt_star: stmt stmt_star {
 		} else $$ = NULL;
 	}| {printf("stmt_star ->  nothing\n"); $$=NULL;};
 
-expr:			assignexpr  {printf("expr ->  assignexpr\n");}
-			|expr aop expr {
-				printf("expr ->  expr op expr %d\n",alpha_yylineno);
-				Expr* expr0 = new_expr(arithexpr_e);
-				expr0->sym = new_temp();
-				emit($2,$1,$3,expr0,0);
-				$$ = expr0;
-			}| expr lop expr{
-				Expr* result;
-				result = new_expr(boolexpr_e);
-				result->sym = new_temp();
-				emit($2, $1 , $3,NULL, nextQuad()+3);
-				emit(assign, newexpr_constbool(0),NULL, result,0);
-				emit(jump,NULL,NULL,NULL,nextQuad()+2);
-				emit(assign, newexpr_constbool(1),NULL, result,0); // arg2 = NULL , label = NULL on assign OR aop
-				$$ = result;
-			}|
-			expr bop expr{
-				Expr* result = new_expr(boolexpr_e);
-				result->sym = new_temp();
-				emit($2, $1 , $3, result,0);
-				$$ = result;
-			}|term {printf("expr ->  term\n");
-				$$ = $1;
-			};
+expr:			assignexpr  {
+		printf("expr ->  assignexpr\n");
+		$$ = $1;
+	}| expr aop expr {
+		printf("expr ->  expr op expr %d\n",alpha_yylineno);
+		Expr* expr0 = new_expr(arithexpr_e);
+		expr0->sym = new_temp();
+		emit($2,$1,$3,expr0,0);
+		$$ = expr0;
+	}| expr lop expr{
+		Expr *result = new_expr(boolexpr_e);
+		result->sym = new_temp();
+		emit($2, $1 , $3,NULL, nextQuad()+3);
+		emit(assign, newexpr_constbool(0),NULL, result,0);
+		emit(jump,NULL,NULL,NULL,nextQuad()+2);
+		emit(assign, newexpr_constbool(1),NULL, result,0); // arg2 = NULL , label = NULL on assign OR aop
+		// partial evaluation
+		result->partialeval = Queue_merge($1->partialeval, $3->partialeval);
+		if (!result->partialeval) result->partialeval = Queue_init();
+		int *i = malloc(sizeof(int));
+		*i = nextQuad();
+		Queue_enqueue(result->partialeval, i);
+		emit(if_eq, result, newexpr_constbool(0), NULL, 0);
+
+		$$ = result;
+	}| expr bop expr{
+		Expr *result = new_expr(boolexpr_e);
+		result->sym = new_temp();
+		emit($2, $1 , $3, result,0);
+		// partial evaluation
+		result->partialeval = Queue_merge($1->partialeval, $3->partialeval);
+		if (!result->partialeval) result->partialeval = Queue_init();
+		int *i = malloc(sizeof(int));
+		*i = nextQuad();
+		Queue_enqueue(result->partialeval, i);
+    printf("--------------ENQUEUED quad %u!!\n", *i);
+		emit(if_eq, result, newexpr_constbool(0), NULL, 0);
+
+		$$ = result;
+	}| term {printf("expr ->  term\n");
+		$$ = $1;
+	};
 
 aop:	PLUS{$$ = add;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;}|MINUS{$$ = sub;};
 
@@ -212,9 +233,10 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = new_e;
 			}
 			|NOT expr {printf("term ->  not expr \n");
-				Expr* term = new_expr(arithexpr_e);
+				Expr* term = new_expr(boolexpr_e);
 				term->sym = new_temp();
 				emit(not,$2,NULL,term,0);
+				term->partialeval = $expr->partialeval; // partial evaluation
 				$$ = term;
 			}
 			|lvalue{
@@ -228,7 +250,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					alpha_yyerror("Illegal instruction++ on function  \n");
           				
 				}
-			} INCR {printf("term ->   lvalue ++ \n");
+			} INCR {printf("term ->   lvalue ++ \n"); // not lvalue INCR??
 				Expr* term = new_expr(var_e);
 				Expr* value;
 				term->sym = new_temp();
@@ -344,6 +366,7 @@ assignexpr:		lvalue{
 							assign_ret->sym = new_temp();
 							emit(assign, $1, NULL, assign_ret,0);
 					}
+					assign_ret->partialeval = $expr->partialeval;
 					$$ = assign_ret;
 			};
 
@@ -493,7 +516,10 @@ elist:		expr exprs {printf("elist ->  expr exprs\n");
 					$$ = Queue_get(global_elist,global_elist->size-1);
 					curr_elist	=  NULL;
 			}
-			|	{printf("elist ->  nothing\n");/*printf("(2)\n");*/};
+			|	{
+				printf("elist ->  nothing\n");/*printf("(2)\n");*/
+				$$ = NULL;
+				};
 
 exprs:			COMMA expr exprs {printf("exprs ->  , expr exprs\n");
 					if(curr_elist==NULL)curr_elist = Queue_init();
@@ -741,26 +767,33 @@ ids: COMMA ID{
 		| {printf("ids ->  nothing\n");};
 
 ifprefix: IF ANGL_O expr ANGL_C {
-		emit(if_eq, $expr, newexpr_constbool(1), NULL, nextQuad()+2);
-		$ifprefix = nextQuad();
-		emit(jump, NULL, NULL, NULL, 0);
+		printf("ifprefix -> if ( expr )\n");
+		// emit(if_eq, $expr, newexpr_constbool(1), NULL, nextQuad()+2); // due to partial evaluation
+		// $ifprefix.q = nextQuad(); // due to partial evaluation
+		$ifprefix.partialeval = $expr->partialeval;
+		// emit(jump, NULL, NULL, NULL, 0);  // due to partial evaluation
 	};
 
 elseprefix: ELSE {
+	printf("elseprefix -> else\n");
 	$elseprefix = nextQuad();
 	emit(jump, NULL, NULL, NULL, 0);
 };
 
 ifstmt:	ifprefix stmt {
-	printf("ifstart1");
-		patchlabel($ifprefix, nextQuad());
-		if($2)$$ = $2;
+	printf("ifstmt -> ifprefix stmt\n");
+	printf("ifstart1\n");
+		// patchlabel($ifprefix.q, nextQuad()); // due to partial evaluation
+		if ($ifprefix.partialeval) patchlabellist($ifprefix.partialeval, nextQuad());
+		if ($2) $$ = $2;
 		else $$ = NULL;
-		printf("ifend1");
+		printf("ifend1\n");
 		
 	}| ifprefix stmt elseprefix stmt {
-		printf("ifstart2");
-		patchlabel($ifprefix, $elseprefix+1);
+	printf("ifstmt -> ifprefix stmt elseprefix stmt\n");
+		printf("ifstart2\n");
+		// patchlabel($ifprefix.q, $elseprefix+1); // due to partial evaluation
+		if ($ifprefix.partialeval) patchlabellist($ifprefix.partialeval, $elseprefix+1);
 		patchlabel($elseprefix, nextQuad());
 		if ($4 && $2) {
 			printf("br1 && br2\n");
@@ -773,8 +806,8 @@ ifstmt:	ifprefix stmt {
 		} else if ($2) {
 						printf("br2\n");
 			$$ = $2;
-		} else $$ = NULL;
-		printf("ifend2");
+		} else $$ = NULL;\
+		printf("ifend2\n");
 	};
 	
 
@@ -789,17 +822,22 @@ whilestart: WHILE {
 	};
 
 whilecond: ANGL_O expr ANGL_C {
-		emit(if_eq, $expr, newexpr_constbool (1), NULL, nextQuad()+2);
-		$whilecond = nextQuad();
-		emit(jump, NULL, NULL, NULL, 0);
+		// emit(if_eq, $expr, newexpr_constbool (1), NULL, nextQuad()+2);
+		$whilecond.q = nextQuad();
+		$whilecond.partialeval = $expr->partialeval;
+		if (!$expr->partialeval) emit(if_eq, $expr, newexpr_constbool (0), NULL, nextQuad()+2);
+		// emit(jump, NULL, NULL, NULL, 0);
 	};
 
 whilestmt: whilestart whilecond loopstmt {
 		printf("whilestmt ->  while ( expr ) stmt \n");
 		emit(jump, NULL, NULL, NULL, $whilestart);
-		patchlabel($whilecond, nextQuad());
-		if ($loopstmt->breaklist) patchlabellist($loopstmt->breaklist, nextQuad());
-		if ($loopstmt->contlist) patchlabellist($loopstmt->contlist, $whilestart);
+		if ($whilecond.partialeval) patchlabellist($whilecond.partialeval, nextQuad());
+		else patchlabel($whilecond.q, nextQuad());
+		if ($loopstmt) {
+			if ($loopstmt->breaklist) patchlabellist($loopstmt->breaklist, nextQuad());
+			if ($loopstmt->contlist) patchlabellist($loopstmt->contlist, $whilestart);
+		}
 	};
 
 
@@ -842,15 +880,14 @@ returnstmt:
 			alpha_yyerror("return outside function");
 		}	
 		printf("returnstmt ->  return ; \n");	
-		// emit(ret, NULL, NULL, NULL, 0);}
+		emit(ret, NULL, NULL, NULL, 0);
 	}
 	|RETURN expr SEMI {
 		if(in_function == 0) {
 			alpha_yyerror("return outside function");
 		}	
 		printf("returnstmt ->  return expr ; \n");
-		// emit(ret, NULL, NULL, $2, 0);
-		// ----------------------------------------------------------------------------------------------------------- FIX
+		emit(ret, NULL, NULL, $2, 0);
 	};
 
 %%

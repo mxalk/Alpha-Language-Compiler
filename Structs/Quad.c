@@ -88,6 +88,7 @@ void reset_temp() {
 Expr *new_expr(Expr_t type) {
     Expr *expression = (Expr *) malloc(sizeof(Expr));
     expression->type = type;
+    expression->partialeval = NULL;
     return expression;
 }
 
@@ -110,7 +111,7 @@ Expr* make_call(Expr* lvalue, Queue* elist){ //elist = arg list
     Expr* func = emit_iftableitem(lvalue);
     int i = 0;
     //for each in reverse elist do
-    if(elist!=NULL){
+    if(elist){
         printf("elist->size %d\n",elist->size);
         for(i = 0 ; i <elist->size; i++){
             emit(param,NULL,NULL,Queue_get(elist,i),0);
@@ -169,7 +170,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label)
 
     // printf("%d\n",iopcode);
     // alpha_yyerror(iopcode);
-    printf("\033[0;32mtried emit(%s)  [at line %d]\n\033[0m",iopcodeNames[iopcode],currQuad+1);
+    printf("\033[0;32mEmit(%s)  [quad %d]\n\033[0m",iopcodeNames[iopcode],currQuad+1);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->op = iopcode;
@@ -190,11 +191,12 @@ void patchlabel(unsigned int topatch, unsigned int tojump) {
 
 void patchlabellist(Queue *topatch, unsigned int tojump) {
     int* i;
-    printf("SIZEEEEEEEEEE %d\n", topatch->size);
+    if (topatch) printf("===== Patch quads: %u\n", topatch->size);
     while (i = (int *) Queue_dequeue(topatch)) {
-        printf("=====patched quad %d with label %d\n", (*i), tojump);
+        printf("===== Patching quad %d with label %d\n", (*i), tojump);
         quads[*i -1].label = tojump;
         free(i);
+        printf("===== OK\n");
     }
 }
 
