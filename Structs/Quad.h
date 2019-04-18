@@ -138,5 +138,5 @@ void resetformalargsoffset();
 void enterscopespace();
 void exitscopespace();
 // SymbolTableRecord * new_symbol(const char* name);
-
+void printQuads();
 Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2);

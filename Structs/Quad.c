@@ -211,7 +211,7 @@ void printQuads() {
     Expr *expressions[2];
     for (qi=0; qi<currQuad; qi++) {
         q = quads[qi];
-        if(q.op == -1)continue;
+        if(q.op == -1)continue;//./out tests_new/p3t_object_creation_expr.asc 
         iopcode = q.op;
         arg1 = q.arg1;
         arg2 = q.arg2;
@@ -231,6 +231,7 @@ void printQuads() {
                     case boolexpr_e:
                     case assignexpr_e:
                     case newtable_e:
+                    case programfunc_e:
                     case arithexpr_e:
                         printf("%15s", arg1->sym->name);
                         break;
@@ -294,6 +295,7 @@ void printQuads() {
                     switch (expressions[i]->type) {
                         case var_e:
                         case boolexpr_e:
+                        case assignexpr_e:
                         case tableitem_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -380,6 +382,7 @@ void printQuads() {
                     printf(" ");
                     switch (expressions[i]->type) {
                         case var_e:
+                        case boolexpr_e:
                         case arithexpr_e:
                             printf("%15s", expressions[i]->sym->name);
                             break;
@@ -533,7 +536,7 @@ void printQuads() {
                 // assert(result->type==newtable_e);
                 printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
-                    printf(" ");
+                    //assert(expressions[i]);
                     switch (expressions[i]->type) {
                         case arithexpr_e:
                         case boolexpr_e:
@@ -579,6 +582,7 @@ Expr *member_item(Expr *lvalue, char *name) {
     Expr *item = new_expr(tableitem_e);
     item->sym = lvalue->sym;
     item->index = newexpr_conststring(name);
+    return item;
 }
 
 //dialeksi 11, diafania 5

@@ -1,73 +1,18 @@
-//test().x = 1;
 
-//x = f(y)(a,b);
-//f(y);
 
-//sprite..move(f(sprite..move(x>2)),dy);
-// x = (((a =  y > -2) == true) and false ) or false; 
+//x = a<b;
 
-//if (x > 5) { x = 20 ;} else x = 10;
-//f (x+1, x=2);
-//sprite..move(f(sprite..move(x>2)),dy); // it works finally
-//circle = [ {"pi" : ++pi}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
-//t.a.b.c = x;
-//a["b"] = x;
-//t = [ ++i, i = 1821, --i, i = 8 ];
-//c = [[[x,y],b,e],d,f,[l,a]];
+//x = a < b or c < d and e < f;
 
-//f = [x,[]];
-//x=0;
-//while(x<5) {
-//   x++;
-//   if (x==3) break;
-//}
-
-//for (x=0; x<10; x++) {
-//        print("LALA1");
-//        continue;
-//        break;
-//        continue;
-//}
-
-//function id(a,b){ // me auto edo dokimase gia to return
-    //    c = a + b;
-   //     function(){
-  //              local c = 1;
- //               return d;        }
-
-//} 
-/*
-function f() {
-        x++;
-        return print("LALA");
-}
-*/
-/*
-while(x and y or f()== true) {
-   f(z++);
-    if (x==3) {
-            if (f() == true) {break;}
-            g();
-    } else if (x == 2) continue;
-    x++;
-}
-/*
-if (y = (a or b) and c and false or (g = z())) {
-        x = 10;
-} else if (y == TRUE) {
-        x = 5;
-        if (h == 30 and not c) {
-                x = 15;
-        }
-}
-*/
-/*
-if (FALSE or a and b and (y = g()) and d or e) {
+if (a < b or c < d and e < f) {
         print("LALA");
 }
-*/
+
 /*
-if (h == 30 and not c) { // EDW EXOUME THEMA, kanei (30 and !c)
-        x = 15;
-}
+        e < f
+        tmp0 and d
+        tmp2  = c < tmp1
+
+
+
 */
