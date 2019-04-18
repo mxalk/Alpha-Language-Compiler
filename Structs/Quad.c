@@ -169,7 +169,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label)
 
     // printf("%d\n",iopcode);
     // alpha_yyerror(iopcode);
-    printf("\033[0;32mtried emit(%s)  [at line %d]\n\033[0m",iopcodeNames[iopcode],currQuad);
+    printf("\033[0;32mtried emit(%s)  [at line %d]\n\033[0m",iopcodeNames[iopcode],currQuad+1);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->op = iopcode;
@@ -189,8 +189,13 @@ void patchlabel(unsigned int topatch, unsigned int tojump) {
 }
 
 void patchlabellist(Queue *topatch, unsigned int tojump) {
-    int i;
-    while (i = (int) Queue_dequeue(topatch)) quads[i].label = tojump;
+    int* i;
+    printf("SIZEEEEEEEEEE %d\n", topatch->size);
+    while (i = (int *) Queue_dequeue(topatch)) {
+        printf("=====patched quad %d with label %d\n", (*i), tojump);
+        quads[*i -1].label = tojump;
+        free(i);
+    }
 }
 
 void printQuads() {

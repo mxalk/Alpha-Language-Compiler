@@ -18,15 +18,38 @@
 //f = [x,[]];
 //x=0;
 //while(x<5) {
-  //  x++;
-    //if (x==3) break;
+//   x++;
+//   if (x==3) break;
 //}
 
-function id(a,b){
-        c = a + b;
-        function(){
-                local c = 1;
-                return d;
-        }
+//for (x=0; x<10; x++) {
+//        print("LALA1");
+//        continue;
+//        break;
+//        continue;
+//}
 
+//function id(a,b){
+    //    c = a + b;
+   //     function(){
+  //              local c = 1;
+ //               return d;
+//        }
+
+//}
+
+while(a){
+        a = f(a);
+        if(a)
+                break;
+        else
+                continue;
+        
+        continue;
+        break;
+}
+
+while(x<5) {
+   x++;
+    if (x==3) break;
 }

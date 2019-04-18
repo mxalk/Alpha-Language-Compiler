@@ -24,6 +24,9 @@ unsigned int isLamda = 0;
 SymbolTableRecord* func_for_args = NULL;
 SymbolTableRecord* dummy;
 SymbolTableRecord* dummy2;
+unsigned int loopcounter = 0;
+Stack *loopcounter_stack;
+unsigned int in_function = 0;
 
 %}
 %define api.prefix {alpha_yy}
@@ -47,7 +50,11 @@ SymbolTableRecord* dummy2;
 		struct Loop{
 			struct Queue *breaklist;
 			struct Queue *contlist;
-		}*loop;
+		}*loop_lists;
+		struct For{
+			unsigned int test;
+			unsigned int enter;
+		}for_quads;
 }
 %type <symbol> funcdef
 %type <symbol> funcname
@@ -75,7 +82,14 @@ SymbolTableRecord* dummy2;
 %type <iop>elseprefix
 %type <iop>whilestart
 %type <iop>whilecond
-%type <loop>loopstmt
+%type <loop_lists> stmt
+%type <loop_lists> stmt_star
+%type <loop_lists> block
+%type <loop_lists> loopstmt
+%type <loop_lists> ifstmt
+%type <iop>M
+%type <iop>N
+%type <for_quads>forprefix
 
 
 
@@ -106,17 +120,53 @@ SymbolTableRecord* dummy2;
 
 program:	stmt_star {printf("program ->  statements\n");};
 
-stmt: 		expr SEMI {printf("stmt ->  expr SEMI\n");}
-      			|ifstmt {printf("stmt ->  ifstmst\n");}
-      			|whilestmt {printf("stmt ->  whilestmt\n");}
-			|forstmt {printf("stmt ->  forstmt\n");}
-			|returnstmt {printf("stmt ->  returnstmt\n");}
-			|block {printf("stmt ->  block\n");}
-			|funcdef {printf("stmt ->  funcdef\n");}
-			|SEMI {printf("stmt ->  SEMI\n");};
+stmt: expr SEMI {printf("stmt ->  expr SEMI\n");$$ = NULL;}
+	| ifstmt {printf("stmt ->  ifstmst\n");$$ = $1;}
+	| whilestmt {printf("stmt ->  whilestmt\n");$$ = NULL;}
+	| forstmt {printf("stmt ->  forstmt\n");$$ = NULL;}
+	| returnstmt {printf("stmt ->  returnstmt\n");$$ = NULL;}
+	| block {
+		printf("stmt ->  block\n");
+		$$ = $1; // check
+	}
+	| funcdef {printf("stmt ->  funcdef\n");$$ = NULL;}
+	| SEMI {printf("stmt ->  SEMI\n");$$ = NULL;}
+	| CONTINUE SEMI {
+		printf("stmt ->  cont SEMI\n");
+		if (!loopcounter) alpha_yyerror("continue can only be used in loop");
+		$$ = (struct Loop*)malloc(sizeof(struct Loop));
+		$$->contlist = Queue_init();
+		int *i = (int *)malloc(sizeof(int));
+		*i = nextQuad();
+		Queue_enqueue($$->contlist, i);
+		$$->breaklist = Queue_init();
+		emit(jump, NULL, NULL, NULL, 0);
+	}| BREAK SEMI {
+		printf("stmt ->  break SEMI\n");
+		if (!loopcounter) alpha_yyerror("break can only be used in loop");
+		$$ = (struct Loop*)malloc(sizeof(struct Loop));
+		$$->breaklist = Queue_init();
+		int *i = (int *)malloc(sizeof(int));
+		*i = nextQuad();
+		Queue_enqueue($$->breaklist, i);
+		$$->contlist = Queue_init();
+		emit(jump, NULL, NULL, NULL, 0);
+	};
 
-stmt_star:			stmt stmt_star {printf("stmt_star ->  stmt and stmt_star\n");}
-			| {printf("stmt_star ->  nothing\n");};
+stmt_star: stmt stmt_star {
+		printf("stmt_star ->  stmt and stmt_star\n");
+		if ($1 && $2) {
+			printf("br1 && br2\n");
+			$$->breaklist = Queue_merge($1->breaklist, $2->breaklist);
+			$$->contlist = Queue_merge($1->contlist, $2->contlist);
+		} else if ($1) {
+						printf("br1\n");
+			$$ = $1;
+		} else if ($2) {
+						printf("br2\n");
+			$$ = $2;
+		} else $$ = NULL;
+	}| {printf("stmt_star ->  nothing\n"); $$=NULL;};
 
 expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			|expr aop expr {
@@ -143,6 +193,7 @@ expr:			assignexpr  {printf("expr ->  assignexpr\n");}
 			}|term {printf("expr ->  term\n");
 				$$ = $1;
 			};
+
 aop:	PLUS{$$ = add;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;}|MINUS{$$ = sub;};
 
 lop:	GREATER{ $$ = if_greater;}|GREATER_E{$$ = if_gratereq;} | LESS {$$ = if_less;}|LESS_E {$$ = if_lesseq;}| EQUALS {$$ = if_eq;} | NEQUALS {$$ = if_noteq;};
@@ -588,13 +639,25 @@ funcargs: ANGL_O idlist ANGL_C{
 	resetfunctionlocalsoffset();
 };
 
-funcbody: block {
+funcblockstart: {
+	int *i = (int *)malloc(sizeof(int));
+	*i = loopcounter;
+	Stack_append(loopcounter_stack, i);
+	loopcounter = 0;
+	in_function++;
+};
+funcblockend: {
+	int *i = Stack_pop(loopcounter_stack);
+	loopcounter = *i;
+	free(i);
+	in_function--;
+};
+funcbody: funcblockstart block funcblockend{
 	decreaseScope();
 	exitscopespace();
 };
-
 			
-block:			CURL_O{increaseScope(0);}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");};
+block:			CURL_O{increaseScope(0);}  stmt_star CURL_C{decreaseScope();}  {printf("block ->  { stmt_star }\n");$$ = $3;};
 
 const:			INTNUM {
 							printf("const ->  INTNUM\n");
@@ -689,35 +752,37 @@ elseprefix: ELSE {
 };
 
 ifstmt:	ifprefix stmt {
+	printf("ifstart1");
 		patchlabel($ifprefix, nextQuad());
+		if($2)$$ = $2;
+		else $$ = NULL;
+		printf("ifend1");
+		
 	}| ifprefix stmt elseprefix stmt {
+		printf("ifstart2");
 		patchlabel($ifprefix, $elseprefix+1);
 		patchlabel($elseprefix, nextQuad());
+		if ($4 && $2) {
+			printf("br1 && br2\n");
+			$$ = (struct Loop*)malloc(sizeof(struct Loop));
+			$$->breaklist = Queue_merge($4->breaklist, $2->breaklist);
+			$$->contlist = Queue_merge($4->contlist, $2->contlist);
+		} else if ($4) {
+						printf("br1\n");
+			$$ = $4;
+		} else if ($2) {
+						printf("br2\n");
+			$$ = $2;
+		} else $$ = NULL;
+		printf("ifend2");
 	};
+	
 
-loopstmt: stmt // FIX HERE TO ACCEPT STMT AND LOOPSTMT AGAIN FOR MANY BREAKS
-	|BREAK SEMI loopstmt{
-		printf("stmt ->  break SEMI\n");
-		$$ = $3;
-		if (!$$) {
-			$$ = malloc(sizeof(struct Loop));
-			$$->breaklist = Queue_init();
-			$$->contlist = Queue_init();
-		}
-		Queue_enqueue($$->breaklist, nextQuad());
-		emit(jump, NULL, NULL, NULL, 0);
-	}
-	|CONTINUE SEMI loopstmt{
-		printf("stmt ->  break SEMI\n");
-		$$ = $3;
-		if (!$$) {
-			$$ = malloc(sizeof(struct Loop));
-			$$->breaklist = Queue_init();
-			$$->contlist = Queue_init();
-		}
-		Queue_enqueue($$->contlist, nextQuad());
-		emit(jump, NULL, NULL, NULL, 0);
-	};
+loopstart: { ++loopcounter; };
+loopend: { --loopcounter; };
+loopstmt: loopstart stmt loopend{
+	$$ = $stmt;
+};
 
 whilestart: WHILE {
 		$whilestart = nextQuad();
@@ -733,15 +798,60 @@ whilestmt: whilestart whilecond loopstmt {
 		printf("whilestmt ->  while ( expr ) stmt \n");
 		emit(jump, NULL, NULL, NULL, $whilestart);
 		patchlabel($whilecond, nextQuad());
+		if ($loopstmt->breaklist) patchlabellist($loopstmt->breaklist, nextQuad());
+		if ($loopstmt->contlist) patchlabellist($loopstmt->contlist, $whilestart);
+	};
+
+
+N: {
+	$$ = nextQuad();
+	emit(jump, NULL, NULL, NULL, 0);
+};
+
+M: {
+	$$ = nextQuad();
+};
+
+forprefix: FOR ANGL_O elist SEMI M expr SEMI {
+	$$.test = $M;
+	$$.enter = nextQuad();
+	emit(if_eq, $expr, newexpr_constbool (1), NULL, 0);
+};
+
+forstmt: forprefix N elist ANGL_C N loopstmt N {
+	printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n");
+	patchlabel($forprefix.enter, $5 +1);
+	patchlabel($2, nextQuad());
+	patchlabel($5, $forprefix.test);
+	patchlabel($7, $2 +1);
+	if ($loopstmt->breaklist) {
+		printf("===================================lala================break \n");
 		patchlabellist($loopstmt->breaklist, nextQuad());
-		patchlabellist($loopstmt->contlist, $whilestart);
-	};
+	}	
+	if ($loopstmt->contlist){
+			printf("=================================lala==================cont\n");
+		  patchlabellist($loopstmt->contlist, $2 +1);
+	}
+		printf("forstmt ends %d\n",alpha_yylineno);
+	// $$ = $6;
+};
 
-forstmt: FOR ANGL_O elist SEMI expr SEMI elist ANGL_C stmt {
-		printf("forstmt ->  for ( elist ; expr ; elist ) stmt \n");
+returnstmt: 
+	RETURN SEMI {
+		if(in_function == 0) {
+			alpha_yyerror("return outside function");
+		}	
+		printf("returnstmt ->  return ; \n");	
+		// emit(ret, NULL, NULL, NULL, 0);}
+	}
+	|RETURN expr SEMI {
+		if(in_function == 0) {
+			alpha_yyerror("return outside function");
+		}	
+		printf("returnstmt ->  return expr ; \n");
+		// emit(ret, NULL, NULL, $2, 0);
+		// ----------------------------------------------------------------------------------------------------------- FIX
 	};
-
-returnstmt: RETURN SEMI {printf("returnstmt ->  return ; \n");} |RETURN expr SEMI {printf("returnstmt ->  return expr ; \n");};
 
 %%
 
@@ -755,6 +865,7 @@ int main (int argc, char** argv) {
 		global_elist = Queue_init();
 		global_indexed_q = Queue_init();
 		global_func_stack = Stack_init();
+		loopcounter_stack = Stack_init();
     sym_init();
     if (argc > 1) {
       if (!(alpha_yyin = fopen(argv[1], "r"))) {

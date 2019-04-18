@@ -44,7 +44,7 @@ void Queue_enqueue(Queue *queue, void *element) {
     node = (Queue_Node *) malloc(sizeof(Queue_Node));
     node->content = element;
     node->next = NULL;
-    if (queue->size == 0) {
+    if (!queue->size) {
         queue->head = node;
     } else queue->tail->next = node;
     queue->tail = node;
@@ -57,7 +57,7 @@ void *Queue_dequeue(Queue *queue) {
     Queue_Node *node;
     void *content;
 
-    if (Queue_isEmpty(queue)) return NULL;
+    if (!queue->size) return NULL;
     node = queue->head;
     if (queue->size == 1) {
         queue->head = NULL;
@@ -82,4 +82,25 @@ void *Queue_get(Queue *queue, int index) {
         node = node->next;
     }
     return node->content;
+}
+
+Queue *Queue_merge(Queue *queue1, Queue *queue2) {
+    if (!queue1) {
+        if (!queue2) return NULL;
+        return queue2;
+    } else if (!queue2) {
+        if (!queue1) return NULL;
+        return queue1;
+    }
+    Queue_Node *node = queue2->head;
+    if (!queue2->size) {
+        free(queue2);
+        return queue1;
+    }
+    if (!queue1->size) {
+        queue1->head = node;
+    } else queue1->tail->next = node;
+    queue1->tail = node;
+    queue1->size += queue2->size;
+    return queue1;
 }

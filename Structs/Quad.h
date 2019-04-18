@@ -126,10 +126,15 @@ Expr *emit_iftableitem(Expr *e);
 Expr *member_item(Expr *lvalue,char *name);
 unsigned nextQuad();
 void patchlabel(unsigned int, unsigned int);
+void patchlabellist(Queue *, unsigned int);
 
 Scopespace_t currscopespace(void);
 unsigned currscopeoffset ();
 void inccurrscopeoffset();
+void resetfunctionlocalsoffset();
+void resetformalargsoffset();
+void enterscopespace();
+void exitscopespace();
 // SymbolTableRecord * new_symbol(const char* name);
 
 Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2);

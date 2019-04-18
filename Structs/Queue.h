@@ -25,3 +25,5 @@ void Queue_enqueue(Queue *queue, void *element);
 void *Queue_dequeue(Queue *queue);
 
 void *Queue_get(Queue *queue, int index);
+
+Queue *Queue_merge(Queue *, Queue *);
