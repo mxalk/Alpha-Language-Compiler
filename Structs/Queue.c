@@ -1,7 +1,5 @@
 #include "Queue.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+
 
 
 Queue *Queue_init() {

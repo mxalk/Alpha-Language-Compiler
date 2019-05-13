@@ -4,7 +4,7 @@ SHELL:=/bin/sh
 STRUCTS := Structs
 OBJ := obj
 DIR = obj/
-SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c
+SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c $(STRUCTS)/t_libAVM.c
 OBJECTS := $(patsubst $(STRUCTS)/%.c, $(OBJ)/%.o, $(SOURCES))
 
 GREY="\033[0;37m"

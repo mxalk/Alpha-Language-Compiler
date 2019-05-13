@@ -1,4 +1,5 @@
 #pragma once
+#include <string.h>
 #include "Stack.h"
 #include "Queue.h"
 

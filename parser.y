@@ -4,6 +4,8 @@
 #include <string.h>
 #include "./Structs/Stack.h"
 #include "./Structs/Quad.h"
+// #include "./Structs/t_libAVM.h"
+
 #define debug 1
 #define errors_halt 1
 #define exit(x) if(errors_halt)exit(x)
@@ -580,7 +582,7 @@ funcdef: funcprefix funcargs funcbody{
 	exitscopespace();
 	$1->sym->totallocals = functionLocalOffset;
 	functionLocalOffset = (unsigned int) Stack_pop(global_func_stack);
-	$$ = $1;
+	$$ = $1->sym;
 	emit(funcend,$1,NULL,NULL,0);
 	inccurrscopeoffset();
 };
@@ -878,5 +880,6 @@ int main (int argc, char** argv) {
 		//printGSS();
     display();
     printQuads();
+//     display_geao();
     return 0;
 }

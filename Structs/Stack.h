@@ -1,4 +1,7 @@
 #pragma once
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 typedef struct Stack_Node Stack_Node;
 typedef struct Stack Stack;
 
