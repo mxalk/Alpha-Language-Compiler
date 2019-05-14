@@ -1,16 +1,46 @@
 #include "t_libAVM.h"
 
+typedef void (*generator_func_t)(Quad *);
+generator_func_t generators[] = {
+	generate_ASSIGN,
+	generate_ADD,
+	generate_SUB,
+	generate_MUL,
+	generate_DIV,
+	generate_MOD,
+	generate_UMINUS,
+	generate_AND,
+	generate_OR,
+	generate_NOT,
+	generate_IF_EQ,
+	generate_IF_NOTEQ,
+	generate_IF_LESSEQ,
+	generate_IF_GREATEREQ,
+	generate_IF_LESS,
+	generate_IF_GREATER,
+	generate_CALL,
+	generate_PARAM,
+	generate_RETURN,
+	generate_JUMP,
+	generate_GETRETVAL,
+	generate_FUNCSTART,
+	generate_FUNCEND,
+	generate_NEWTABLE,
+	generate_TABLEGETELEM,
+	generate_TABLESETELEM,
+	generate_NOP
+};
 
 void generateCode(void){
-	// unsigned int i;
-	// for( i = 0; i < currQuad; i++){
+	unsigned int i;
+	for( i = 0; i < currQuad; i++){
 
-	// 	assert(quads +i);
-	// 	(*generators[quads[i].op])(quads + i);
-	// }
-	// patch_incomplete_jumps();
+		assert(quads +i);
+		(*generators[quads[i].op])(quads + i);
+	}
+	patch_incomplete_jumps();
 }
-#if 0
+#if 1
 void make_operand(Expr* e,vmarg* arg){
     switch(e->type){
         case var_e:
@@ -54,12 +84,12 @@ void make_operand(Expr* e,vmarg* arg){
             break;
         }
         case programfunc_e:{
-            arg->val = e->sym->iaddress; // taddress is recommended ? what is taddress ?
+            arg->val = (unsigned int)e->sym->iaddress; // taddress is recommended ? what is taddress ?
             arg->type = userfunc_a;
             break;
         }
         case libraryfunc_e:{
-            arg->val = e->sym->name; // taddress is recommended ? what is taddress ?
+            arg->val = (unsigned int)e->sym->name; // taddress is recommended ? what is taddress ?
             arg->type = libfuncs_newused(e->sym->name);
             break;
         }

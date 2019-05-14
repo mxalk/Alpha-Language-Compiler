@@ -4,7 +4,7 @@
 #include <string.h>
 #include "./Structs/Stack.h"
 #include "./Structs/Quad.h"
-// #include "./Structs/t_libAVM.h"
+#include "./Structs/t_libAVM.h"
 
 #define debug 1
 #define errors_halt 1

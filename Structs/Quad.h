@@ -1,6 +1,14 @@
 #pragma once
 #include "SymTable.h"
 
+typedef struct expr Expr;
+typedef struct quad Quad;
+typedef struct alpha_func_t af_t;
+
+extern Quad *quads ;
+extern unsigned total ;
+extern unsigned int currQuad;
+
 // typedef enum scopespace_t {
 //     programvar,
 //     functionlocal,
@@ -64,9 +72,7 @@ typedef enum expr_t {
 
 // extern struct expr; 
 // extern struct quad;
-typedef struct expr Expr;
-typedef struct quad Quad;
-typedef struct alpha_func_t af_t;
+
 
 
 struct alpha_func_t{
