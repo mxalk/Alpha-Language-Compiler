@@ -1,5 +1,10 @@
 #include "t_libAVM.h"
 
+#define EXPAND_SIZE 1024
+#define CURR_SIZE (total*sizeof(struct instruction))
+#define NEW_SIZE (EXPAND_SIZE*sizeof(struct instruction)+CURR_SIZE)
+
+
 typedef void (*generator_func_t)(Quad *);
 generator_func_t generators[] = {
 	generate_ASSIGN,
@@ -101,16 +106,16 @@ void make_operand(Expr* e,vmarg* arg){
 #endif
 
 void patch_incomplete_jumps() {
-    // int i;
-    // incomplete_jump* iter = ij_head;
-    // for (i = 1 ; i < ij_total ; i++){
-    //     // if (iter->iaddress = intermediate code size)
-    //     //     instructions[iter->instrNo].result = target code size;
-    //     // else
-    //     //     instructions[iter->instrNo].result = quads[iter->iaddress].taddress;
+    int i;
+    incomplete_jump* iter = ij_head;
+    for (i = 1 ; i < ij_total ; i++){
+        // if (iter->iaddress = intermediate code size)
+        //     instructions[iter->instrNo].result = target code size;
+        // else
+        //     instructions[iter->instrNo].result = quads[iter->iaddress].taddress;
 
-    //     iter=iter->next;
-    // }
+        iter=iter->next;
+    }
 }
 
 void generate_ADD(Quad* q){

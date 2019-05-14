@@ -1,5 +1,3 @@
-#ifndef T_LIBAVM_H
-#define T_LIBAVM_H
 #pragma once
 #include "Quad.h"
 
@@ -32,7 +30,6 @@ extern void generate_RETURN(Quad *);
 extern void generate_FUNCEND(Quad *);
 
 typedef struct userfunc userfunc;
-
 typedef enum vmopcode
 {
 	assign_v,
@@ -129,4 +126,3 @@ void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
 void patch_incomplete_jumps(void);
 void display();
 
-#endif
