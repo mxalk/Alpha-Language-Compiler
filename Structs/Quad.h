@@ -101,6 +101,7 @@ struct quad {
 	Expr *arg2;
 	unsigned label;
 	unsigned line;
+	unsigned taddress;
 };
 
 extern const char *iopcodeNames[];

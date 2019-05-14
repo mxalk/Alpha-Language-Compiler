@@ -36,6 +36,7 @@ parser.o: parser.c
 	@echo -n ${GREY}
 	$(CC) -I$(STRUCTS) -c $< -o $@
 	@echo -n ${NC}
+
 scanner.o: scanner.c
 	@echo -n ${GREY}
 	$(CC) -I$(STRUCTS) -c $< -o $@
@@ -43,7 +44,7 @@ scanner.o: scanner.c
 
 parser.c: parser.y
 	@echo -n ${CYAN}
-	bison --yacc --defines=parser.h --output=parser.c -v parser.y 
+	bison --yacc --defines=parser.h --output=parser.c -v parser.y -Wno-conflicts-sr
 	@echo -n ${NC}
 
 scanner.c: scanner.l
@@ -65,9 +66,8 @@ clean:
 test: all
 	./out antest.txt
 
-
 t_success:	all
-		./out tests_new/backpatch0.asc
+	./out tests_new/backpatch0.asc
 	./out tests_new/backpatch0.asc
 	./out tests_new/backpatch1.asc
 	./out tests_new/backpatch2.asc

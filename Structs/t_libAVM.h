@@ -82,6 +82,10 @@ char **nameLibfuncs;
 unsigned totalNamedLibfuncs;
 userfunc *userFuncs;
 unsigned int totalUserFuncs;
+struct instruction* instructions;
+unsigned int totalInstruction;
+unsigned int currInstruction;
+unsigned int currprocessedquads;
 
 typedef struct incomplete_jump incomplete_jump;
 struct incomplete_jump
@@ -112,12 +116,18 @@ struct userfunc
 	unsigned localSize;
 	char *id;
 };
-
+void emit_instr(instruction* t);
 unsigned consts_newstring(char *s);
 unsigned consts_newnumber(double n);
 unsigned libfuncs_newused(char *s);
+unsigned userfuncs_newfunc(SymbolTableRecord* sym);
 void make_operand(Expr *e, vmarg *arg);
+void make_numberoperand(vmarg *arg, double val);
+void make_booloperand(vmarg *arg, unsigned val);
+void make_retvaloperand(vmarg *arg);
 
+void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
+unsigned int nextinstructionlabel();
 incomplete_jump *ij_head;
 unsigned ij_total;
 
