@@ -885,5 +885,6 @@ int main (int argc, char** argv) {
     display();
     printQuads();
 //     display_geao();
+		generateCode();
     return 0;
 }

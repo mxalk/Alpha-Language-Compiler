@@ -134,5 +134,6 @@ unsigned ij_total;
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
 
 void patch_incomplete_jumps(void);
-void display();
+void generateCode(void);
+
 

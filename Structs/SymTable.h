@@ -41,6 +41,7 @@ typedef struct SymbolTableRecord
 	Scopespace_t space;
 	unsigned offset;
 	unsigned iaddress;
+    unsigned taddress;
 	unsigned totallocals;
 }SymbolTableRecord;
 
