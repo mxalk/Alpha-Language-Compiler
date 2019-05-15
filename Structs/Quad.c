@@ -97,6 +97,7 @@ Expr* lvalue_expr (SymbolTableRecord* sym){
     assert(sym);
     Expr * e = (Expr*)malloc(sizeof(Expr));
     memset(e,0,sizeof(Expr));
+    printf("%s\n",sym->name);
     e->next = (Expr*)0;
     e->sym = sym;
     switch(sym->stype){
