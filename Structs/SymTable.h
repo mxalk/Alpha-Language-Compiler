@@ -39,6 +39,7 @@ typedef struct SymbolTableRecord
     unsigned int active;
     Symbol_t stype;
 	Scopespace_t space;
+    Queue* returnList;
 	unsigned offset;
 	unsigned iaddress;
     unsigned taddress;

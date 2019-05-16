@@ -25,5 +25,7 @@ int Stack_isEmpty(Stack *stack);
 void Stack_append(Stack *stack, void *element);
 
 void *Stack_pop(Stack *stack);
+void *Stack_top(Stack *stack);
+
 
 void *Stack_get(Stack *stack, int index);

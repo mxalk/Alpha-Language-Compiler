@@ -27,6 +27,10 @@ void Queue_destroy(Queue *queue) {
     free(queue);
 }
 
+unsigned int Queue_getSize(Queue* queue){
+    return queue->size;
+}
+
 int Queue_isEmpty(Queue *queue) {
     assert(queue != NULL);
 

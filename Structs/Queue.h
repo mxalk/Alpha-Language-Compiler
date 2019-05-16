@@ -21,6 +21,8 @@ Queue *Queue_init();
 
 void Queue_destroy(Queue *queue);
 
+unsigned int Queue_getSize(Queue* queue);
+
 int Queue_isEmpty(Queue *queue);
 
 void Queue_enqueue(Queue *queue, void *element);

@@ -884,7 +884,7 @@ int main (int argc, char** argv) {
 		//printGSS();
     display();
     printQuads();
-//     display_geao();
-		generateCode();
+	printf("============== Intermediate code Done ==============\n");
+	generateCode();
     return 0;
 }

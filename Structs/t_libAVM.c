@@ -12,6 +12,8 @@ unsigned int totalInstructions = 0;
 unsigned int currInstruction = 0;
 unsigned int currprocessedquads;
 Queue *userfunctions;
+// Queue *ij_head;
+
 Stack *funcstack;
 
 void userfunctions_add(unsigned address, unsigned localSize, char *id)
@@ -99,13 +101,15 @@ void generate(vmopcode op, Quad *quad)
 void generateCode(void) // main target code function
 {
     //init
+    ij_head = Queue_init();
     funcstack = Stack_init();
     userfunctions = Queue_init();
     //init
     unsigned int i;
     for (i = 0; i < currQuad; i++)
     {
-        assert(quads + i);
+        // printf("Quad %d %s\n",i,(quads+i)->op);
+        assert(quads+i);
         (*generators[quads[i].op])(quads + i);
     }
     patch_incomplete_jumps();
@@ -182,15 +186,14 @@ void make_operand(Expr *e, vmarg *arg)
 void patch_incomplete_jumps()
 {
     int i;
-    incomplete_jump *iter = ij_head;
+    unsigned int ij_total = Queue_getSize(ij_head);
     for (i = 1; i < ij_total; i++)
     {
+        // instead of iter use Queue_get(ij_head,index)
         // if (iter->iaddress = intermediate code size)
         //     instructions[iter->instrNo].result = target code size;
         // else
         //     instructions[iter->instrNo].result = quads[iter->iaddress].taddress;
-
-        iter = iter->next;
     }
 }
 
@@ -306,22 +309,54 @@ void generate_GETRETVAL(Quad *quad)
 
 void generate_FUNCSTART(Quad *q)
 {
+        printf("q->result->sym seg check %s\n",q->result);
     SymbolTableRecord *f = q->result->sym;
+    assert(f);
+    printf("assert\n");
     f->taddress = nextinstructionlabel();
     q->taddress = nextinstructionlabel();
     userfunctions_add(f->taddress, f->totallocals, f->name);
+        printf("userfunction_add\n");
+
     instruction t;
     t.opcode =funcenter_v;
     make_operand(q->result,&t.result);
     emit_instr(&t); 
+        printf("emit_instr\n");
+
     return;
 }
 void generate_RETURN(Quad *q)
 {
+    q->taddress = nextinstructionlabel();
+    instruction t;
+    t.opcode = assign_v;
+    make_retvaloperand(&t.result);
+    make_operand(q->arg1,&t.arg1);
+    emit_instr(&t);
+
+    SymbolTableRecord* f = Stack_top(funcstack);
+    if(!f->returnList)f->returnList = Queue_init();
+    int* i;
+    *i = nextinstructionlabel(); 
+    Queue_enqueue(f->returnList,(int*)i);
+    t.opcode = jump_v;
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
+    t.result.type = label_a;
+    emit_instr(&t);
     return;
 }
 void generate_FUNCEND(Quad *q)
 {
+    SymbolTableRecord* f = (SymbolTableRecord*)Stack_pop(funcstack);
+    backpatch(f->returnList,nextinstructionlabel());
+
+    q->taddress= nextinstructionlabel();
+    instruction t;
+    t.opcode = funcexit_v;
+    make_operand(q->result,&t.result);
+    emit_instr(&t);
     return;
 }
 
@@ -424,11 +459,6 @@ void generate_AND(Quad *q)
     return;
 }
 
-void display_geao()
-{
-    printf("Geia");
-}
-
 unsigned consts_newstring(char *s)
 {
 }
@@ -458,7 +488,21 @@ void make_retvaloperand(vmarg *arg)
     arg->type = retval_a;
 }
 
+void backpatch(Queue* q,unsigned int next_ilabel){
+    for(int i; i < Queue_getSize(q);i++){
+        vmarg* ret = (vmarg*)malloc(sizeof(vmarg));
+        ret->type = retval_a;
+        ret->val = next_ilabel;
+        instructions[quads[((incomplete_jump*)Queue_get(q,i))->iaddress].taddress].result = *ret;
+    }
+    return;
+}
+
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress)
 {
+    incomplete_jump* new_ij = (incomplete_jump*)malloc(sizeof(incomplete_jump*));
+    new_ij->iaddress = iaddress;
+    new_ij->instrNo = insrtNo;
+    Queue_enqueue(ij_head,new_ij);
     return;
 }
