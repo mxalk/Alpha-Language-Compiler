@@ -59,8 +59,8 @@ generator_func_t generators[] = {
     generate_IF_GREATER,
     generate_CALL,
     generate_PARAM,
-    generate_RETURN,
     generate_JUMP,
+    generate_RETURN,
     generate_GETRETVAL,
     generate_FUNCSTART,
     generate_FUNCEND,
@@ -71,8 +71,8 @@ generator_func_t generators[] = {
 
 void emit_instr(instruction *t)
 {
-    // if(currInstruction == totalInstructions)
-    // 	expand_instructions(); // tbchanged
+    if(currInstruction == totalInstructions)
+    	expand_instructions(); // tbchanged
 
     instruction *inst = instructions + currInstruction++;
     inst->opcode = t->opcode;
@@ -87,12 +87,29 @@ void reset_operand(vmarg *arg)
     arg = NULL;
 }
 
+void expand_instructions(){
+    unsigned i = currInstruction;
+    assert(totalInstructions==currInstruction);
+    instruction* p = (instruction*)malloc(NEW_SIZE);
+    if (instructions) {
+        memcpy(p, instructions, CURR_SIZE);
+        free(instructions);
+    }
+    instructions = p;
+    total += EXPAND_SIZE;
+}
+
 void generate(vmopcode op, Quad *quad)
 {
     instruction t;
     t.opcode = op;
+    printf("arg1\n");
     make_operand(quad->arg1, &t.arg1);
-    make_operand(quad->arg2, &t.arg2);
+    if(op!=assign_v){
+        printf("arg2\n");
+        make_operand(quad->arg2, &t.arg2);
+    }
+    printf("result\n");
     make_operand(quad->result, &t.result);
     quad->taddress = nextinstructionlabel();
     emit_instr(&t);
@@ -108,11 +125,13 @@ void generateCode(void) // main target code function
     unsigned int i;
     for (i = 0; i < currQuad; i++)
     {
-        // printf("Quad %d %s\n",i,(quads+i)->op);
         assert(quads+i);
-        (*generators[quads[i].op])(quads + i);
+        printf("===> Quad #%d op: %10s %20s\n",i,iopcodeNames[(quads+i)->op],"to target code ...");
+        (*generators[quads[i].op])(quads+i);
+        printf("\n");
     }
     patch_incomplete_jumps();
+    printf("================= Target Code Done =================\n");
 }
 #if 1
 void make_operand(Expr *e, vmarg *arg)
@@ -122,6 +141,7 @@ void make_operand(Expr *e, vmarg *arg)
     case var_e:
     case tableitem_e:
     case arithexpr_e:
+    case assignexpr_e:
     case boolexpr_e:
     case newtable_e:
     {
@@ -309,20 +329,20 @@ void generate_GETRETVAL(Quad *quad)
 
 void generate_FUNCSTART(Quad *q)
 {
-        printf("q->result->sym seg check %s\n",q->result);
-    SymbolTableRecord *f = q->result->sym;
+        // printf("q->result->sym seg check %s\n",q);
+    SymbolTableRecord *f = q->arg1->sym;
     assert(f);
-    printf("assert\n");
+    // printf("assert\n");
     f->taddress = nextinstructionlabel();
     q->taddress = nextinstructionlabel();
     userfunctions_add(f->taddress, f->totallocals, f->name);
-        printf("userfunction_add\n");
-
+    push_funcstack(f);
+        // printf("userfunction_add\n");
     instruction t;
     t.opcode =funcenter_v;
-    make_operand(q->result,&t.result);
+    make_operand(q->arg1,&t.result);
     emit_instr(&t); 
-        printf("emit_instr\n");
+        // printf("emit_instr\n");
 
     return;
 }
@@ -331,9 +351,11 @@ void generate_RETURN(Quad *q)
     q->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = assign_v;
+    printf("first emit done\n");
     make_retvaloperand(&t.result);
     make_operand(q->arg1,&t.arg1);
     emit_instr(&t);
+    printf("second emit done\n");
 
     SymbolTableRecord* f = Stack_top(funcstack);
     if(!f->returnList)f->returnList = Queue_init();
@@ -345,18 +367,23 @@ void generate_RETURN(Quad *q)
     reset_operand(&t.arg2);
     t.result.type = label_a;
     emit_instr(&t);
+    printf("last emit done\n");
     return;
 }
 void generate_FUNCEND(Quad *q)
 {
     SymbolTableRecord* f = (SymbolTableRecord*)Stack_pop(funcstack);
     backpatch(f->returnList,nextinstructionlabel());
+    printf("first emit done\n");
 
     q->taddress= nextinstructionlabel();
     instruction t;
     t.opcode = funcexit_v;
-    make_operand(q->result,&t.result);
+    printf("seclast emit done\n");
+    make_operand(q->arg1,&t.result);
     emit_instr(&t);
+    printf("last emit done\n");
+
     return;
 }
 
@@ -388,6 +415,7 @@ void generate_MOD(Quad *q)
 
 void generate_UMINUS(Quad *q)
 {
+    
     return;
 }
 
@@ -398,17 +426,17 @@ void generate_NEWTABLE(Quad *q)
 }
 void generate_TABLEGETELEM(Quad *q)
 {
-    generate(sub, q);
+    generate(tablegetelem_v, q);
     return;
 }
 void generate_TABLESETELEM(Quad *q)
 {
-    generate(sub, q);
+    generate(tablesetelem_v, q);
     return;
 }
 void generate_ASSIGN(Quad *q)
 {
-    generate(sub, q);
+    generate(assign_v, q);
     return;
 }
 void generate_NOP(Quad *q)
@@ -489,7 +517,10 @@ void make_retvaloperand(vmarg *arg)
 }
 
 void backpatch(Queue* q,unsigned int next_ilabel){
-    for(int i; i < Queue_getSize(q);i++){
+    printf("bp\n");
+    int sz = Queue_getSize(q);
+    for(int i=0; i < sz;i++){
+        printf("bp%d",i);
         vmarg* ret = (vmarg*)malloc(sizeof(vmarg));
         ret->type = retval_a;
         ret->val = next_ilabel;

@@ -131,7 +131,7 @@ Queue *ij_head;
 void backpatch(Queue* q,unsigned int next_ilabel);
 
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
-
+void expand_instructions();
 void patch_incomplete_jumps(void);
 void generateCode(void);
 
