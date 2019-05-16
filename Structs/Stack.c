@@ -23,6 +23,10 @@ int Stack_isEmpty(Stack *stack) {
     return 0;
 }
 
+void *Stack_top(Stack *stack){
+    return stack->top;
+}
+
 void Stack_append(Stack *stack, void *element) {
     assert(stack != 0);
 

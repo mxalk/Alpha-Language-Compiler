@@ -6,13 +6,37 @@
 #define false 0
 #define true 1
 
-struct instruction* instructions = (struct instruction*) 0;
+struct instruction *instructions = (struct instruction *)0;
+
 unsigned int totalInstructions = 0;
 unsigned int currInstruction = 0;
 unsigned int currprocessedquads;
+Queue *userfunctions;
+// Queue *ij_head;
 
-unsigned int nextinstructionlabel(){
-	return currInstruction;
+Stack *funcstack;
+
+void userfunctions_add(unsigned address, unsigned localSize, char *id)
+{
+    userfunc *new_ufunc = (userfunc *)malloc(sizeof(userfunc));
+    new_ufunc->address = address;
+    new_ufunc->id = strdup(id);
+    new_ufunc->localSize = localSize;
+    Queue_Node *new_ufunc_node = (Queue_Node *)malloc(sizeof(Queue_Node));
+    new_ufunc_node->content = (userfunc *)new_ufunc;
+    Queue_enqueue(userfunctions, new_ufunc_node);
+}
+
+void push_funcstack(SymbolTableRecord *sym)
+{
+    Stack_Node *new_ufunc_node = (Stack_Node *)malloc(sizeof(Stack_Node));
+    new_ufunc_node->content = (SymbolTableRecord *)sym;
+    Stack_append(funcstack, new_ufunc_node);
+}
+
+unsigned int nextinstructionlabel()
+{
+    return currInstruction;
 }
 
 typedef void (*generator_func_t)(Quad *);
@@ -35,8 +59,8 @@ generator_func_t generators[] = {
     generate_IF_GREATER,
     generate_CALL,
     generate_PARAM,
-    generate_RETURN,
     generate_JUMP,
+    generate_RETURN,
     generate_GETRETVAL,
     generate_FUNCSTART,
     generate_FUNCEND,
@@ -45,45 +69,69 @@ generator_func_t generators[] = {
     generate_TABLESETELEM,
     generate_NOP};
 
-void emit_instr(instruction* t){
-	// if(currInstruction == totalInstructions)
-	// 	expand_instructions(); // tbchanged
+void emit_instr(instruction *t)
+{
+    if(currInstruction == totalInstructions)
+    	expand_instructions(); // tbchanged
 
-	instruction* inst	= instructions+currInstruction++;
-	inst->opcode = t->opcode;
-	inst->result = t->result;
-	inst->arg1 = t->arg1;
-	inst->arg2 = t->arg2;
-	inst->srcLine = t->srcLine;
+    instruction *inst = instructions + currInstruction++;
+    inst->opcode = t->opcode;
+    inst->result = t->result;
+    inst->arg1 = t->arg1;
+    inst->arg2 = t->arg2;
+    inst->srcLine = t->srcLine;
 }
 
 void reset_operand(vmarg *arg)
 {
-	arg = NULL;
+    arg = NULL;
 }
 
+void expand_instructions(){
+    unsigned i = currInstruction;
+    assert(totalInstructions==currInstruction);
+    instruction* p = (instruction*)malloc(NEW_SIZE);
+    if (instructions) {
+        memcpy(p, instructions, CURR_SIZE);
+        free(instructions);
+    }
+    instructions = p;
+    total += EXPAND_SIZE;
+}
 
 void generate(vmopcode op, Quad *quad)
 {
     instruction t;
     t.opcode = op;
+    printf("arg1\n");
     make_operand(quad->arg1, &t.arg1);
-    make_operand(quad->arg2, &t.arg2);
+    if(op!=assign_v){
+        printf("arg2\n");
+        make_operand(quad->arg2, &t.arg2);
+    }
+    printf("result\n");
     make_operand(quad->result, &t.result);
     quad->taddress = nextinstructionlabel();
     emit_instr(&t);
 }
 
-void generateCode(void)
+void generateCode(void) // main target code function
 {
+    //init
+    ij_head = Queue_init();
+    funcstack = Stack_init();
+    userfunctions = Queue_init();
+    //init
     unsigned int i;
     for (i = 0; i < currQuad; i++)
     {
-
-        assert(quads + i);
-        (*generators[quads[i].op])(quads + i);
+        assert(quads+i);
+        printf("===> Quad #%d op: %10s %20s\n",i,iopcodeNames[(quads+i)->op],"to target code ...");
+        (*generators[quads[i].op])(quads+i);
+        printf("\n");
     }
     patch_incomplete_jumps();
+    printf("================= Target Code Done =================\n");
 }
 #if 1
 void make_operand(Expr *e, vmarg *arg)
@@ -93,6 +141,7 @@ void make_operand(Expr *e, vmarg *arg)
     case var_e:
     case tableitem_e:
     case arithexpr_e:
+    case assignexpr_e:
     case boolexpr_e:
     case newtable_e:
     {
@@ -157,20 +206,16 @@ void make_operand(Expr *e, vmarg *arg)
 void patch_incomplete_jumps()
 {
     int i;
-    incomplete_jump *iter = ij_head;
+    unsigned int ij_total = Queue_getSize(ij_head);
     for (i = 1; i < ij_total; i++)
     {
+        // instead of iter use Queue_get(ij_head,index)
         // if (iter->iaddress = intermediate code size)
         //     instructions[iter->instrNo].result = target code size;
         // else
         //     instructions[iter->instrNo].result = quads[iter->iaddress].taddress;
-
-        iter = iter->next;
     }
 }
-
-
-
 
 void generate_relational(vmopcode op, Quad *quad)
 {
@@ -186,8 +231,6 @@ void generate_relational(vmopcode op, Quad *quad)
     quad->taddress = nextinstructionlabel();
     emit_instr(&t);
 }
-
-
 
 void generate_NOT(Quad *quad)
 {
@@ -221,18 +264,19 @@ void generate_NOT(Quad *quad)
     emit_instr(&t);
 }
 
-void generate_OR (Quad* quad) {
+void generate_OR(Quad *quad)
+{
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = jeq_v;
     make_operand(quad->arg1, &t.arg1);
     make_booloperand(&t.arg2, true);
     t.result.type = label_a;
-    t.result.val = nextinstructionlabel()+4;
+    t.result.val = nextinstructionlabel() + 4;
     emit_instr(&t);
 
     make_operand(quad->arg2, &t.arg1);
-    t.result.val = nextinstructionlabel()+3;
+    t.result.val = nextinstructionlabel() + 3;
     emit_instr(&t);
 
     t.opcode = assign_v;
@@ -242,10 +286,10 @@ void generate_OR (Quad* quad) {
     emit_instr(&t);
 
     t.opcode = jump_v;
-    reset_operand (&t.arg1);
+    reset_operand(&t.arg1);
     reset_operand(&t.arg2);
     t.result.type = label_a;
-    t.result.val = nextinstructionlabel()+2;
+    t.result.val = nextinstructionlabel() + 2;
     emit_instr(&t);
 
     t.opcode = assign_v;
@@ -255,23 +299,26 @@ void generate_OR (Quad* quad) {
     emit_instr(&t);
 
     // similar impl for AND
-}   //funcstack impl for bellow
+} //funcstack impl for bellow
 
-void generate_PARAM(Quad* quad) {
+void generate_PARAM(Quad *quad)
+{
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = pusharg_v;
     make_operand(quad->arg1, &t.arg1);
     emit_instr(&t);
 }
-void generate_CALL(Quad* quad) {
+void generate_CALL(Quad *quad)
+{
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = call_v;
     make_operand(quad->arg1, &t.arg1);
     emit_instr(&t);
 }
-void generate_GETRETVAL(Quad* quad) {
+void generate_GETRETVAL(Quad *quad)
+{
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = assign_v;
@@ -282,14 +329,61 @@ void generate_GETRETVAL(Quad* quad) {
 
 void generate_FUNCSTART(Quad *q)
 {
+        // printf("q->result->sym seg check %s\n",q);
+    SymbolTableRecord *f = q->arg1->sym;
+    assert(f);
+    // printf("assert\n");
+    f->taddress = nextinstructionlabel();
+    q->taddress = nextinstructionlabel();
+    userfunctions_add(f->taddress, f->totallocals, f->name);
+    push_funcstack(f);
+        // printf("userfunction_add\n");
+    instruction t;
+    t.opcode =funcenter_v;
+    make_operand(q->arg1,&t.result);
+    emit_instr(&t); 
+        // printf("emit_instr\n");
+
     return;
 }
 void generate_RETURN(Quad *q)
 {
+    q->taddress = nextinstructionlabel();
+    instruction t;
+    t.opcode = assign_v;
+    printf("first emit done\n");
+    make_retvaloperand(&t.result);
+    make_operand(q->arg1,&t.arg1);
+    emit_instr(&t);
+    printf("second emit done\n");
+
+    SymbolTableRecord* f = Stack_top(funcstack);
+    if(!f->returnList)f->returnList = Queue_init();
+    int* i;
+    *i = nextinstructionlabel(); 
+    Queue_enqueue(f->returnList,(int*)i);
+    t.opcode = jump_v;
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
+    t.result.type = label_a;
+    emit_instr(&t);
+    printf("last emit done\n");
     return;
 }
 void generate_FUNCEND(Quad *q)
 {
+    SymbolTableRecord* f = (SymbolTableRecord*)Stack_pop(funcstack);
+    backpatch(f->returnList,nextinstructionlabel());
+    printf("first emit done\n");
+
+    q->taddress= nextinstructionlabel();
+    instruction t;
+    t.opcode = funcexit_v;
+    printf("seclast emit done\n");
+    make_operand(q->arg1,&t.result);
+    emit_instr(&t);
+    printf("last emit done\n");
+
     return;
 }
 
@@ -321,6 +415,7 @@ void generate_MOD(Quad *q)
 
 void generate_UMINUS(Quad *q)
 {
+    
     return;
 }
 
@@ -331,17 +426,17 @@ void generate_NEWTABLE(Quad *q)
 }
 void generate_TABLEGETELEM(Quad *q)
 {
-    generate(sub, q);
+    generate(tablegetelem_v, q);
     return;
 }
 void generate_TABLESETELEM(Quad *q)
 {
-    generate(sub, q);
+    generate(tablesetelem_v, q);
     return;
 }
 void generate_ASSIGN(Quad *q)
 {
-    generate(sub, q);
+    generate(assign_v, q);
     return;
 }
 void generate_NOP(Quad *q)
@@ -392,12 +487,6 @@ void generate_AND(Quad *q)
     return;
 }
 
-
-void display_geao()
-{
-    printf("Geia");
-}
-
 unsigned consts_newstring(char *s)
 {
 }
@@ -408,8 +497,8 @@ unsigned libfuncs_newused(char *s)
 {
 }
 
-unsigned userfuncs_newfunc(SymbolTableRecord* sym){
-    
+unsigned userfuncs_newfunc(SymbolTableRecord *sym)
+{
 }
 
 void make_numberoperand(vmarg *arg, double val)
@@ -427,7 +516,24 @@ void make_retvaloperand(vmarg *arg)
     arg->type = retval_a;
 }
 
+void backpatch(Queue* q,unsigned int next_ilabel){
+    printf("bp\n");
+    int sz = Queue_getSize(q);
+    for(int i=0; i < sz;i++){
+        printf("bp%d",i);
+        vmarg* ret = (vmarg*)malloc(sizeof(vmarg));
+        ret->type = retval_a;
+        ret->val = next_ilabel;
+        instructions[quads[((incomplete_jump*)Queue_get(q,i))->iaddress].taddress].result = *ret;
+    }
+    return;
+}
+
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress)
 {
+    incomplete_jump* new_ij = (incomplete_jump*)malloc(sizeof(incomplete_jump*));
+    new_ij->iaddress = iaddress;
+    new_ij->instrNo = insrtNo;
+    Queue_enqueue(ij_head,new_ij);
     return;
 }

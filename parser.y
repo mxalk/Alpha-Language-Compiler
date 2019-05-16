@@ -365,7 +365,7 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 				$$ = $1;
 			};
 
-lvalue:			ID {printf("lvalue -> ID= \n") ; /*scope lookup and decide what type of var it is*/
+lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type of var it is*/
 				// $$ = $1;
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
 				int expected =0;// curr_scope->isFunction?1:0;
@@ -590,6 +590,7 @@ funcdef: funcprefix funcargs funcbody{
 funcprefix: FUNCTION funcname{
 	SymbolTableRecord* func = $2;
 	func->iaddress = nextQuad();
+	func->stype = programfunc_s;
 	Expr* funcpref = lvalue_expr(func);
 	emit(funcstart,funcpref,NULL,NULL,0);
 	Stack_append(global_func_stack,(unsigned*)functionLocalOffset);
@@ -602,7 +603,8 @@ funcname: ID {
 				dummy=NULL;
 				//char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 				int sc = getScope();
-				printf("funcname -> ID:%d \n",$1);
+				$1;
+				printf("funcname -> ID:%s \n",alpha_yylval.stringValue);
 				dummy=lookup(alpha_yylval.stringValue,(sc==0)?GLBL:LCL,alpha_yylineno,0,1,0);
 				if(dummy!=NULL){
 					if (dummy->type==LIBFUNC) {
@@ -697,22 +699,24 @@ idlist:	ID{
 	dummy = NULL;
 	int sc = getScope();
 	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
-	printf("idlist -> ID:%d\n",$1);
+	printf("idlist -> ID:%s\n",alpha_yylval.stringValue);
+	$1;
 	if(dummy==NULL){
 		printf("-->%s\n",alpha_yylval.stringValue);
-		insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 	}
 	else{
 		if(dummy->type==LIBFUNC){
 			alpha_yyerror("Can't shadow a LIBFUNC");
 		}
 		else if(dummy->scope == 0 && getScope()>0){
-			insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 		}else{
 			printf("===> %s\n",alpha_yylval.stringValue);
 			alpha_yyerror("on argument declaration OR arg is already defined");
 		}
 	}
+	// $$ = dummy;
 } ids {
 	printf("idlist ->  ID ids\n");
 	}
@@ -880,6 +884,7 @@ int main (int argc, char** argv) {
 		//printGSS();
     display();
     printQuads();
-//     display_geao();
+	printf("============== Intermediate code Done ==============\n");
+	generateCode();
     return 0;
 }

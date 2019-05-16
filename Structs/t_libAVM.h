@@ -92,7 +92,6 @@ struct incomplete_jump
 {
 	unsigned instrNo;
 	unsigned iaddress;
-	incomplete_jump *next;
 };
 
 typedef struct vmarg
@@ -128,11 +127,12 @@ void make_retvaloperand(vmarg *arg);
 
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
 unsigned int nextinstructionlabel();
-incomplete_jump *ij_head;
-unsigned ij_total;
+Queue *ij_head;
+void backpatch(Queue* q,unsigned int next_ilabel);
 
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
-
+void expand_instructions();
 void patch_incomplete_jumps(void);
-void display();
+void generateCode(void);
+
 
