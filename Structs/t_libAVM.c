@@ -5,7 +5,7 @@
 #define false 0
 #define true 1
 extern void alpha_yyerror();
-#define _stop_ alpha_yyerror("Stop")
+#define _stop_ alpha_yyerror("Stop");
 char *vmopcode_name[] = {
     "assign",
     "add",
@@ -47,9 +47,10 @@ Stack *funcstack;
 void userfunctions_add(unsigned address, unsigned localSize, char *id)
 {
     userfunc *new_ufunc = (userfunc *)malloc(sizeof(userfunc));
-    new_ufunc->address = address;
+    new_ufunc->address = (unsigned int)address;
     new_ufunc->id = strdup(id);
-    new_ufunc->localSize = localSize;
+    new_ufunc->localSize = (unsigned int) localSize;
+    printf("%u assert\n", localSize);
     totalUserFuncs++;
 
     Queue_enqueue(userfunctions, new_ufunc);
@@ -94,8 +95,7 @@ generator_func_t generators[] = {
     generate_TABLESETELEM,
     generate_NOP,
     generate_JUMP
-
-    };
+};
 
 void emit_instr(instruction *t)
 {
@@ -112,7 +112,7 @@ void emit_instr(instruction *t)
 
 void reset_operand(vmarg *arg)
 {
-    arg = NULL;
+    arg->type = empty_a;
 }
 
 void expand_instructions()
@@ -139,15 +139,21 @@ void generate(vmopcode op, Quad *quad)
 {
     instruction t;
     t.opcode = op;
-    printf("arg1\n");
-    make_operand(quad->arg1, &t.arg1);
-    if (op != assign_v)
+    if (quad->arg1)
+    {
+        printf("arg1\n");
+        make_operand(quad->arg1, &t.arg1);
+    }
+    if (quad->arg2)
     {
         printf("arg2\n");
         make_operand(quad->arg2, &t.arg2);
     }
-    printf("result\n");
-    make_operand(quad->result, &t.result);
+    if (quad->result)
+    {
+        printf("result\n");
+        make_operand(quad->result, &t.result);
+    }
     quad->taddress = nextinstructionlabel();
     emit_instr(&t);
 }
@@ -166,88 +172,69 @@ void generateCode(void) // main target code function
         printf("===> Quad #%d op: %10s %20s\n", i, iopcodeNames[(quads + i)->op], "to target code ...");
         (*generators[quads[i].op])(quads + i);
     }
-    patch_incomplete_jumps();
+    // patch_incomplete_jumps();
     printf("================= Target Code Generated =================\n");
 }
 
 #if 1
-void make_operand(Expr *e, vmarg *arg)
-{
-    switch (e->type)
-    {
-    case var_e:
-    case tableitem_e:
-    case arithexpr_e:
-    case assignexpr_e:
-    case boolexpr_e:
-    case newtable_e:
-    {
-        arg->val = e->sym->offset;
-        switch (e->sym->space)
-        {
-        case programvar:
-            arg->type = global_a;
+void make_operand(Expr *e, vmarg *arg) {
+    switch (e->type) {
+        case var_e:
+        case tableitem_e:
+        case arithexpr_e:
+        case assignexpr_e:
+        case boolexpr_e:
+        case newtable_e:
+            arg->val = e->sym->offset;
+            switch (e->sym->space) {
+                case programvar:
+                    arg->type = global_a;
+                    break;
+                case functionlocal:
+                    arg->type = local_a;
+                    break;
+                case formalarg:
+                    arg->type = formal_a;
+                    break;
+                default:
+                    assert(0);
+            }
+        case constbool_e:
+            arg->val = e->value.boolConst;
+            arg->type = bool_a;
             break;
-        case functionlocal:
-            arg->type = local_a;
+        case conststring_e:
+            arg->val = consts_newstring(e->value.strConst);
+            arg->type = string_a;
             break;
-        case formalarg:
-            arg->type = formal_a;
+        case constnum_e:
+            arg->val = consts_newnumber(e->value.numConst);
+            arg->type = number_a;
+            break;
+        case nil_e:
+            arg->type = nil_a;
+            break;
+        case programfunc_e:
+            // printf("in tcode address is:%d\n",e->sym->taddress);
+            // userfuncs_newfunc(e->sym);
+            arg->val = e->sym->taddress;
+            printf("EDWWWWWWWGEIAAA %u\n",arg->val);
+            arg->type = userfunc_a;
+            break;
+        case libraryfunc_e:
+            arg->type = libfunc_a;
+            arg->val = libfuncs_newused(e->sym->name);
             break;
         default:
             assert(0);
-        }
-    }
-    case constbool_e:
-    {
-        arg->val = e->value.boolConst;
-        arg->type = bool_a;
-        break;
-    }
-    case conststring_e:
-    {
-        arg->val = consts_newstring(e->value.strConst);
-        arg->type = string_a;
-        break;
-    }
-    case constnum_e:
-    {
-        arg->val = consts_newnumber(e->value.numConst);
-        arg->type = number_a;
-        break;
-    }
-    case nil_e:
-    {
-        arg->type = nil_a;
-        break;
-    }
-    case programfunc_e:
-    {
-        // printf("in tcode address is:%d\n",e->sym->taddress);
-        arg->val = userfuncs_newfunc(e->sym);
-        arg->type = userfunc_a;
-        break;
-    }
-    case libraryfunc_e:
-    {
-        arg->type = libfunc_a;
-        arg->val = libfuncs_newused(e->sym->name);
-        break;
-    }
-    default:
-        assert(0);
     }
 }
 #endif
 
 void patch_incomplete_jumps()
 {
-    int i;
-    unsigned int ij_total = Queue_getSize(ij_head);
-    for (i = 1; i < ij_total; i++)
-    {
-        // instead of iter use
-        incomplete_jump *iter = (incomplete_jump *)Queue_get(ij_head, i);
+    incomplete_jump *iter;
+    while (iter = Queue_dequeue(ij_head)) {
         if (iter->iaddress = currQuad)
             instructions[iter->instrNo].result.val = currInstruction;
         else
@@ -346,7 +333,9 @@ void generate_PARAM(Quad *quad)
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = pusharg_v;
-    printf("%d\n",quad->result->value.numConst);
+    printf("%f\n",quad->result->value.numConst);
+    // _stop_;
+    reset_operand(&t.result);
     make_operand(quad->result, &t.arg1);
     emit_instr(&t);
 }
@@ -355,6 +344,9 @@ void generate_CALL(Quad *quad)
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = call_v;
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
+    reset_operand(&t.result);
     make_operand(quad->result, &t.arg1);
     emit_instr(&t);
 }
@@ -373,21 +365,22 @@ void generate_FUNCSTART(Quad *q)
     // printf("q->result->sym seg check %s\n",q);
     SymbolTableRecord *f = q->arg1->sym;
     assert(f);
-    printf("%s assert\n", f->name);
+    printf("%s %d %d assert\n", f->name,f->totallocals,f->taddress);
     f->taddress = nextinstructionlabel();
     q->taddress = nextinstructionlabel();
     f->returnList = Queue_init();
-    ;
     userfunctions_add(f->taddress, f->totallocals, f->name);
+    // _stop_
     // push_funcstack(f);
     Stack_append(funcstack, f);
     // printf("userfunction_add\n");
     instruction t;
     t.opcode = funcenter_v;
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
     make_operand(q->arg1, &t.result);
     emit_instr(&t);
-    // printf("emit_instr\n");
-
+    printf("emit_instr %u\n",t.result.val);
     return;
 }
 void generate_RETURN(Quad *q)
@@ -537,6 +530,15 @@ void generate_AND(Quad *q)
 
 unsigned consts_newstring(char *s)
 {
+    if(!totalStringConsts){
+		stringConsts = (char **) malloc(sizeof(char*));
+	}else{
+		stringConsts = (char **) realloc(stringConsts,  sizeof(char*) * (totalStringConsts + 1)  );
+	}
+    // _stop_
+	stringConsts[totalStringConsts++] = strdup(s);
+    printf("const string added \"%s\"\n",stringConsts[totalStringConsts-1] );
+	return totalStringConsts - 1;
     
 }
 unsigned consts_newnumber(double n)
@@ -547,11 +549,12 @@ unsigned consts_newnumber(double n)
 		numConsts = (double *) realloc(numConsts,  sizeof(double) * (totalNumConsts + 1)  );
 	}
 	numConsts[totalNumConsts++] = n;
-    printf("------------------------const number added %d\n",n);
+    printf("const number added %f\n",numConsts[totalNumConsts-1] );
 	return totalNumConsts - 1;
 }
 unsigned libfuncs_newused(char *s)
 {
+    
 }
 
 unsigned userfuncs_newfunc(SymbolTableRecord *sym)
@@ -578,16 +581,16 @@ void backpatch(Queue *q, unsigned int next_ilabel)
     // printf("bp\n");
     unsigned int sz = q->size;
     unsigned int ind = -1;
-    for (int i = 0; i < sz; i++)
-    {
-        printf("bp%d", i);
-        vmarg *ret = (vmarg *)malloc(sizeof(vmarg));
-        ret->type = retval_a;
-        ret->val = next_ilabel;
-        incomplete_jump *tmp = ((incomplete_jump *)Queue_get(q, i));
-        ind = tmp->iaddress;
-        instructions[quads[ind].taddress].result = *ret;
-    }
+    // for (int i = 0; i < sz; i++)
+    // {
+    //     printf("======================================================bp%d", i);
+    //     vmarg *ret = (vmarg *)malloc(sizeof(vmarg));
+    //     ret->type = retval_a;
+    //     ret->val = next_ilabel;
+    //     incomplete_jump *tmp = ((incomplete_jump *)Queue_get(q, i));
+    //     ind = tmp->iaddress;
+    //     instructions[quads[ind].taddress].result = *ret;
+    // }
     return;
 }
 
@@ -600,88 +603,103 @@ void add_incomplete_jump(unsigned insrtNo, unsigned iaddress)
     return;
 }
 
+void printTables(){
+    int i = 0;
+    for( i; i < totalNumConsts;i++){
+        printf("%d | %f\n",i,numConsts[i]);
+    }
+    printf("---------------------------------------------------------\n");
+    for( i = 0 ; i < totalStringConsts ; i++){
+        printf("%d | %s\n",i,stringConsts[i]);
+    }
+    printf("---------------------------------------------------------\n");
+    for( i=0; i < totalUserFuncs; i++){
+        userfunc* f = (userfunc*)Queue_get(userfunctions,i);
+        printf("%d | Func Address %d, Local Size %u, ID %s\n",i,f->address,f->localSize,f->id);
+    }
+    // _stop_
+        printf("---------------------------------------------------------\n");
+    for( i=0; i < totalNamedLibfuncs;i++){
+        // printfrintf
+    }
+}
+
 void display_instr()
 {
     printf(" Target Code display commences (lastInstruction / Total: %d/%d)\n", currInstruction, totalInstructions);
     printf("=========================================================\n");
-
+    printTables();
+    printf("=========================================================\n");
+    instruction instr;
     for (int i = 0; i < currInstruction; i++)
     {
-        instruction instr = instructions[i];
+        instr = instructions[i];
         printf("%s ", vmopcode_name[instr.opcode]);
-        // if (&instr.result)
-        //     switch (instr.result.type)
-        //     {
-        //     case empty_a:
-        //     {
-        //         break;
-        //     }
-        //     case label_a:
-        //     case global_a:
-        //     case formal_a:
-        //     case local_a:
-        //     case number_a:
-        //     case string_a:
-        //     case bool_a:
-        //     {
-        //         printf("%d ", instr.result.val);
-        //         break;
-        //     }
-        //     case nil_a:
-        //     {
-        //         printf("nill");
-        //         break;
-        //     }
-        //     case userfunc_a:
-        //     case libfunc_a:
-        //     case retval_a:
-        //     {
-        //         printf("%d ", instr.result.val);
-        //         break;
-        //     }
-        //     }
-        // if (&instr.arg1)
-        //     switch (instr.result.type)
-        //     {
-        //     case label_a:
-        //     case global_a:
-        //     case formal_a:
-        //     case local_a:
-        //     case number_a:
-        //     case string_a:
-        //     case bool_a:
-        //         printf("%d ", instr.arg1.val);
-        //         break;
-        //     case nil_a:
-        //         printf("nill");
-        //         break;
-        //     case userfunc_a:
-        //     case libfunc_a:
-        //     case retval_a:
-        //         printf("%d ", instr.arg1.val);
-        //         break;
-        //     }
-        //  if (&instr.arg2)
-        //     switch (instr.result.type)
-        //     {
-        //     case label_a:
-        //     case global_a:
-        //     case formal_a:
-        //     case local_a:
-        //     case number_a:
-        //     case string_a:
-        //     case bool_a:
-        //         printf("%d ", instr.arg2.val);
-        //         break;
-        //     case nil_a:
-        //         printf("nill");
-        //         break;
-        //     case userfunc_a:
-        //     case libfunc_a:
-        //     case retval_a:
-        //         printf("%d ", instr.arg2.val);
-        //         break;
-        //     }
+        switch (instr.result.type) {
+            case empty_a:
+                break;
+            case label_a:
+            case global_a:
+            case formal_a:
+            case local_a:
+            case number_a:
+            case string_a:
+            case bool_a:
+                printf("%u ", instr.result.val);
+                break;
+            case nil_a:
+                printf("nill");
+                break;
+            case userfunc_a:
+            case libfunc_a:
+                printf("%u ", instr.result.val);
+                break;
+            case retval_a:
+                printf("(retval) ", instr.result.val);
+                break;
+        }
+        switch (instr.arg1.type) {
+            case empty_a:
+                break;
+            case label_a:
+            case global_a:
+            case formal_a:
+            case local_a:
+            case number_a:
+            case string_a:
+            case bool_a:
+                printf("%u_a1 ", instr.arg1.val);
+                break;
+            case nil_a:
+                printf("nill");
+                break;
+            case userfunc_a:
+            case libfunc_a:
+            case retval_a:
+                printf("%u_a1 ", instr.arg1.val);
+                break;
+        }
+        switch (instr.arg2.type){
+            case empty_a:
+                break;
+            case label_a:
+            case global_a:
+            case formal_a:
+            case local_a:
+            case number_a:
+            case string_a:
+            case bool_a:
+                printf("%u_a2 ", instr.arg2.val);
+                break;
+            case nil_a:
+                printf("nill");
+                break;
+            case userfunc_a:
+            case libfunc_a:
+            case retval_a:
+                printf("%u_a2 ", instr.arg2.val);
+                break;
+        }
 
         printf("\n");
     }

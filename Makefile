@@ -64,7 +64,7 @@ clean:
 	rmdir obj/
 
 test: all
-	./out antest.txt
+	./out temp.txt
 
 t_success:	all
 	./out tests_new/backpatch0.asc

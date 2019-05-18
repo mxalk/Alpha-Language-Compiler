@@ -593,7 +593,7 @@ funcprefix: FUNCTION funcname{
 	func->stype = programfunc_s;
 	Expr* funcpref = lvalue_expr(func);
 	emit(funcstart,funcpref,NULL,NULL,0);
-	Stack_append(global_func_stack,(unsigned*)functionLocalOffset);
+	Stack_append(global_func_stack,&functionLocalOffset);
 	enterscopespace();
 	resetformalargsoffset();
 	$$ = funcpref;
