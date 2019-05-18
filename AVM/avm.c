@@ -1,114 +1,22 @@
+#include "avm.h"
+
 // ---------------------------------------------------------------------------
-// INSTRUCTION SET
+// DYNAMIC ARRAYS
 // ---------------------------------------------------------------------------
-enum vmopcode {
-    assign_v,
-    add_v,
-    sub_v,
-    mul_v,
-    div_v,
-    mod_v,
-    uminus_v,
-    and_v,
-    or_v,
-    not_v,
-    jeq_v,
-    jne_v,
-    jle_v,
-    jge_v,
-    jlt_v,
-    jgt_v,
-    call_v,
-    pusharg_v,
-    funcenter_v,
-    funcexit_v,
-    newtable_v,
-    tablegetelem_v,
-    tablesetelem_v,
-    nop_v
-};
 
-enum vmarg_t {
-    label_a,
-    global_a,
-    formal_a,
-    local_a,
-    number_a,
-    string_a,
-    bool_a,
-    nil_a,
-    userfunc_a,
-    libfunc_a,
-    retval_a
-};
-
-struct vmarg {
-    enum vmarg_t type;
-    unsigned val;
-};
-
-struct instruction {
-    enum vmopcode opcode;
-    struct vmarg result;
-    struct vmarg arg1;
-    struct vmarg arg2;
-    unsigned srcLine;
-};
-
-struct userfunc {
-    unsigned address;
-    unsigned localSize;
-    char *id;
-};
-
-double *numConsts;
-unsigned totalNumConsts;
-char **stringConsts;
-unsigned totalStringConsts;
-char **namedLibFuncs;
-unsigned totalNamedLibFuncs;
-struct userfunc *userFuncs;
-unsigned totalUserFuncs;
-
-// MEMORY
-#define AVM_STACKSIZE 4096
-#define AVM_WIPEOUT(m) memset(&(m), 0, sizeof(m))
-
-struct avm_table;
-struct avm_memcell {
-    enum avm_memcell_t type;
-    union {
-        double numVal;
-        char *strVal;
-        unsigned char boolVal;
-        struct avm_table *tableVal;
-        unsigned funcVal;
-        char *libfuncVal;
-    } data;
-};
-
-enum avm_memcell_t {
-    number_m,
-    string_m,
-    bool_m,
-    table_m,
-    userfunc_m,
-    libfunc_m,
-    nil_m,
-    undef_m
-};
-
-
-struct avm_memcell stack[AVM_STACKSIZE];
-
-
-struct avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) {
+/*Η συνάρτηση αυτή θα καλείται
+όπως χρειάζεται στις συναρτήσεις
+που υλοποιούν τις εντολές της
+εικονικής μηχανής*/
+avm_memc *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) {
     switch (arg->type) {
         // VARIABLES
-        case global_a: return &stack[AVM_STACKSIZE-1-arg->val];
-        case local_a: return &stack[topsp-arg->val];
-        case formal_a: return &stack[topsp+AVM_STACKENV_SIZE+1+arg->val];
-        case retval_a: return &retval;
+        // enviroment function!
+        case global_a:  return &stack[AVM_STACKSIZE-1-arg->val];
+        case local_a:   return &stack[topsp-arg->val];
+        case formal_a:  return &stack[topsp+AVM_STACKENV_SIZE+1+arg->val];
+        
+        case retval_a:  return &retval;
         // CONSTANTS
         case number_a:
             reg->type = number_m;
@@ -116,7 +24,7 @@ struct avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell
             return reg;
         case string_a:
             reg->type = string_m;
-            reg->data.strVal = consts_getstring(arg->val);
+            reg->data.strVal = strdup(consts_getstring(arg->val));
             return reg;
         case bool_a:
             reg->type = bool_m;
@@ -134,41 +42,10 @@ struct avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell
             reg->type = libfunc_m;
             reg->data.libfuncVal = libfuncs_getused(arg->val);
             return reg;
-
+        default: 
+            assert(0);
     }
 }
-// ---------------------------------------------------------------------------
-// OPERAND TRANSLATE
-// ---------------------------------------------------------------------------
-#define AVM_STACKENV_SIZE 4
-struct avm_memcell ax, bx, cx, retval;
-unsigned top, topsp;
-double consts_getnumber(unsigned index);
-char *consts_getstring(unsigned index);
-char *libfuncs_getused(unsigned index);
-
-
-// ---------------------------------------------------------------------------
-// DYNAMIC ARRAYS
-// ---------------------------------------------------------------------------
-#define AVM_TABLE_HASHSIZE 211
-
-struct avm_table_bucket {
-    struct avm_memcell key;
-    struct avm_memcell value;
-    struct avm_table_bucket *next;
-};
-
-// LECTURE 13 SLIDE 25 BONUS TO IMPLEMENT
-struct avm_table {
-    unsigned refCounter;
-    struct avm_table_bucket *strIndexed[AVM_TABLE_HASHSIZE];
-    struct avm_table_bucket *numIndexed[AVM_TABLE_HASHSIZE];
-    struct avm_table_bucket *ufncIndexed[AVM_TABLE_HASHSIZE]; // BONUS
-    struct avm_table_bucket *lfncIndexed[AVM_TABLE_HASHSIZE]; // BONUS
-    struct avm_table_bucket *boolIndexed[AVM_TABLE_HASHSIZE]; // BONUS
-    unsigned total;
-};
 
 void avm_tableincrefcounter(struct avm_table *t) {
     ++t->refCounter;
@@ -195,8 +72,6 @@ struct avm_table *avm_tablenew(void) {
     return t;
 }
 
-void avm_memcellclear (struct avm_memcell *m);
-
 void avm_tablebucketsdestroy(struct avm_table_bucket **p) {
     for (unsigned i=0; i<AVM_TABLE_HASHSIZE; i++, p++) {
         for (struct avm_table_bucket *b = *p; b;) {
@@ -222,8 +97,7 @@ void avm_tabledestroy(struct avm_table *t) {
 // ---------------------------------------------------------------------------
 // DISPATCHER
 // ---------------------------------------------------------------------------
-typedef void (*execute_func_t)(struct instruction *);
-#define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
+
 
 extern void execute_assign (struct instruction*);
 extern void execute_add (struct instruction*);
