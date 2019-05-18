@@ -151,10 +151,6 @@ char *libfuncs_getused(unsigned index);
 // ---------------------------------------------------------------------------
 // DYNAMIC ARRAYS
 // ---------------------------------------------------------------------------
-struct avm_table *avm_tablenew(void);
-void avm_tabledestroy(struct avm_table *t);
-struct avm_memcell *avm_tablegetelem(struct avm_memcell *key);
-void avm_tablesetelem(struct avm_memcell *key, struct avm_memcell *value);
 #define AVM_TABLE_HASHSIZE 211
 
 struct avm_table_bucket {
@@ -354,7 +350,7 @@ void execute_assign(struct instruction *instr) {
 void avm_assign (struct avm_memcell *lv, struct avm_memcell *rv) {
     if (lv == rv) return;
     if (lv->type == table_m && rv->type == table_m && lv->data.tableVal == rv->data.tableVal) return;
-    if (rv->type == undef_m) avm_warning("Assigning from \'undef\' content!");
+    if (rv->type == undef_m) avm_warning("Assigning from 'undef' content!");
     avm_memcellclear(lv);
     memcpy(lv, rv, sizeof(struct avm_memcell));
     if (lv->type == string_m) 
@@ -392,7 +388,7 @@ void execute_call(struct instruction *instr) {
             break;
         default:
             char *s = avm_tostring(func);
-            avm_error("Call: cannot bind \'%s\' to function!", s);
+            avm_error("Call: cannot bind '%s' to function!", s);
             free(s);
             executionFinished = 1;
     }
@@ -457,7 +453,7 @@ library_func_t avm_getlibraryfunc(char *id);
 void avm_calllibfunc(char *id) {
     library_func_t f = avm_getlibraryfunc(id);
     if (!f) {
-        avm_error("Unsupported lib func \'%s\' called!", id);
+        avm_error("Unsupported lib func '%s' called!", id);
         executionFinished = 1;
     } else {
         topsp = top;
@@ -532,6 +528,11 @@ arithmetic_func_t arithmeticFuncs[] = {
     mod_impl
 };
 
+#define execute_add execute_arithmetic
+#define execute_sub execute_arithmetic
+#define execute_mul execute_arithmetic
+#define execute_div execute_arithmetic
+#define execute_mod execute_arithmetic
 void execute_arithmetic (struct instruction *instr) {
     struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
     struct avm_memcell *rv1 = avm_translate_operand(&instr->arg1, &ax);
@@ -599,10 +600,10 @@ void execute_jeq (struct instruction *instr) {
     struct avm_memcell *rv2 = avm_translate_operand(&instr->arg2, &bx);
 
     unsigned char result = 0;
-    if (rv1->type == undef_m || rv2->type == undef_m) avm_error("\'undef\' involved in equality");
+    if (rv1->type == undef_m || rv2->type == undef_m) avm_error("'undef' involved in equality");
     else if (rv1->type == nil_m || rv2->type == nil_m) result = rv1->type == rv2->type;
-    else if (rv1->type == bool_m || rv2->type == bool_m) result = (avm_tobool(rv1) = avm_tobool(rv2));
-    else if (rv1->type != rv2->type) avm_error("%s == %s is illegal", typeStrings[rv1->type], typeString[rv2->type]);
+    else if (rv1->type == bool_m || rv2->type == bool_m) result = (avm_tobool(rv1) == avm_tobool(rv2));
+    else if (rv1->type != rv2->type) avm_error("%s == %s is illegal", typeStrings[rv1->type], typeStrings[rv2->type]);
     else {
         // EQUALITY CHECK WITH DISPATCHING
     }
@@ -634,7 +635,7 @@ void execute_tablegetelem(struct instruction *instr) {
     avm_memcell(lv);
     lv->type = nil_m;
     if (t->type != table_m) {
-        avm_error("Illegal use of type \'%s\' as table!", typeStrings[t->type]);
+        avm_error("Illegal use of type '%s' as table!", typeStrings[t->type]);
         return;
     }
     struct avm_memcell *content = avm_tablegetelem(t->data.tableVal, i);
@@ -656,7 +657,7 @@ void execute_tablesetelem(struct instruction *instr) {
     assert(t && &stack[N-1] >= t && &stack[top]);
     assert(i && c);
     if (t->type != table_m) {
-        avm_error("Illegal use of type \'%s\' as table", t->type);
+        avm_error("Illegal use of type '%s' as table", t->type);
         return;
     }
     avm_tablesetelem(t->data.tableVal, i, c);
