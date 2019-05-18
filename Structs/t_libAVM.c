@@ -92,7 +92,10 @@ generator_func_t generators[] = {
     generate_NEWTABLE,
     generate_TABLEGETELEM,
     generate_TABLESETELEM,
-    generate_NOP};
+    generate_NOP,
+    generate_JUMP
+
+    };
 
 void emit_instr(instruction *t)
 {
