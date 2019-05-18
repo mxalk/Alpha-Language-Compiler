@@ -122,7 +122,7 @@ struct avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell
             reg->type = bool_m;
             reg->data.boolVal = arg->val;
             return reg;
-        case nil_a: 
+        case nil_a:
             reg->type = nil_m;
             return reg;
         //  FUNCTIONS
@@ -285,6 +285,7 @@ unsigned char executionFinished = 0;
 unsigned pc = 0;
 unsigned currLine = 0;
 unsigned codeSize = 0;
+unsigned totalActuals = 0;
 struct instruction *code = (struct instruction *) 0;
 #define AVM_ENDING_PC codeSize
 
@@ -319,7 +320,7 @@ extern void memclear_table (struct avm_memcell *m) {
 }
 memclear_func_t memclearFuncs[] = {
     0, // NUMBER
-    memclear_string, 
+    memclear_string,
     0, // BOOLEAN
     memclear_table,
     0, // USERFUNC
@@ -353,9 +354,9 @@ void avm_assign (struct avm_memcell *lv, struct avm_memcell *rv) {
     if (rv->type == undef_m) avm_warning("Assigning from 'undef' content!");
     avm_memcellclear(lv);
     memcpy(lv, rv, sizeof(struct avm_memcell));
-    if (lv->type == string_m) 
+    if (lv->type == string_m)
         lv->data.strVal = strdup(rv->data.strVal);
-    else if (lv->type == string_m) 
+    else if (lv->type == string_m)
         avm_tableincrefcounter(lv->data.tableVal);
 }
 
@@ -386,6 +387,9 @@ void execute_call(struct instruction *instr) {
         case libfunc_m:
             avm_calllibfunc(func->data.funcVal);
             break;
+        case table_m:
+            avm_calllibfunc(func->data.tableVal);
+            break;
         default:
             char *s = avm_tostring(func);
             avm_error("Call: cannot bind '%s' to function!", s);
@@ -393,8 +397,6 @@ void execute_call(struct instruction *instr) {
             executionFinished = 1;
     }
 }
-
-unsigned totalActuals = 0;
 
 void avm_dec_top(void) {
     if (!top) {
@@ -566,13 +568,13 @@ unsigned char nil_tobool (struct avm_memcell *m) {return 0;}
 unsigned char undef_tobool (struct avm_memcell *m) {assert(0);return 0;}
 
 tobool_func_t toboolFuncs[] = {
-    number_tobool, 
-    string_tobool, 
-    bool_tobool, 
-    table_tobool, 
-    userfunc_tobool, 
-    libfunc_tobool, 
-    nil_tobool, 
+    number_tobool,
+    string_tobool,
+    bool_tobool,
+    table_tobool,
+    userfunc_tobool,
+    libfunc_tobool,
+    nil_tobool,
     undef_tobool
 };
 
