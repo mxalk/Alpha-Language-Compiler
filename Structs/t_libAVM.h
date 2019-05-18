@@ -22,12 +22,14 @@ extern void generate_IF_LESSEQ(Quad *);
 extern void generate_AND(Quad *);
 extern void generate_NOT(Quad *);
 extern void generate_OR(Quad *);
-extern void generate_PARAM(Quad *);
 extern void generate_CALL(Quad *);
+extern void generate_PARAM(Quad *);
 extern void generate_GETRETVAL(Quad *);
 extern void generate_FUNCSTART(Quad *);
 extern void generate_RETURN(Quad *);
 extern void generate_FUNCEND(Quad *);
+
+extern char *vmopcode_name[];
 
 typedef struct userfunc userfunc;
 typedef enum vmopcode
@@ -42,6 +44,7 @@ typedef enum vmopcode
 	and_v,
 	or_v,
 	not_v,
+	jump_v,
 	jeq_v,
 	jne_v,
 	jle_v,
@@ -49,7 +52,6 @@ typedef enum vmopcode
 	jlt_v,
 	jgt_v,
 	call_v,
-	jump_v,
 	pusharg_v,
 	funcenter_v,
 	funcexit_v,
@@ -60,18 +62,18 @@ typedef enum vmopcode
 } vmopcode;
 typedef enum vmarg_t
 {
-	label_a,
-	global_a,
-	formal_a,
-	local_a,
-	number_a,
-	string_a,
-	bool_a,
-	nil_a,
-	userfunc_a,
-	libfunc_a,
-	retval_a,
-	useless_a
+	label_a=0,
+	global_a=1,
+	formal_a=2,
+	local_a=3,
+	number_a=4,
+	string_a=5,
+	bool_a=6,
+	nil_a=7,
+	userfunc_a=8,
+	libfunc_a=9,
+	retval_a=10,
+	empty_a=11
 } vmarg_t;
 
 double *numConsts;
@@ -82,8 +84,8 @@ char **nameLibfuncs;
 unsigned totalNamedLibfuncs;
 userfunc *userFuncs;
 unsigned int totalUserFuncs;
-struct instruction* instructions;
-unsigned int totalInstruction;
+struct instruction *instructions;
+unsigned int totalInstructions;
 unsigned int currInstruction;
 unsigned int currprocessedquads;
 
@@ -115,11 +117,11 @@ struct userfunc
 	unsigned localSize;
 	char *id;
 };
-void emit_instr(instruction* t);
+void emit_instr(instruction *t);
 unsigned consts_newstring(char *s);
 unsigned consts_newnumber(double n);
 unsigned libfuncs_newused(char *s);
-unsigned userfuncs_newfunc(SymbolTableRecord* sym);
+unsigned userfuncs_newfunc(SymbolTableRecord *sym);
 void make_operand(Expr *e, vmarg *arg);
 void make_numberoperand(vmarg *arg, double val);
 void make_booloperand(vmarg *arg, unsigned val);
@@ -128,11 +130,10 @@ void make_retvaloperand(vmarg *arg);
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
 unsigned int nextinstructionlabel();
 Queue *ij_head;
-void backpatch(Queue* q,unsigned int next_ilabel);
+void backpatch(Queue *q, unsigned int next_ilabel);
 
 void add_incomplete_jump(unsigned insrtNo, unsigned iaddress);
 void expand_instructions();
 void patch_incomplete_jumps(void);
 void generateCode(void);
-
-
+void display_instr();

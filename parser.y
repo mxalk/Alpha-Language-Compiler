@@ -886,5 +886,7 @@ int main (int argc, char** argv) {
     printQuads();
 	printf("============== Intermediate code Done ==============\n");
 	generateCode();
-    return 0;
+	display_instr();
+	
+  return 0;
 }

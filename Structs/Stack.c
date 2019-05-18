@@ -24,7 +24,7 @@ int Stack_isEmpty(Stack *stack) {
 }
 
 void *Stack_top(Stack *stack){
-    return stack->top;
+    return Stack_get(stack,0);
 }
 
 void Stack_append(Stack *stack, void *element) {

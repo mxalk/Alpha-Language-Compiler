@@ -28,7 +28,7 @@ void Queue_destroy(Queue *queue) {
 }
 
 unsigned int Queue_getSize(Queue* queue){
-    if(queue == NULL)return 0;
+    if(queue==NULL)return 0;
     return queue->size;
 }
 

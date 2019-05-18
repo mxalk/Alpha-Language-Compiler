@@ -3,7 +3,7 @@ function id(a,b){
         c = a + b;
         function(){
                 local c = 1;
-         //       return;
+                return;
         }
 
 }
