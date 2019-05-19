@@ -1,5 +1,5 @@
-function x(i,j) { z = i*y; return i+y; }
+function x(i,j) { return i+y; }
 x(1,2);
-function lala(i,j) { return i+y; }
-function lala2(i,j,k) { return i+y; }
+//function lala(i,j) { return i+y; }
+//function lala2(i,j,k) { return i+y; }
 a = "string";

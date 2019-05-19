@@ -132,6 +132,9 @@ void expand_instructions()
         instructions[k].arg1.type = empty_a;
         instructions[k].arg2.type = empty_a;
         instructions[k].result.type = empty_a;
+        // instructions[k].arg1.val = 66;
+        // instructions[k].arg2.val = 66;
+        // instructions[k].result.val = 66;
     }
 }
 
@@ -141,17 +144,17 @@ void generate(vmopcode op, Quad *quad)
     t.opcode = op;
     if (quad->arg1)
     {
-        printf("arg1\n");
+        // printf("arg1\n");
         make_operand(quad->arg1, &t.arg1);
     }
     if (quad->arg2)
     {
-        printf("arg2\n");
+        // printf("arg2\n");
         make_operand(quad->arg2, &t.arg2);
     }
     if (quad->result)
     {
-        printf("result\n");
+        // printf("result\n");
         make_operand(quad->result, &t.result);
     }
     quad->taddress = nextinstructionlabel();
@@ -218,7 +221,13 @@ void make_operand(Expr *e, vmarg *arg) {
             // printf("in tcode address is:%d\n",e->sym->taddress);
             // userfuncs_newfunc(e->sym);
             arg->val = e->sym->taddress;
-            printf("EDWWWWWWWGEIAAA %u\n",arg->val);
+            int sz =Queue_getSize(userfunctions);
+            for(int w = 0 ; w <sz; w ++){
+                if(((userfunc*)Queue_get(userfunctions,w))->address == arg->val){
+                    arg->val = w;
+                }
+            }
+            // printf("EDWWWWWWWGEIAAA %u\n",arg->val);
             arg->type = userfunc_a;
             break;
         case libraryfunc_e:
@@ -235,8 +244,9 @@ void patch_incomplete_jumps()
 {
     incomplete_jump *iter;
     while (iter = Queue_dequeue(ij_head)) {
-        if (iter->iaddress = currQuad)
-            instructions[iter->instrNo].result.val = currInstruction;
+        // printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&%d\n",iter->instrNo);
+        if (iter->iaddress = currQuad-1)
+            instructions[iter->instrNo].result.val = currInstruction-1;
         else
             instructions[iter->instrNo].result.val = quads[iter->iaddress].taddress;
     }
@@ -333,7 +343,7 @@ void generate_PARAM(Quad *quad)
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = pusharg_v;
-    printf("%f\n",quad->result->value.numConst);
+    // printf("%f\n",quad->result->value.numConst);
     // _stop_;
     reset_operand(&t.result);
     make_operand(quad->result, &t.arg1);
@@ -363,24 +373,40 @@ void generate_GETRETVAL(Quad *quad)
 void generate_FUNCSTART(Quad *q)
 {
     // printf("q->result->sym seg check %s\n",q);
+    
+
     SymbolTableRecord *f = q->arg1->sym;
     assert(f);
-    printf("%s %d %d assert\n", f->name,f->totallocals,f->taddress);
+    // printf("%s %d %d assert\n", f->name,f->totallocals,f->taddress);
     f->taddress = nextinstructionlabel();
     q->taddress = nextinstructionlabel();
     f->returnList = Queue_init();
     userfunctions_add(f->taddress, f->totallocals, f->name);
     // _stop_
     // push_funcstack(f);
+
     Stack_append(funcstack, f);
-    // printf("userfunction_add\n");
+    instruction t_jump;
+    unsigned int *d = (unsigned*)malloc(sizeof(unsigned));;
+    reset_operand(&t_jump.result);
+    reset_operand(&t_jump.arg1);
+    reset_operand(&t_jump.arg2);
+    t_jump.opcode = jump_v;
+    t_jump.result.type = label_a;
+    t_jump.result.val = nextinstructionlabel();
+    // printf("jump to funcend %d\n",nextinstructionlabel());
+    *d = nextinstructionlabel();
+    Queue_enqueue(f->returnList, d);
+    emit_instr(&t_jump);
+
     instruction t;
     t.opcode = funcenter_v;
     reset_operand(&t.arg1);
     reset_operand(&t.arg2);
+    reset_operand(&t.result);
     make_operand(q->arg1, &t.result);
     emit_instr(&t);
-    printf("emit_instr %u\n",t.result.val);
+    // printf("emit_instr %u\n",t.result.val);
     return;
 }
 void generate_RETURN(Quad *q)
@@ -390,19 +416,20 @@ void generate_RETURN(Quad *q)
     make_retvaloperand(&t.result);
     // if(q->result){
     t.opcode = assign_v;
-    printf("first emit done\n");
+    // printf("first emit done\n");
     make_operand(q->result, &t.arg1);
     emit_instr(&t);
     // }
-    printf("second emit done\n");
+    // printf("second emit done\n");
     SymbolTableRecord *f = (SymbolTableRecord *)Stack_top(funcstack);
-    printf("%s \n", f->name);
+    // printf("%s \n", f->name);
 
-    unsigned int *i = (unsigned int *)malloc(sizeof(unsigned int));
+    unsigned int *i =(unsigned*)malloc(sizeof(unsigned));
     *i = nextinstructionlabel();
     Queue_enqueue(f->returnList, i);
-    printf("last emit done\n");
+    // printf("last emit done\n");
     t.opcode = jump_v;
+    reset_operand(&t.result);
     reset_operand(&t.arg1);
     reset_operand(&t.arg2);
     t.result.type = label_a;
@@ -420,10 +447,10 @@ void generate_FUNCEND(Quad *q)
     q->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = funcexit_v;
-    printf("seclast emit done\n");
+    // printf("seclast emit done\n");
     make_operand(q->arg1, &t.result);
     emit_instr(&t);
-    printf("last emit done\n");
+    // printf("last emit done\n");
 
     return;
 }
@@ -576,21 +603,20 @@ void make_retvaloperand(vmarg *arg)
     arg->type = retval_a;
 }
 
-void backpatch(Queue *q, unsigned int next_ilabel)
+void backpatch(Queue *q, unsigned int funcend_position)
 {
     // printf("bp\n");
-    unsigned int sz = q->size;
-    unsigned int ind = -1;
-    // for (int i = 0; i < sz; i++)
-    // {
-    //     printf("======================================================bp%d", i);
-    //     vmarg *ret = (vmarg *)malloc(sizeof(vmarg));
-    //     ret->type = retval_a;
-    //     ret->val = next_ilabel;
-    //     incomplete_jump *tmp = ((incomplete_jump *)Queue_get(q, i));
-    //     ind = tmp->iaddress;
-    //     instructions[quads[ind].taddress].result = *ret;
-    // }
+    assert(q);
+    unsigned int i= 0 ;;
+    unsigned int *k;
+    while(k = (unsigned int*) Queue_dequeue(q))
+    {
+        // vmarg *ret = (vmarg *)malloc(sizeof(vmarg));
+        // ret->type = retval_a;
+        // ret->val = funcend_position;
+        printf("BP %d %d\n",*k,i++);
+        instructions[*k].result.val = funcend_position;
+    }
     return;
 }
 
@@ -626,81 +652,139 @@ void printTables(){
 
 void display_instr()
 {
-    printf(" Target Code display commences (lastInstruction / Total: %d/%d)\n", currInstruction, totalInstructions);
+    printf("==== Target Code (lastInstruction / Total: %d/%d ) ====\n", currInstruction, totalInstructions);
     printf("=========================================================\n");
     printTables();
     printf("=========================================================\n");
     instruction instr;
+    userfunc* f1 = NULL,*f2=NULL,*f3=NULL;
     for (int i = 0; i < currInstruction; i++)
     {
+        printf("%3d: ",i);
         instr = instructions[i];
+        if(instr.result.type != empty_a){
+            f1 = (userfunc*)Queue_get(userfunctions,instr.result.val);
+        }
+        if(instr.arg1.type != empty_a){
+            f2 = (userfunc*)Queue_get(userfunctions,instr.arg1.val);
+        }
+        if(instr.arg2.type != empty_a){
+            f3 = (userfunc*)Queue_get(userfunctions,instr.arg2.val);
+        }
         printf("%s ", vmopcode_name[instr.opcode]);
         switch (instr.result.type) {
             case empty_a:
                 break;
             case label_a:
+                printf("00_%u ", instr.result.val);
+                break;
             case global_a:
+                printf("01_%u_ ", instr.result.val);
+                break;
             case formal_a:
+                printf("02_%u_ ", instr.result.val);
+                break;
             case local_a:
+                printf("03_%u_ ", instr.result.val);
+                break;
             case number_a:
+                printf("04_%u_[%f] ", instr.result.val,numConsts[instr.result.val]);
+                break;
             case string_a:
+                 printf("05_%u_[\"%s\"] ", instr.result.val,strdup(stringConsts[instr.result.val]));
+                break;
             case bool_a:
-                printf("%u ", instr.result.val);
+                printf("06_%u ", instr.result.val);
                 break;
             case nil_a:
-                printf("nill");
+                printf("07_nill");
                 break;
             case userfunc_a:
+                printf("08_%u_[%s] ", instr.result.val,(f1->id));
+                break;
             case libfunc_a:
-                printf("%u ", instr.result.val);
+                printf("09_%u_[%s] ", instr.result.val,(nameLibfuncs[instr.result.val]));
                 break;
             case retval_a:
-                printf("(retval) ", instr.result.val);
+                printf("10_(retval) ", instr.result.val);
                 break;
         }
         switch (instr.arg1.type) {
             case empty_a:
                 break;
             case label_a:
+                printf("00_%u ", instr.arg1.val);
+                break;
             case global_a:
+                printf("01_%u_ ", instr.arg1.val);
+                break;
             case formal_a:
+                printf("02_%u_ ", instr.arg1.val);
+                break;
             case local_a:
+                printf("03_%u_ ", instr.arg1.val);
+                break;
             case number_a:
+                printf("04_%u_[%f] ", instr.arg1.val,numConsts[instr.arg1.val]);
+                break;
             case string_a:
+                 printf("05_%u_[\"%s\"] ", instr.arg1.val,strdup(stringConsts[instr.arg1.val]));
+                break;
             case bool_a:
-                printf("%u_a1 ", instr.arg1.val);
+                printf("06_%u ", instr.arg1.val);
                 break;
             case nil_a:
-                printf("nill");
+                printf("07_nill");
                 break;
             case userfunc_a:
+                printf("08_%u_[%s] ", instr.arg1.val,strdup(f2->id));
+                break;
             case libfunc_a:
+                printf("09_%u_[%s] ", instr.arg1.val,strdup(nameLibfuncs[instr.arg1.val]));
+                break;
             case retval_a:
-                printf("%u_a1 ", instr.arg1.val);
+                printf("10_(retval) ", instr.arg1.val);
                 break;
         }
-        switch (instr.arg2.type){
+        switch (instr.arg2.type) {
             case empty_a:
                 break;
             case label_a:
+                printf("00_%u ", instr.arg2.val);
+                break;
             case global_a:
+                printf("01_%u_ ", instr.arg2.val);
+                break;
             case formal_a:
+                printf("02_%u_ ", instr.arg2.val);
+                break;
             case local_a:
+                printf("03_%u_ ", instr.arg2.val);
+                break;
             case number_a:
+                printf("04_%u_[%f] ", instr.arg2.val,numConsts[instr.arg2.val]);
+                break;
             case string_a:
+                 printf("05_%u_[\"%s\"] ", instr.arg2.val,strdup(stringConsts[instr.arg2.val]));
+                break;
             case bool_a:
-                printf("%u_a2 ", instr.arg2.val);
+                printf("06_%u ", instr.arg2.val);
                 break;
             case nil_a:
-                printf("nill");
+                printf("07_nill");
                 break;
             case userfunc_a:
+                printf("08_%u_[%s] ", instr.arg2.val,strdup((f3->id)));
+                break;
             case libfunc_a:
+                printf("09_%u_[%s] ", instr.arg2.val,strdup(nameLibfuncs[instr.arg2.val]));
+                break;
             case retval_a:
-                printf("%u_a2 ", instr.arg2.val);
+                printf("10_(retval) ", instr.arg2.val);
                 break;
         }
 
         printf("\n");
     }
 }
+

@@ -67,3 +67,4 @@ void decreaseScope();
 unsigned int getScope();
 void printRecord(struct SymbolTableRecord *r);
 void printGSS();
+void displaySymbolsWithOffset();

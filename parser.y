@@ -584,7 +584,8 @@ funcdef: funcprefix funcargs funcbody{
 	functionLocalOffset = (unsigned int) Stack_pop(global_func_stack);
 	$$ = $1->sym;
 	emit(funcend,$1,NULL,NULL,0);
-	inccurrscopeoffset();
+	// $1->sym->offset = currscopeoffset();
+	// inccurrscopeoffset();
 };
 
 funcprefix: FUNCTION funcname{
@@ -615,7 +616,7 @@ funcname: ID {
 						//sprintf(buffer, "Function already defined as USERFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
 						alpha_yyerror("Function defined as USRFUNC");
 					}else if(dummy->scope == 0 && getScope()>0){
-						func_for_args = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+						dummy = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
 					}
 					else{
 						//sprintf(buffer, "Function definition on existing var \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
@@ -624,6 +625,7 @@ funcname: ID {
 
 				}else{
 					dummy = insert(alpha_yylval.stringValue,USRFUNC,getScope(),alpha_yylineno);
+				
 				}
 				$$ = dummy;
 				increaseScope(1);
@@ -699,11 +701,13 @@ idlist:	ID{
 	dummy = NULL;
 	int sc = getScope();
 	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
-	printf("idlist -> ID:%s\n",alpha_yylval.stringValue);
+	// printf("idlist -> ID:%s\n",alpha_yylval.stringValue);
 	$1;
 	if(dummy==NULL){
-		printf("-->%s\n",alpha_yylval.stringValue);
+		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopeoffset());
 		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+		dummy->offset = currscopeoffset();
+	  inccurrscopeoffset();
 	}
 	else{
 		if(dummy->type==LIBFUNC){
@@ -711,6 +715,8 @@ idlist:	ID{
 		}
 		else if(dummy->scope == 0 && getScope()>0){
 			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+			dummy->offset = currscopeoffset();
+			inccurrscopeoffset();
 		}else{
 			printf("===> %s\n",alpha_yylval.stringValue);
 			alpha_yyerror("on argument declaration OR arg is already defined");
@@ -726,24 +732,30 @@ ids: COMMA ID{
 		dummy = NULL;
 	int sc = getScope();
 	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
-	printf("ids -> COMMA ID:%d\n",$2);
+	// printf("CURRSCOPESPACE %u\n",currscopespace());
 	if(dummy==NULL){
-		printf("-->%s\n",alpha_yylval.stringValue);
-		insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopeoffset());
+		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+		dummy->offset = currscopeoffset();
+		inccurrscopeoffset();
+
 	}
 	else{
 		if(dummy->type==LIBFUNC){
 			alpha_yyerror("Can't shadow a LIBFUNC");
 		}
 		else if(dummy->scope == 0){
-			insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
+			dummy->offset = currscopeoffset();
+			inccurrscopeoffset();
 		}else{
 			printf("===> %s\n",alpha_yylval.stringValue);
 			alpha_yyerror("on argument declaration");
 		}
 	}
+		// printf("CURRSCOPESPACE %u %u\n",currscopespace(),currscopeoffset());
 	} ids {
-		printf("ids ->  , ID ids\n");
+		// printf("ids ->  , ID ids\n");
 	}
 		| {printf("ids ->  nothing\n");};
 
@@ -886,6 +898,7 @@ int main (int argc, char** argv) {
     printQuads();
 	printf("============== Intermediate code Done ==============\n");
 	generateCode();
+		displaySymbolsWithOffset();
 	display_instr();
 	
   return 0;

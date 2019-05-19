@@ -206,6 +206,24 @@ void display()
         printf("====================================================\n");
 }
 
+void displaySymbolsWithOffset()
+{
+        printf("=========================================================\n");
+        int i = 0;
+        SymbolTableRecord *iter;
+        printf("%20s %10s %3s %5s %3s %3s\n", "name", "type", "scope","line", "offset", "active");
+        for (i = 0; i < SYM_SIZE; i++)
+        {
+                iter = GST[i];
+                while (iter != NULL)
+                {
+                       if(iter->type!=LIBFUNC)printf("%20s %10s %3d %5d %5d %3d [%3d] \n", iter->name, typeNames[iter->type], iter->scope, iter->line,iter->offset, iter->active ,i);
+                        iter = iter->next;
+                }
+        }
+        printf("=========================================================\n");
+}
+
 void sym_init()
 {
 

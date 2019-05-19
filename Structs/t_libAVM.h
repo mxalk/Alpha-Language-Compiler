@@ -60,6 +60,7 @@ typedef enum vmopcode
 	tablesetelem_v,
 	nop_v
 } vmopcode;
+
 typedef enum vmarg_t
 {
 	label_a=0,

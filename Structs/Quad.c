@@ -76,7 +76,11 @@ SymbolTableRecord *new_temp() {
     // itoa(temp_no, name+4, 10);
     temp_no++;
             
-    SymbolTableRecord* new_sym = insert(name, LCL, getScope(), 0);
+    SymbolTableRecord* new_sym = insert(name, getScope()?LCL:GLBL, getScope(), 0);
+    printf("XAXAXAXAcurrscopeoffset %d %u",currscopeoffset(),currscopespace());
+    new_sym->offset = currscopeoffset();
+    inccurrscopeoffset();
+    // _stop_
     // new_sym->name = name;
     return new_sym;
 }
