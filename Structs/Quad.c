@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+extern void alpha_yyerror();
+#define _stop_ alpha_yyerror("Stop");
+
 
 Quad *quads = (Quad *) 0;
 unsigned total = 0;
@@ -77,7 +80,7 @@ SymbolTableRecord *new_temp() {
     temp_no++;
             
     SymbolTableRecord* new_sym = insert(name, getScope()?LCL:GLBL, getScope(), 0);
-    printf("XAXAXAXAcurrscopeoffset %d %u",currscopeoffset(),currscopespace());
+    // printf("XAXAXAXAcurrscopeoffset %d %u",currscopeoffset(),currscopespace());
     new_sym->offset = currscopeoffset();
     inccurrscopeoffset();
     // _stop_
@@ -523,6 +526,7 @@ void printQuads() {
                         default: emit_error(iopcode, expressions[i]);
                     }
                 }
+                    // 
                 break;
 
             case tablegetelem:
@@ -556,8 +560,9 @@ void printQuads() {
 
             case tablesetelem:
                 // assert(result->type==newtable_e);
-                printf(" %15s", result->sym->name);
+                // printf(" %15s", result->sym->name);
                 for (i=0; i<2; i++) {
+            // _stop_
                     //assert(expressions[i]);
                     switch (expressions[i]->type) {
                         case arithexpr_e:

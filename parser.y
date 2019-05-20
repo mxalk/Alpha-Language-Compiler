@@ -376,6 +376,7 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 					dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
 					dummy->space = currscopespace();
 					dummy->offset = currscopeoffset();
+					dummy->stype = var_s;
 					inccurrscopeoffset();
 				}
 				$$ = lvalue_expr(dummy);
@@ -387,6 +388,7 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 				dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
 				dummy->space = currscopespace();
 				dummy->offset = currscopeoffset();
+				dummy->stype = var_s;
 				$2;
 				inccurrscopeoffset();
 				$$ = lvalue_expr(dummy);

@@ -1,5 +1,11 @@
-function x(i,j) { return i+y; }
-x(1,2);
+//function x(i,j) { return i+y; }
+//x(1,2);
 //function lala(i,j) { return i+y; }
 //function lala2(i,j,k) { return i+y; }
-a = "string";
+a = false;
+b= true;
+
+if (not a){
+    a = 2;
+}
+

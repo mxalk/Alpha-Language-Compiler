@@ -174,13 +174,19 @@ void generateCode(void) // main target code function
         assert(quads + i);
         printf("===> Quad #%d op: %10s %20s\n", i, iopcodeNames[(quads + i)->op], "to target code ...");
         (*generators[quads[i].op])(quads + i);
+        currprocessedquads++;
     }
-    // patch_incomplete_jumps();
+    currprocessedquads-=1;
+    patch_incomplete_jumps();
     printf("================= Target Code Generated =================\n");
 }
 
 #if 1
 void make_operand(Expr *e, vmarg *arg) {
+if(e==NULL){
+    reset_operand(arg);
+}
+
     switch (e->type) {
         case var_e:
         case tableitem_e:
@@ -202,6 +208,7 @@ void make_operand(Expr *e, vmarg *arg) {
                 default:
                     assert(0);
             }
+            break;
         case constbool_e:
             arg->val = e->value.boolConst;
             arg->type = bool_a;
@@ -227,7 +234,6 @@ void make_operand(Expr *e, vmarg *arg) {
                     arg->val = w;
                 }
             }
-            // printf("EDWWWWWWWGEIAAA %u\n",arg->val);
             arg->type = userfunc_a;
             break;
         case libraryfunc_e:
@@ -244,27 +250,43 @@ void patch_incomplete_jumps()
 {
     incomplete_jump *iter;
     while (iter = Queue_dequeue(ij_head)) {
-        // printf("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&%d\n",iter->instrNo);
-        if (iter->iaddress = currQuad-1)
-            instructions[iter->instrNo].result.val = currInstruction-1;
-        else
-            instructions[iter->instrNo].result.val = quads[iter->iaddress].taddress;
+        if (iter->iaddress == currInstruction){
+            printf("IJ_1 %d %d\n",iter->iaddress,currInstruction);
+            instructions[iter->instrNo].result.val = currInstruction;
+        }else{
+            printf("IJ_2 %d %d %d\n",iter->iaddress,currInstruction,iter->instrNo);
+            if(!quads[iter->iaddress-1].taddress)
+            instructions[iter->instrNo].result.val = currInstruction;
+            else
+            {
+                instructions[iter->instrNo].result.val  = quads[iter->iaddress-1].taddress;
+            }
+            
+        }
     }
 }
 
 void generate_relational(vmopcode op, Quad *quad)
 {
     instruction t;
+    reset_operand(&t.result);
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
     t.opcode = op;
-    printf("%s\n", vmopcode_name[op]);
-
+    if (quad->arg1)
     make_operand(quad->arg1, &t.arg1);
+    if (quad->arg2)
     make_operand(quad->arg2, &t.arg2);
     t.result.type = label_a;
-    if (quad->label < currprocessedquads)
+    // printf("rel gen %s %d %d\n", vmopcode_name[op],quad->label,currprocessedquads);
+    if (quad->label < currprocessedquads){
+        printf("rel gen %s %d %d\n", vmopcode_name[op],quad->label,currprocessedquads);
         t.result.val = quads[quad->label].taddress;
-    else
+    }
+    else{
+        printf("rel gen ij %s %d %d\n", vmopcode_name[op],quad->label,currprocessedquads);
         add_incomplete_jump(nextinstructionlabel(), quad->label);
+    }
     quad->taddress = nextinstructionlabel();
     emit_instr(&t);
 }
@@ -337,6 +359,41 @@ void generate_OR(Quad *quad)
 
     // similar impl for AND
 } //funcstack impl for bellow
+void generate_AND(Quad *q)
+{
+    q->taddress = nextinstructionlabel();
+	instruction t;
+
+	t.opcode = jeq_v;
+	make_operand(q->arg1, &t.arg1);
+	make_booloperand(&t.arg2, 0);
+	t.result.type = label_a;
+	t.result.val = nextinstructionlabel() + 4;
+	emit_instr(&t);
+
+	make_operand(q->arg2, &t.arg1);
+	t.result.val = nextinstructionlabel() + 3;
+	emit_instr(&t);
+
+	t.opcode = assign_v;
+	make_booloperand (&t.arg1, 1);
+	reset_operand(&t.arg2);
+	make_operand(q->result, &t.result);
+	emit_instr(&t);
+
+	t.opcode = jump_v;
+	reset_operand(&t.arg1);
+	reset_operand(&t.arg2);
+	t.result.type = label_a;
+	t.result.val = nextinstructionlabel() + 2;
+	emit_instr(&t);
+
+	t.opcode = assign_v;
+	make_booloperand (&t.arg1, 0);
+	reset_operand(&t.arg2);
+	make_operand(q->result, &t.result);
+	emit_instr(&t);
+}
 
 void generate_PARAM(Quad *quad)
 {
@@ -550,10 +607,6 @@ void generate_IF_LESSEQ(Quad *q)
     generate_relational(jle_v, q);
     return;
 }
-void generate_AND(Quad *q)
-{
-    return;
-}
 
 unsigned consts_newstring(char *s)
 {
@@ -620,10 +673,10 @@ void backpatch(Queue *q, unsigned int funcend_position)
     return;
 }
 
-void add_incomplete_jump(unsigned insrtNo, unsigned iaddress)
+void add_incomplete_jump(unsigned insrtNo, unsigned jump_to)
 {
-    incomplete_jump *new_ij = (incomplete_jump *)malloc(sizeof(incomplete_jump *));
-    new_ij->iaddress = iaddress;
+    incomplete_jump *new_ij = (incomplete_jump *)malloc(sizeof(incomplete_jump));
+    new_ij->iaddress = jump_to;
     new_ij->instrNo = insrtNo;
     Queue_enqueue(ij_head, new_ij);
     return;
@@ -658,10 +711,18 @@ void display_instr()
     printf("=========================================================\n");
     instruction instr;
     userfunc* f1 = NULL,*f2=NULL,*f3=NULL;
-    for (int i = 0; i < currInstruction; i++)
+    unsigned sz = currInstruction;
+    for (int i = 0; i < sz; i++)
     {
         printf("%3d: ",i);
         instr = instructions[i];
+        if(instr.result.type > 11)
+            reset_operand(&instr.result);
+        if(instr.arg1.type > 11)
+            reset_operand(&instr.arg1);
+        if(instr.arg2.type > 11)
+            reset_operand(&instr.arg2);
+        
         if(instr.result.type != empty_a){
             f1 = (userfunc*)Queue_get(userfunctions,instr.result.val);
         }
@@ -671,7 +732,9 @@ void display_instr()
         if(instr.arg2.type != empty_a){
             f3 = (userfunc*)Queue_get(userfunctions,instr.arg2.val);
         }
+        printf("[op %2d] ",instr.opcode);
         printf("%s ", vmopcode_name[instr.opcode]);
+        // printf("[op %2d] ",instr.arg2.type);
         switch (instr.result.type) {
             case empty_a:
                 break;
@@ -708,7 +771,11 @@ void display_instr()
             case retval_a:
                 printf("10_(retval) ", instr.result.val);
                 break;
+            default:
+                assert(0);
         }
+        // printf("arg1\n");
+
         switch (instr.arg1.type) {
             case empty_a:
                 break;
@@ -745,7 +812,11 @@ void display_instr()
             case retval_a:
                 printf("10_(retval) ", instr.arg1.val);
                 break;
+            default:
+                assert(0);
         }
+        
+        // printf("%d \n",instr.arg2.type);
         switch (instr.arg2.type) {
             case empty_a:
                 break;
@@ -782,7 +853,10 @@ void display_instr()
             case retval_a:
                 printf("10_(retval) ", instr.arg2.val);
                 break;
+            default:
+                assert(0);
         }
+
 
         printf("\n");
     }
