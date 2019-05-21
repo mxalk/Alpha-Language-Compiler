@@ -1,9 +1,15 @@
 
-function id(a,b){
-        c = a + b;
-        function(){
-                local c = 1;
-                return;
-        }
+//function id(a,b){
+//        c = a + b;
+//        function(){
+//                local c = 1;
+//                return;
+//        }
+//}
+function foo() 
 
+{
+        function foo() { print("scope1\n"); }
 }
+ print("g1\n"); 
+  print("g2\n"); 

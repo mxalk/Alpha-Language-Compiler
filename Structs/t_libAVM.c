@@ -5,6 +5,7 @@
 #define false 0
 #define true 1
 extern void alpha_yyerror();
+extern unsigned alpha_yylineno;
 #define _stop_ alpha_yyerror("Stop");
 char *vmopcode_name[] = {
     "assign",
@@ -40,6 +41,7 @@ unsigned int totalInstructions = 0;
 unsigned int currInstruction = 0;
 unsigned int currprocessedquads;
 Queue *userfunctions;
+Queue *libfuncs;
 // Queue *ij_head;
 
 Stack *funcstack;
@@ -167,6 +169,7 @@ void generateCode(void) // main target code function
     ij_head = Queue_init();
     funcstack = Stack_init();
     userfunctions = Queue_init();
+    libfuncs = Queue_init();
     //init
     unsigned int i;
     for (i = 0; i < currQuad; i++)
@@ -186,7 +189,7 @@ void make_operand(Expr *e, vmarg *arg) {
 if(e==NULL){
     reset_operand(arg);
 }
-
+    // printf("%d\n",e->type);
     switch (e->type) {
         case var_e:
         case tableitem_e:
@@ -195,6 +198,7 @@ if(e==NULL){
         case boolexpr_e:
         case newtable_e:
             arg->val = e->sym->offset;
+            printf("%d %d\n",e->type,e->sym->space);
             switch (e->sym->space) {
                 case programvar:
                     arg->type = global_a;
@@ -414,6 +418,7 @@ void generate_CALL(Quad *quad)
     reset_operand(&t.arg1);
     reset_operand(&t.arg2);
     reset_operand(&t.result);
+    checkLIB(quad);
     make_operand(quad->result, &t.arg1);
     emit_instr(&t);
 }
@@ -634,11 +639,19 @@ unsigned consts_newnumber(double n)
 }
 unsigned libfuncs_newused(char *s)
 {
-    
+    char* name = strdup(s);
+    Queue_enqueue(libfuncs,name);
+    printf("name %s at %d\n",name, Queue_getSize(libfuncs)-1);
+    totalNamedLibfuncs++;
+    return Queue_getSize(libfuncs)-1;
 }
 
-unsigned userfuncs_newfunc(SymbolTableRecord *sym)
-{
+void checkLIB(Quad* q){
+    assert(q->result->sym);
+    SymbolTableRecord* dummy = lookup(q->result->sym->name,LIBFUNC,0,1,0,0);
+
+    if(dummy)
+    q->result->type= libraryfunc_e;
 }
 
 void make_numberoperand(vmarg *arg, double val)
@@ -699,7 +712,8 @@ void printTables(){
     // _stop_
         printf("---------------------------------------------------------\n");
     for( i=0; i < totalNamedLibfuncs;i++){
-        // printfrintf
+        char* f = strdup((char*)Queue_get(libfuncs,i));
+        printf("%d | Lib Func ID %s\n",i,f);
     }
 }
 
@@ -710,7 +724,6 @@ void display_instr()
     printTables();
     printf("=========================================================\n");
     instruction instr;
-    userfunc* f1 = NULL,*f2=NULL,*f3=NULL;
     unsigned sz = currInstruction;
     for (int i = 0; i < sz; i++)
     {
@@ -723,142 +736,190 @@ void display_instr()
         if(instr.arg2.type > 11)
             reset_operand(&instr.arg2);
         
-        if(instr.result.type != empty_a){
-            f1 = (userfunc*)Queue_get(userfunctions,instr.result.val);
-        }
-        if(instr.arg1.type != empty_a){
-            f2 = (userfunc*)Queue_get(userfunctions,instr.arg1.val);
-        }
-        if(instr.arg2.type != empty_a){
-            f3 = (userfunc*)Queue_get(userfunctions,instr.arg2.val);
-        }
-        printf("[op %2d] ",instr.opcode);
-        printf("%s ", vmopcode_name[instr.opcode]);
-        // printf("[op %2d] ",instr.arg2.type);
-        switch (instr.result.type) {
-            case empty_a:
-                break;
-            case label_a:
-                printf("00_%u ", instr.result.val);
-                break;
-            case global_a:
-                printf("01_%u_ ", instr.result.val);
-                break;
-            case formal_a:
-                printf("02_%u_ ", instr.result.val);
-                break;
-            case local_a:
-                printf("03_%u_ ", instr.result.val);
-                break;
-            case number_a:
-                printf("04_%u_[%f] ", instr.result.val,numConsts[instr.result.val]);
-                break;
-            case string_a:
-                 printf("05_%u_[\"%s\"] ", instr.result.val,strdup(stringConsts[instr.result.val]));
-                break;
-            case bool_a:
-                printf("06_%u ", instr.result.val);
-                break;
-            case nil_a:
-                printf("07_nill");
-                break;
-            case userfunc_a:
-                printf("08_%u_[%s] ", instr.result.val,(f1->id));
-                break;
-            case libfunc_a:
-                printf("09_%u_[%s] ", instr.result.val,(nameLibfuncs[instr.result.val]));
-                break;
-            case retval_a:
-                printf("10_(retval) ", instr.result.val);
-                break;
-            default:
-                assert(0);
-        }
-        // printf("arg1\n");
-
-        switch (instr.arg1.type) {
-            case empty_a:
-                break;
-            case label_a:
-                printf("00_%u ", instr.arg1.val);
-                break;
-            case global_a:
-                printf("01_%u_ ", instr.arg1.val);
-                break;
-            case formal_a:
-                printf("02_%u_ ", instr.arg1.val);
-                break;
-            case local_a:
-                printf("03_%u_ ", instr.arg1.val);
-                break;
-            case number_a:
-                printf("04_%u_[%f] ", instr.arg1.val,numConsts[instr.arg1.val]);
-                break;
-            case string_a:
-                 printf("05_%u_[\"%s\"] ", instr.arg1.val,strdup(stringConsts[instr.arg1.val]));
-                break;
-            case bool_a:
-                printf("06_%u ", instr.arg1.val);
-                break;
-            case nil_a:
-                printf("07_nill");
-                break;
-            case userfunc_a:
-                printf("08_%u_[%s] ", instr.arg1.val,strdup(f2->id));
-                break;
-            case libfunc_a:
-                printf("09_%u_[%s] ", instr.arg1.val,strdup(nameLibfuncs[instr.arg1.val]));
-                break;
-            case retval_a:
-                printf("10_(retval) ", instr.arg1.val);
-                break;
-            default:
-                assert(0);
-        }
         
-        // printf("%d \n",instr.arg2.type);
-        switch (instr.arg2.type) {
-            case empty_a:
-                break;
-            case label_a:
-                printf("00_%u ", instr.arg2.val);
-                break;
-            case global_a:
-                printf("01_%u_ ", instr.arg2.val);
-                break;
-            case formal_a:
-                printf("02_%u_ ", instr.arg2.val);
-                break;
-            case local_a:
-                printf("03_%u_ ", instr.arg2.val);
-                break;
-            case number_a:
-                printf("04_%u_[%f] ", instr.arg2.val,numConsts[instr.arg2.val]);
-                break;
-            case string_a:
-                 printf("05_%u_[\"%s\"] ", instr.arg2.val,strdup(stringConsts[instr.arg2.val]));
-                break;
-            case bool_a:
-                printf("06_%u ", instr.arg2.val);
-                break;
-            case nil_a:
-                printf("07_nill");
-                break;
-            case userfunc_a:
-                printf("08_%u_[%s] ", instr.arg2.val,strdup((f3->id)));
-                break;
-            case libfunc_a:
-                printf("09_%u_[%s] ", instr.arg2.val,strdup(nameLibfuncs[instr.arg2.val]));
-                break;
-            case retval_a:
-                printf("10_(retval) ", instr.arg2.val);
-                break;
-            default:
-                assert(0);
-        }
+        printf("[op %2d] ",instr.opcode);
+        printf("\033[0;36m%20s \033[0m", vmopcode_name[instr.opcode]);
 
+        switch(instr.opcode){
+            case add_v:
+            case sub_v:
+            case mul_v:
+            case div_v:
+            case mod_v:
+            case and_v:
+            case or_v:
+            case jeq_v:
+            case jne_v:
+            case jle_v:
+            case jge_v:
+            case jlt_v:
+            case jgt_v:
+            case tablesetelem_v:
+            case tablegetelem_v:
+                use_instr_result(instr.result);
+                use_instr_arg1(instr.arg1);
+                use_instr_arg2(instr.arg2);
+                break;
+            case assign_v:
+            case not_v:
+                use_instr_result(instr.result);
+                use_instr_arg1(instr.arg1);
+                break;
+            case jump_v:
+            case funcenter_v:
+            case funcexit_v:
+                use_instr_result(instr.result);
+                break;
+            case uminus_v:
+            case nop_v:
+                break;//TBI
+            case call_v:
+            case pusharg_v:
+            case newtable_v:
+                use_instr_arg1(instr.arg1);
+                break;
+            
+                
+        }
 
         printf("\n");
     }
 }
 
+void use_instr_result(vmarg result){
+    userfunc* f1= NULL;
+    if(result.type == userfunc_a){
+            f1 = (userfunc*)Queue_get(userfunctions,result.val);
+    }
+    switch (result.type) {
+            case empty_a:
+                break;
+            case label_a:
+                printf("00_%u ", result.val);
+                break;
+            case global_a:
+                printf("01_%u ", result.val);
+                break;
+            case formal_a:
+                printf("02_%u ", result.val);
+                break;
+            case local_a:
+                printf("03_%u ", result.val);
+                break;
+            case number_a:
+                printf("04_%u_[%f] ", result.val,numConsts[result.val]);
+                break;
+            case string_a:
+                 printf("05_%u_[\"%s\"] ", result.val,strdup(stringConsts[result.val]));
+                break;
+            case bool_a:
+                printf("06_%u ", result.val);
+                break;
+            case nil_a:
+                printf("07_nill");
+                break;
+            case userfunc_a:
+                printf("08_%u_[%s] ", result.val,strdup((f1->id)));
+                break;
+            case libfunc_a:
+                printf("09_%u_[%s] ", result.val,strdup((char*)Queue_get(libfuncs,result.val)));
+                break;
+            case retval_a:
+                printf("10_(retval) ", result.val);
+                break;
+            default:
+                assert(0);
+        }
+}
+
+void use_instr_arg1(vmarg arg1){
+    userfunc* f2= NULL;
+    if(arg1.type == userfunc_a){
+            f2 = (userfunc*)Queue_get(userfunctions,arg1.val);
+    }
+    switch (arg1.type) {
+            case empty_a:
+                break;
+            case label_a:
+                printf("00_%u ", arg1.val);
+                break;
+            case global_a:
+                printf("01_%u ", arg1.val);
+                break;
+            case formal_a:
+                printf("02_%u ", arg1.val);
+                break;
+            case local_a:
+                printf("03_%u ", arg1.val);
+                break;
+            case number_a:
+                printf("04_%u_[%f] ", arg1.val,numConsts[arg1.val]);
+                break;
+            case string_a:
+                 printf("05_%u_[\"%s\"] ", arg1.val,strdup(stringConsts[arg1.val]));
+                break;
+            case bool_a:
+                printf("06_%u ", arg1.val);
+                break;
+            case nil_a:
+                printf("07_nill");
+                break;
+            case userfunc_a:
+                printf("08_%u_[%s] ", arg1.val,strdup((f2->id)));
+                break;
+            case libfunc_a:
+                printf("09_%u_[%s] ", arg1.val,strdup((char*)Queue_get(libfuncs,arg1.val)));
+                break;
+            case retval_a:
+                printf("10_(retval) ", arg1.val);
+                break;
+            default:
+                assert(0);
+        }
+}
+
+void use_instr_arg2(vmarg arg2){
+    userfunc* f3= NULL;
+    if(arg2.type == userfunc_a){
+            f3 = (userfunc*)Queue_get(userfunctions,arg2.val);
+    }
+    switch (arg2.type) {
+            case empty_a:
+                break;
+            case label_a:
+                printf("00_%u ", arg2.val);
+                break;
+            case global_a:
+                printf("01_%u ", arg2.val);
+                break;
+            case formal_a:
+                printf("02_%u ", arg2.val);
+                break;
+            case local_a:
+                printf("03_%u ", arg2.val);
+                break;
+            case number_a:
+                printf("04_%u_[%f] ", arg2.val,numConsts[arg2.val]);
+                break;
+            case string_a:
+                 printf("05_%u_[\"%s\"] ", arg2.val,strdup(stringConsts[arg2.val]));
+                break;
+            case bool_a:
+                printf("06_%u ", arg2.val);
+                break;
+            case nil_a:
+                printf("07_nill");
+                break;
+            case userfunc_a:
+                printf("08_%u_[%s] ", arg2.val,strdup((f3->id)));
+                break;
+            case libfunc_a:
+                printf("09_%u_[%s] ", arg2.val,strdup((char*)Queue_get(libfuncs,arg2.val)));
+                break;
+            case retval_a:
+                printf("10_(retval) ", arg2.val);
+                break;
+            default:
+                assert(0);
+        }
+}

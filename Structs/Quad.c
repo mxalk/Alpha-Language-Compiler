@@ -11,6 +11,7 @@ extern void alpha_yyerror();
 Quad *quads = (Quad *) 0;
 unsigned total = 0;
 unsigned int currQuad = 0;
+extern unsigned alpha_yylineno;
 
 #define EXPAND_SIZE 1024
 #define CURR_SIZE (total*sizeof(Quad))
@@ -82,6 +83,7 @@ SymbolTableRecord *new_temp() {
     SymbolTableRecord* new_sym = insert(name, getScope()?LCL:GLBL, getScope(), 0);
     // printf("XAXAXAXAcurrscopeoffset %d %u",currscopeoffset(),currscopespace());
     new_sym->offset = currscopeoffset();
+    new_sym->space = currscopespace();
     inccurrscopeoffset();
     // _stop_
     // new_sym->name = name;
@@ -123,7 +125,9 @@ Expr* make_call(Expr* lvalue, Queue* elist){ //elist = arg list
     if(elist){
         printf("elist->size %d\n",elist->size);
         for(i = 0 ; i <elist->size; i++){
-            emit(param,NULL,NULL,Queue_get(elist,i),0);
+            Expr* e = (Expr*)Queue_get(elist,i);
+            //e->type = 
+            emit(param,NULL,NULL,e,0);
         }
     }
     emit(call,NULL,NULL,func,0);
@@ -179,7 +183,7 @@ void emit(Iopcode iopcode, Expr *arg1, Expr *arg2, Expr *result, unsigned label)
 
     // printf("%d\n",iopcode);
     // alpha_yyerror(iopcode);
-    printf("\033[0;32mEmit(%s)  [quad %d]\n\033[0m",iopcodeNames[iopcode],currQuad+1);
+    printf("\033[0;32mEmit(%s) (line: %d) [quad %d]\n\033[0m",iopcodeNames[iopcode],alpha_yylineno,currQuad+1);
     if (currQuad == total) expand();
     Quad *p = quads+currQuad++;
     p->op = iopcode;

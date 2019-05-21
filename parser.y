@@ -221,16 +221,16 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = term;
 			}
 			|lvalue{
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
-				if(dummy == NULL){
-					printf("%s\n",alpha_yylval.stringValue);
-					alpha_yyerror("Illegal instruction++ on undefined variable \n");
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0,1); //type(arg:#4) is not important when we are expecting this var
+				// if(dummy == NULL){
+				// 	printf("%s\n",alpha_yylval.stringValue);
+				// 	alpha_yyerror("Illegal instruction++ on undefined variable \n");
           				
-				}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
-					printf("%s\n",alpha_yylval.stringValue);
-					alpha_yyerror("Illegal instruction++ on function  \n");
+				// }else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
+				// 	printf("%s\n",alpha_yylval.stringValue);
+				// 	alpha_yyerror("Illegal instruction++ on function  \n");
           				
-				}
+				// }
 			} INCR {printf("term ->   lvalue ++ \n");
 				Expr* term = new_expr(var_e);
 				Expr* value;
@@ -247,16 +247,16 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = term;
 			}
 			|INCR lvalue {printf("term ->  ++ lvalue\n");
-					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
-					if(dummy == NULL){
-						printf("%s\n",alpha_yylval.stringValue);
-						alpha_yyerror("Illegal ++instruction on undefined variable \n");
+					dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0,1); //type(arg:#4) is not important when we are expecting this var
+					// if(dummy == NULL){
+					// 	printf("%s\n",alpha_yylval.stringValue);
+					// 	alpha_yyerror("Illegal ++instruction on undefined variable \n");
 										
-					}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
-						printf("%s\n",alpha_yylval.stringValue);
-						alpha_yyerror("Illegal ++instruction on function  \n");
+					// }else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
+					// 	printf("%s\n",alpha_yylval.stringValue);
+					// 	alpha_yyerror("Illegal ++instruction on function  \n");
 										
-					}
+					// }
 					Expr* term;
 					Expr* value;
 					if($2->type == tableitem_e){
@@ -272,14 +272,14 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					$$ = term;
 				}
 			|lvalue{
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
-				if(dummy == NULL){
-					alpha_yyerror("Illegal instruction-- on undefined variable \n");
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0,1); //type(arg:#4) is not important when we are expecting this var
+				// if(dummy == NULL){
+				// 	alpha_yyerror("Illegal instruction-- on undefined variable \n");
           				
-				}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
-					alpha_yyerror("Illegal instruction-- on function  \n");
+				// }else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
+				// 	alpha_yyerror("Illegal instruction-- on function  \n");
           				
-				}
+				// }
 			} DECR {printf("term ->  lvalue -- \n");
 				Expr* term = new_expr(var_e);
 				Expr* value;
@@ -296,14 +296,14 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = term;
 			}
 			|DECR lvalue {printf("term ->  -- lvalue \n");
-				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,1,0,0); //type(arg:#4) is not important when we are expecting this var
-				if(dummy == NULL){
-					alpha_yyerror("Illegal --instruction on undefined variable ");
+				dummy = lookup(alpha_yylval.stringValue,LCL,alpha_yylineno,0,0,1); //type(arg:#4) is not important when we are expecting this var
+				// if(dummy == NULL){
+				// 	alpha_yyerror("Illegal --instruction on undefined variable ");
           				
-				}else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
-					alpha_yyerror("Illegal --instruction on function  ");
+				// }else if(dummy->type == LIBFUNC || dummy->type == USRFUNC){
+				// 	alpha_yyerror("Illegal --instruction on function  ");
           				
-				}	
+				// }	
 				Expr* term;
 					Expr* value;
 					if($2->type == tableitem_e){
@@ -397,6 +397,7 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 					// $$ = $2;
 				printf("lvalue ->  DCOLON ID\n");
 				dummy = lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,1);
+				dummy->stype = var_s;
 				if(dummy==NULL){
 						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 						sprintf(buffer, "Global variable %s not defined \n",alpha_yylval.stringValue);
@@ -454,6 +455,7 @@ call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");
 					Expr* lval = $1;
 					Expr* self= lval;
 					lval = emit_iftableitem(member_item(self,callsuffix->name));
+					if(!callsuffix->elist)callsuffix->elist = Queue_init();
 					Queue_enqueue(callsuffix->elist,(Expr*)self);
 				}
 				$$ = make_call($1,callsuffix->elist);
@@ -542,6 +544,8 @@ objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");
 			};
 
 indexed:		indexedelem indexedelem_comm {printf("indexed ->  indexedelem indexedelem_comm\n");
+				if(curr_indexed == NULL)
+					curr_indexed = Queue_init();
 				Queue_enqueue(curr_indexed,$1);
 
 				$$ = Queue_get(global_indexed_q,global_indexed_q->size-1);
@@ -614,7 +618,7 @@ funcname: ID {
 						//sprintf(buffer, "Function already defined as LIBFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
 						alpha_yyerror("Function defined as LIB");
 					}
-					else if(dummy->type==USRFUNC){
+					else if(dummy->type==USRFUNC && dummy->scope == getScope()){
 						//sprintf(buffer, "Function already defined as USERFUNC \'%s\' line %u", alpha_yylval.stringValue, alpha_yylineno);
 						alpha_yyerror("Function defined as USRFUNC");
 					}else if(dummy->scope == 0 && getScope()>0){
@@ -702,13 +706,14 @@ const:			INTNUM {
 idlist:	ID{
 	dummy = NULL;
 	int sc = getScope();
-	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
+	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,1);
 	// printf("idlist -> ID:%s\n",alpha_yylval.stringValue);
 	$1;
 	if(dummy==NULL){
 		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopeoffset());
 		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 		dummy->offset = currscopeoffset();
+			dummy->stype = var_s;
 	  inccurrscopeoffset();
 	}
 	else{
@@ -718,6 +723,7 @@ idlist:	ID{
 		else if(dummy->scope == 0 && getScope()>0){
 			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 			dummy->offset = currscopeoffset();
+			dummy->stype = var_s;
 			inccurrscopeoffset();
 		}else{
 			printf("===> %s\n",alpha_yylval.stringValue);
@@ -733,12 +739,14 @@ idlist:	ID{
 ids: COMMA ID{
 		dummy = NULL;
 	int sc = getScope();
-	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,0);
+	$2;
+	dummy=lookup(alpha_yylval.stringValue,FORMAL,alpha_yylineno,0,0,1);
 	// printf("CURRSCOPESPACE %u\n",currscopespace());
 	if(dummy==NULL){
 		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopeoffset());
 		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 		dummy->offset = currscopeoffset();
+				dummy->stype = var_s;
 		inccurrscopeoffset();
 
 	}
@@ -749,6 +757,8 @@ ids: COMMA ID{
 		else if(dummy->scope == 0){
 			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 			dummy->offset = currscopeoffset();
+				dummy->stype = var_s;
+
 			inccurrscopeoffset();
 		}else{
 			printf("===> %s\n",alpha_yylval.stringValue);
