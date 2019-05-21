@@ -52,6 +52,7 @@ void userfunctions_add(unsigned address, unsigned localSize, char *id)
     new_ufunc->address = (unsigned int)address;
     new_ufunc->id = strdup(id);
     new_ufunc->localSize = (unsigned int) localSize;
+    if(localSize >1000000)new_ufunc->localSize=0;
     printf("%u assert\n", localSize);
     totalUserFuncs++;
 
@@ -648,10 +649,12 @@ unsigned libfuncs_newused(char *s)
 
 void checkLIB(Quad* q){
     assert(q->result->sym);
-    SymbolTableRecord* dummy = lookup(q->result->sym->name,LIBFUNC,0,1,0,0);
+    if(q->result->sym->type==LIBFUNC){
+        SymbolTableRecord* dummy = lookup(q->result->sym->name,LIBFUNC,0,1,0,0);
 
-    if(dummy)
-    q->result->type= libraryfunc_e;
+        if(dummy)
+            q->result->type= libraryfunc_e;
+    }
 }
 
 void make_numberoperand(vmarg *arg, double val)

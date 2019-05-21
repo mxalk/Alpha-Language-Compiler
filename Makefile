@@ -67,22 +67,29 @@ test: all
 	./out temp.txt
 
 t_success:	all
-	./out tests_new/backpatch0.asc
-	./out tests_new/backpatch0.asc
-	./out tests_new/backpatch1.asc
-	./out tests_new/backpatch2.asc
-	./out tests_new/backpatch3.asc
-	./out tests_new/p3t_assignments_complex.asc
-	./out tests_new/p3t_assignments_objects.asc
-	./out tests_new/p3t_assignments_simple.asc
-	./out tests_new/p3t_basic_expr.asc
-	./out tests_new/p3t_calls.asc
-	./out tests_new/p3t_const_maths.asc
-	./out tests_new/p3t_flow_control.asc
-	# ./out tests_new/p3t_flow_control_error.asc # works
-	./out tests_new/p3t_funcdecl.asc
-	./out tests_new/p3t_if_else.asc
-	#  ./out tests_new/p3t_object_creation_expr.asc #seg
-	./out tests_new/p3t_relational.asc
-	./out tests_new/p3t_var_maths.asc
-	./out tests_new/vavouris.asc
+	./out tests_4h_5h/basic_complex.asc
+	./out tests_4h_5h/basic_simple.asc
+	./out tests_4h_5h/calc.asc
+	./out tests_4h_5h/Circle.asc
+	./out tests_4h_5h/delegation.asc
+	./out tests_4h_5h/err1.asc
+	./out tests_4h_5h/err2.asc
+	./out tests_4h_5h/err3.asc
+	./out tests_4h_5h/err4.asc
+	./out tests_4h_5h/err5.asc
+	./out tests_4h_5h/err6.asc
+	./out tests_4h_5h/funcs.asc
+	./out tests_4h_5h/hercules.asc
+	./out tests_4h_5h/libfuncs.asc
+	./out tests_4h_5h/line_point.asc
+	./out tests_4h_5h/queens.asc
+	./out tests_4h_5h/Random.asc
+	./out tests_4h_5h/ShadowedFunctions.asc
+	./out tests_4h_5h/tables1.asc
+	./out tests_4h_5h/tables2.asc
+	./out tests_4h_5h/tables3.asc
+	./out tests_4h_5h/tables_bonus.asc
+	./out tests_4h_5h/Tree1.asc
+	./out tests_4h_5h/Tree2.asc
+	./out tests_4h_5h/visitor.asc
+
