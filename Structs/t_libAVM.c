@@ -781,6 +781,8 @@ void display_instr()
             case newtable_v:
                 use_instr_arg1(instr.arg1);
                 break;
+            default:
+                assert(0);
             
                 
         }
