@@ -66,6 +66,7 @@ clean:
 test: all
 	./out temp.txt
 
+
 t_success:	all
 	./out tests_4h_5h/basic_complex.asc
 	./out tests_4h_5h/basic_simple.asc

@@ -560,6 +560,7 @@ indexedelem:		CURL_O expr{
 					// insert(alpha_yylval.stringValue,LCL,getScope(),alpha_yylineno);
 				// }
 			} COLON expr CURL_C {printf("indexedelem ->  { expr : expr }\n");
+				    printf("currscopespace %u %u\n",currscopespace(),currscopeoffset());
 				if(curr_indexed == NULL){
 					curr_indexed = Queue_init();
 					Queue_enqueue(global_indexed_q,curr_indexed);
@@ -576,6 +577,7 @@ indexedelem:		CURL_O expr{
 
 indexedelem_comm:		COMMA indexedelem indexedelem_comm {printf("indexedelem_comm ->  , indexedelem indexedelem_comm\n");
 				printf("i(2)\n");	
+				    printf("currscopespace %u %u\n",currscopespace(),currscopeoffset());
 
 			}
 			| {printf("indexedelem_comm ->  nothing\n");
@@ -587,10 +589,10 @@ funcdef: funcprefix funcargs funcbody{
 	printf("%d\n",scopeSpaceCounter);
 	exitscopespace();
 	$1->sym->totallocals = functionLocalOffset;
-	functionLocalOffset = (unsigned int) Stack_pop(global_func_stack);
+	functionLocalOffset = *((unsigned int*)Stack_pop(global_func_stack));
 	$$ = $1->sym;
 	emit(funcend,$1,NULL,NULL,0);
-	// $1->sym->offset = currscopeoffset();
+	//$1->sym->offset = currscopeoffset();
 	// inccurrscopeoffset();
 };
 
@@ -600,7 +602,9 @@ funcprefix: FUNCTION funcname{
 	func->stype = programfunc_s;
 	Expr* funcpref = lvalue_expr(func);
 	emit(funcstart,funcpref,NULL,NULL,0);
-	Stack_append(global_func_stack,&functionLocalOffset);
+	unsigned* LocalOffset = (unsigned*)malloc(sizeof(unsigned));
+	*LocalOffset = functionLocalOffset;
+	Stack_append(global_func_stack,LocalOffset);
 	enterscopespace();
 	resetformalargsoffset();
 	$$ = funcpref;
@@ -662,7 +666,7 @@ funcblockstart: {
 funcblockend: {
 	int *i = Stack_pop(loopcounter_stack);
 	loopcounter = *i;
-	free(i);
+	// free(i);
 	in_function--;
 };
 funcbody: funcblockstart block funcblockend{

@@ -1,15 +1,24 @@
+function Stack () {
 
-//function id(a,b){
-//        c = a + b;
-//        function(){
-//                local c = 1;
-//                return;
-//        }
-//}
-function foo() 
-
-{
-        function foo() { print("scope1\n"); }
+	return [
+		{"class" : "Stack"},
+		{"next"  : 0},
+		{"data"  : []},
+		{"empty" : (function (self){
+			return self.next == 0;
+		})},
+		
+		{"push"	 : (function (self, data){
+			self.data[self.next++] = data;
+		})},
+		
+		{"pop"	 : (function (self){
+			if (self.next > 0)
+				self.data[--self.next] = nil;
+		})},
+		
+		{"top" 	 : (function (self){
+			return self.data[self.next-1];
+		})}
+	];
 }
- print("g1\n"); 
-  print("g2\n"); 

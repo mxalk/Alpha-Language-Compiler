@@ -7,3 +7,12 @@ if (not a){
     a = 2;
 }
 t = [{"hi":0}];
+
+x1 = "prepei na mpei 1 fora";
+x2 = "prepei na mpei 1 fora";
+
+print();
+
+function foo(a,x){
+    return;
+}

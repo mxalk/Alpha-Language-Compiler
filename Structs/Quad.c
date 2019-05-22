@@ -84,6 +84,8 @@ SymbolTableRecord *new_temp() {
     // printf("XAXAXAXAcurrscopeoffset %d %u",currscopeoffset(),currscopespace());
     new_sym->offset = currscopeoffset();
     new_sym->space = currscopespace();
+    printf("\033[0;34mtemp = currscopespace %u %u\n\033[0m",currscopespace(),currscopeoffset());
+    
     inccurrscopeoffset();
     // _stop_
     // new_sym->name = name;
@@ -456,6 +458,7 @@ void printQuads() {
             case ret:
                 if (result) {
                     switch (result->type){
+                        case newtable_e:
                         case var_e:
                             printf("%15s", result->sym->name);
                             break;
@@ -683,13 +686,16 @@ void inccurrscopeoffset(){
         case formalarg      : ++formalArgOffset; break;
         default: assert(0);
     }
+    printf("\033[0;34mLIBcurrscopeoffset %u %u\n\033[0m",currscopespace(),currscopeoffset());
 }
 
 void enterscopespace(){
     ++scopeSpaceCounter;
+     printf("\033[0;34mLIBcurrscopespace %u \n\033[0m",currscopespace());
 }
 
 void exitscopespace(){
+    printf("\033[0;34mexit LIBcurrscopespace %u %d \n\033[0m",scopeSpaceCounter,currscopespace());
     assert(scopeSpaceCounter>1);
     scopeSpaceCounter-=1;
 }

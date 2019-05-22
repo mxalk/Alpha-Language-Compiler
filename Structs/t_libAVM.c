@@ -411,18 +411,7 @@ void generate_PARAM(Quad *quad)
     make_operand(quad->result, &t.arg1);
     emit_instr(&t);
 }
-void generate_CALL(Quad *quad)
-{
-    quad->taddress = nextinstructionlabel();
-    instruction t;
-    t.opcode = call_v;
-    reset_operand(&t.arg1);
-    reset_operand(&t.arg2);
-    reset_operand(&t.result);
-    checkLIB(quad);
-    make_operand(quad->result, &t.arg1);
-    emit_instr(&t);
-}
+
 void generate_GETRETVAL(Quad *quad)
 {
     quad->taddress = nextinstructionlabel();
@@ -476,13 +465,15 @@ void generate_RETURN(Quad *q)
 {
     q->taddress = nextinstructionlabel();
     instruction t;
-    make_retvaloperand(&t.result);
+    if(q->result){
+        make_retvaloperand(&t.result);
     // if(q->result){
-    t.opcode = assign_v;
+        t.opcode = assign_v;
     // printf("first emit done\n");
-    make_operand(q->result, &t.arg1);
-    emit_instr(&t);
-    // }
+        make_operand(q->result, &t.arg1);
+        emit_instr(&t);
+        // }
+    }
     // printf("second emit done\n");
     SymbolTableRecord *f = (SymbolTableRecord *)Stack_top(funcstack);
     // printf("%s \n", f->name);
@@ -616,6 +607,9 @@ void generate_IF_LESSEQ(Quad *q)
 
 unsigned consts_newstring(char *s)
 {
+    int i;
+    for (i=0; i<totalStringConsts; i++)
+        if (!strcmp(stringConsts[i], s)) return i;
     if(!totalStringConsts){
 		stringConsts = (char **) malloc(sizeof(char*));
 	}else{
@@ -629,6 +623,9 @@ unsigned consts_newstring(char *s)
 }
 unsigned consts_newnumber(double n)
 {
+    int i;
+    for (i=0; i<totalNumConsts; i++)
+        if (numConsts[i] == n) return i;
     if(!totalNumConsts){
 		numConsts = (double *) malloc(sizeof(double));
 	}else{
@@ -640,19 +637,37 @@ unsigned consts_newnumber(double n)
 }
 unsigned libfuncs_newused(char *s)
 {
-    char* name = strdup(s);
-    Queue_enqueue(libfuncs,name);
-    printf("name %s at %d\n",name, Queue_getSize(libfuncs)-1);
-    totalNamedLibfuncs++;
-    return Queue_getSize(libfuncs)-1;
+    char *name;
+    int i, size = Queue_getSize(libfuncs);
+    for (i = 0; i<size; i++) 
+        if (!strcmp(name = (char *)Queue_get(libfuncs, i), s)) break;
+    if (i == size) {
+        name = strdup(s);
+        Queue_enqueue(libfuncs,name);
+        totalNamedLibfuncs++;
+    }
+    printf("name %s at %d\n",name, i);
+    return i;
 }
 
+void generate_CALL(Quad *quad)
+{
+    quad->taddress = nextinstructionlabel();
+    instruction t;
+    t.opcode = call_v;
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
+    reset_operand(&t.result);
+    checkLIB(quad);
+    make_operand(quad->result, &t.arg1);
+    emit_instr(&t);
+}
 void checkLIB(Quad* q){
     assert(q->result->sym);
     if(q->result->sym->type==LIBFUNC){
-        SymbolTableRecord* dummy = lookup(q->result->sym->name,LIBFUNC,0,1,0,0);
+        // SymbolTableRecord* dummy = lookup(q->result->sym->name,LIBFUNC,0,1,0,0);
 
-        if(dummy)
+        // if(dummy)
             q->result->type= libraryfunc_e;
     }
 }
