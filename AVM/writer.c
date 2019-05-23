@@ -1,46 +1,42 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "./../Structs/t_libAVM.h"
-#define MAGICNUMBER magic
-#define FILENAME "test.abc"
-#define BYTE char
-#define MODE "w"
-#define fwrite(...) fwrite(__VA_ARGS__)
-
-// extern void* Queue_get(Queue*,int);
-
-unsigned usrfunc(unsigned);
-void init_writter();
-void create_avmbinaryfile();
-int magicnumber();
-int arrays();
-int strings();
-char *string_get(unsigned);
-unsigned total_str();
-unsigned size(char*);
-unsigned numbers();
-unsigned userfunctions_gen();
-unsigned libfunctions();
-unsigned usrfunc(unsigned);
-unsigned code();
-unsigned operand_gen(vmarg*);
+#include "writer.h"
+#include <string.h>
 
 unsigned *magic;
 FILE *generated_file;
-
-int main(){
-    
-    return 0;
-}
+char* gen_file_name;
 
 void init_writter(){
+    printf("=========================================================\n");
+    printf("==================== to binary ==========================\n");
     magic = (unsigned*)malloc(sizeof(unsigned));
     *magic= 194623425; //655*639*465 from 3655 3639 3465
-    generated_file = fopen(FILENAME,MODE);
+    
+    int init_size = strlen(file_name),i = 0,k=0;
+	char delim[] = ".";
+    char* tok[init_size];
+    char* file_name_dup = strdup(file_name);
+	char *ptr = strtok(file_name_dup, delim);
+    // tok[i++] = strdup(ptr);
+        printf("===========================1==============================\n");
+
+	while(ptr != NULL)
+	{
+        tok[i++] = strdup(ptr);
+		ptr = strtok(NULL, delim);
+	}
+        printf("==========================2===============================\n");
+
+    gen_file_name = (char*)malloc(sizeof(file_name)+5);
+        gen_file_name[0]= '\0';
+    while(k<i-1){
+        strcat(gen_file_name,strdup(tok[k++]));
+    }
+    sprintf(gen_file_name,"%s%s",gen_file_name,".abc");
+    generated_file = fopen(gen_file_name,MODE);
 }
 
 void create_avmbinaryfile() {
-
+    init_writter();
     if(!magicnumber())
         fprintf(stderr,"\033[0;31mError writing magicnumber\033[0m\n");
     
@@ -50,7 +46,11 @@ void create_avmbinaryfile() {
     if(!code())
         fprintf(stderr,"\033[0;31mError writing code\033[0m\n");
 
-    printf("\033[0;32mBinary was succesfully generated\n\033[0m");
+    printf("<==\033[0;32m %s \033[0m\n",file_name);
+    printf("==>\033[0;32m Compilation completed succesfully \033[0m\n");
+    printf("==>\033[0;32m %s \033[0m\n",strdup(gen_file_name));
+    printf("=========================================================\n");
+
 }
 
 
@@ -190,8 +190,40 @@ unsigned code(){
         if(!fwrite(&t.opcode, sizeof(BYTE), 1, generated_file)){
             return 0;
         }
-        if(!operand_gen(&t.arg1)&&operand_gen(&t.arg2)&& operand_gen(&t.result)){
-            return 0;
+            switch (t.opcode) {
+            case add_v:
+            case sub_v:
+            case mul_v:
+            case div_v:
+            case mod_v:
+            case jeq_v:
+            case jne_v:
+            case jle_v:
+            case jge_v:
+            case jlt_v:
+            case jgt_v:
+            case tablegetelem_v:
+            case tablesetelem_v:
+                operand_gen(&t.arg2);
+            case assign_v:
+                operand_gen(&t.arg1);
+            case jump_v:
+            case call_v:
+            case pusharg_v:
+            case funcenter_v:
+            case funcexit_v:
+            case newtable_v:
+                operand_gen(&t.result);
+            case nop_v:
+                break;
+            case uminus_v:
+            case and_v:
+            case or_v:
+            case not_v:
+                fprintf(stderr,"\033[0;31mError illigal opcode\033[0m\n");
+            default:
+                fprintf(stderr,"\033[0;31mError invalid opcode\033[0m\n");
+                assert(0);
         }
     }
     return 1;

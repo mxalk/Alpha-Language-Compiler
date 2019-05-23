@@ -2,9 +2,10 @@ CC=gcc
 CCFLAGS= -o $@ -g
 SHELL:=/bin/sh
 STRUCTS := Structs
+AVM := AVM
 OBJ := obj
 DIR = obj/
-SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c $(STRUCTS)/t_libAVM.c
+SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c $(STRUCTS)/t_libAVM.c 
 OBJECTS := $(patsubst $(STRUCTS)/%.c, $(OBJ)/%.o, $(SOURCES))
 
 GREY="\033[0;37m"
@@ -14,9 +15,10 @@ NC="\033[0m" # No Color
 all: clean_start $(DIR) out
 	@echo -n ${NC}
 
-out: $(OBJECTS) parser.o scanner.o
+out: $(OBJECTS) parser.o scanner.o writer.o
 	@echo -n ${CYAN}
-	$(CC) $^ $(CCFLAGS) 
+	$(CC) $(OBJECTS) parser.o scanner.o writer.o $(CCFLAGS)
+
 	@echo -n ${NC}
 	@echo "========================== Compilation_Succesfull =========================="
 	
@@ -31,6 +33,11 @@ $(DIR):
 
 # out: parser flex
 # 	$(CC) $(CCFLAGS) $(LIBS) parser.c scanner.c
+
+writer.o: $(AVM)/writer.c
+	@echo -n ${GREY}
+	$(CC) -I$(STRUCTS) -I$(AVM) -c $< -o $@
+	@echo -n ${NC}
 
 parser.o: parser.c
 	@echo -n ${GREY}
@@ -60,7 +67,7 @@ clean_start:
 
 clean:
 	@echo -n ${NC}
-	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output
+	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o 
 	rmdir obj/
 
 test: all

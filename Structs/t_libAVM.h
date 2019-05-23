@@ -82,12 +82,14 @@ unsigned totalNumConsts;
 char **stringConsts;
 unsigned totalStringConsts;
 unsigned totalNamedLibfuncs;
-userfunc *userFuncs;
+// userfunc *userFuncs;
 unsigned int totalUserFuncs;
 struct instruction *instructions;
 unsigned int totalInstructions;
 unsigned int currInstruction;
 unsigned int currprocessedquads;
+Queue *userfunctions;
+Queue *libfuncs;
 
 typedef struct incomplete_jump incomplete_jump;
 struct incomplete_jump

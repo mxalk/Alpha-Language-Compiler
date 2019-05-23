@@ -908,7 +908,7 @@ int main (int argc, char** argv) {
     }
     else alpha_yyin= stdin;
     yyparse();
-
+    file_name = strdup(argv[1]);
 		//printGSS();
     display();
     printQuads();

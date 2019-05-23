@@ -2,7 +2,7 @@
 #include <string.h>
 #include "Stack.h"
 #include "Queue.h"
-
+char* file_name;
 #define SYM_SIZE 1000
 #define GlobalSymbolTable GST
 #define GlobalScopeStack GSS

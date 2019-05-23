@@ -1,4 +1,5 @@
 #include "t_libAVM.h"
+#include "./../AVM/writer.h"
 #define EXPAND_SIZE 1024
 #define CURR_SIZE (totalInstructions * sizeof(struct instruction))
 #define NEW_SIZE (EXPAND_SIZE * sizeof(struct instruction) + CURR_SIZE)
@@ -40,8 +41,7 @@ struct instruction *instructions = (struct instruction *)0;
 unsigned int totalInstructions = 0;
 unsigned int currInstruction = 0;
 unsigned int currprocessedquads;
-Queue *userfunctions;
-Queue *libfuncs;
+
 // Queue *ij_head;
 
 Stack *funcstack;
@@ -809,6 +809,9 @@ void display_instr()
 
         printf("\n");
     }
+    
+
+    create_avmbinaryfile();
 }
 
 void use_instr_result(vmarg result){
