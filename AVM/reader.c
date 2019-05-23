@@ -14,15 +14,20 @@ int main(){
     avmbinaryfile();
     printf("STRINGS\n");
     for (unsigned i = 0; i<totalStringConsts; i++) {
-        printf("%u) %s\n", i, consts_getstring(i));
+        printf("%u: %s\n", i, consts_getstring(i));
     }
     printf("NUMCONSTS\n");
     for (unsigned i = 0; i<totalNumConsts; i++) {
-        printf("%u) %f\n", i, consts_getnumber(i));
+        printf("%u: %f\n", i, consts_getnumber(i));
+    }
+    printf("USRFUNCS\n");
+    for (unsigned i = 0; i<totalUserFuncs; i++) {
+        printf("%u: %u %u %s\n", i,userFuncs[i].address,userFuncs[i].localSize,userFuncs[i].id);
+        
     }
     printf("LIBFUNCS\n");
     for (unsigned i = 0; i<totalNamedLibFuncs; i++) {
-        printf("%u) %s\n", i, libfuncs_getused(i));
+        printf("%u: %s\n", i, libfuncs_getused(i));
     }
     printf("\n");
     return 0;
@@ -125,13 +130,15 @@ int t_code() {
         return 0;
     }
     struct instruction *instr;
-    code = malloc(sizeof(struct instruction) * codeSize);
+    code = (struct instruction*)malloc(sizeof(struct instruction) * codeSize);
+     printf("currInstr / totalInstr : opcode \n");
     for (int i = 0; i<codeSize; i++) {
         instr = &code[i];
         if (!readByte((char *)&instr->opcode)) {
             fprintf(stderr,"\033[0;31mError reading instruction(%d) opcode\033[0m\n", i);
             return 0;
         }
+                printf("%d/%d:%d\n",i,codeSize-1,instr->opcode);
         switch (instr->opcode) {
             case add_v:
             case sub_v:
@@ -156,12 +163,17 @@ int t_code() {
                     return 0;
                 }
             case jump_v:
-            case call_v:
-            case pusharg_v:
             case funcenter_v:
             case funcexit_v:
-            case newtable_v:
                 operand(&instr->result);
+                break;
+            case call_v:
+            case pusharg_v:
+            case newtable_v:
+                if(!operand(&instr->arg1)) {
+                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
+                    return 0;
+                }
             case nop_v:
                 break;
             case uminus_v:
@@ -192,6 +204,7 @@ int operand(struct vmarg *vmarg) {
         case bool_a:
         case nil_a:
         case userfunc_a:
+        case libfunc_a:
             if (!readUnsigned(&vmarg->val)){
                 fprintf(stderr,"\033[0;31mError reading operand value\033[0m\n");
                 return 0;

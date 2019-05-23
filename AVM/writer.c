@@ -113,12 +113,12 @@ int arrays_libfunctions() {
 
 int t_code() {
     char* buff;
-    if(!writeUnsigned(totalInstructions)) {
+    if(!writeUnsigned(currInstruction)) {
         fprintf(stderr,"\033[0;31mError writing number of total instructions\033[0m\n");
             return 0;
     }
     struct instruction *instr;
-    for(int i = 0 ; i < totalInstructions ;i++){
+    for(int i = 0 ; i < currInstruction ;i++){
         instr = &instructions[i];
         if(!writeByte(instr->opcode)) {
             fprintf(stderr,"\033[0;31mError writing instruction(%d) opcode\033[0m\n", i);
@@ -139,22 +139,24 @@ int t_code() {
             case tablegetelem_v:
             case tablesetelem_v:
                 if(!operand(&instr->arg2)) {
-                    fprintf(stderr,"\033[0;31mError writing instruction(%d) arg2\033[0m\n", i);
+                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg2\033[0m\n", i);
                     return 0;
                 }
             case assign_v:
                 if(!operand(&instr->arg1)) {
-                    fprintf(stderr,"\033[0;31mError writing instruction(%d) arg1\033[0m\n", i);
+                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
                     return 0;
                 }
             case jump_v:
-            case call_v:
-            case pusharg_v:
             case funcenter_v:
             case funcexit_v:
+                operand(&instr->result);
+                break;
+            case call_v:
+            case pusharg_v:
             case newtable_v:
-                if(!operand(&instr->result)) {
-                    fprintf(stderr,"\033[0;31mError writing instruction(%d) result\033[0m\n", i);
+                if(!operand(&instr->arg1)) {
+                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
                     return 0;
                 }
             case nop_v:
@@ -163,9 +165,9 @@ int t_code() {
             case and_v:
             case or_v:
             case not_v:
-                fprintf(stderr,"\033[0;31mError writing instruction(%d), illegal opcode\033[0m\n", i);
+                fprintf(stderr,"\033[0;31mError reading instruction(%d), illegal opcode\033[0m\n", i);
             default:
-                fprintf(stderr,"\033[0;31mError writing instruction(%d), invalid opcode\033[0m\n", i);
+                fprintf(stderr,"\033[0;31mError reading instruction(%d), invalid opcode\033[0m\n", i);
                 assert(0);
         }
     }
@@ -177,15 +179,17 @@ int operand(vmarg *v) {
         fprintf(stderr,"\033[0;31mError writing operand type\033[0m\n");
         return 0;
     }
-    if(!writeUnsigned(v->val)) {
-        fprintf(stderr,"\033[0;31mError writing operand value\033[0m\n");
-        return 0;
+    if(v->type != retval_a){
+        if(!writeUnsigned(v->val)) {
+            fprintf(stderr,"\033[0;31mError writing operand value\033[0m\n");
+            return 0;
+        }
     }
     return 1;
 }
 
 int writeString(char *str) {
-    unsigned s = strlen(str);
+    unsigned s = strlen(str)+1;
     writeUnsigned(s);
     if (!fwrite(str, sizeof(char), s, bin_file)) return 0;
     return 1;
