@@ -67,7 +67,7 @@ clean_start:
 
 clean:
 	@echo -n ${NC}
-	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o 
+	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o *.abc
 	rmdir obj/
 
 test: all

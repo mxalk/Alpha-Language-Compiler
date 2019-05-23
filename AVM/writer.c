@@ -28,7 +28,7 @@ void init_writter(){
         strcat(gen_file_name,strdup(tok[k++]));
     }
     sprintf(gen_file_name,"%s%s",gen_file_name,".abc");
-    generated_file = fopen(gen_file_name,MODE);
+    generated_file = fopen(gen_file_name,"wb");
 }
 
 void create_avmbinaryfile() {

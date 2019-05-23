@@ -6,7 +6,6 @@
 #define MAGICNUMBER magic
 #define FILENAME "test.abc"
 #define BYTE char
-#define MODE "w"
 #define fwrite(...) fwrite(__VA_ARGS__)
 
 // extern void* Queue_get(Queue*,int);
