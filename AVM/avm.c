@@ -8,7 +8,7 @@
 όπως χρειάζεται στις συναρτήσεις
 που υλοποιούν τις εντολές της
 εικονικής μηχανής*/
-avm_memc *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) {
+avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) {
     switch (arg->type) {
         // VARIABLES
         // enviroment function!
@@ -98,36 +98,6 @@ void avm_tabledestroy(struct avm_table *t) {
 // DISPATCHER
 // ---------------------------------------------------------------------------
 
-
-extern void execute_assign (struct instruction*);
-extern void execute_add (struct instruction*);
-extern void execute_sub (struct instruction*);
-extern void execute_mul (struct instruction*);
-extern void execute_div (struct instruction*);
-extern void execute_div (struct instruction*);
-extern void execute_mod (struct instruction*);
-extern void execute_mod (struct instruction*);
-extern void execute_uminus (struct instruction*);
-extern void execute_and (struct instruction*);
-extern void execute_and (struct instruction*);
-extern void execute_or (struct instruction*);
-extern void execute_not (struct instruction*);
-extern void execute_jeq (struct instruction*);
-extern void execute_jne (struct instruction*);
-extern void execute_jle (struct instruction*);
-extern void execute_jge (struct instruction*);
-extern void execute_jge (struct instruction*);
-extern void execute_jlt (struct instruction*);
-extern void execute_jgt (struct instruction*);
-extern void execute_call (struct instruction*);
-extern void execute_pusharg (struct instruction*);
-extern void execute_funcenter (struct instruction*);
-extern void execute_funcexit (struct instruction*);
-extern void execute_newtable (struct instruction*);
-extern void execute_tablegetelem (struct instruction*);
-extern void execute_tablesetelem (struct instruction*);
-extern void execute_nop (struct instruction*);
-
 execute_func_t executeFuncs[] = {
     execute_assign,
     execute_add,
@@ -155,12 +125,39 @@ execute_func_t executeFuncs[] = {
     execute_nop
 };
 
+extern void execute_assign (struct instruction*);
+extern void execute_add (struct instruction*);
+extern void execute_sub (struct instruction*);
+extern void execute_mul (struct instruction*);
+extern void execute_div (struct instruction*);
+extern void execute_mod (struct instruction*);
+extern void execute_uminus (struct instruction*);
+extern void execute_and (struct instruction*);
+extern void execute_or (struct instruction*);
+extern void execute_not (struct instruction*);
+extern void execute_jeq (struct instruction*);
+extern void execute_jne (struct instruction*);
+extern void execute_jle (struct instruction*);
+extern void execute_jge (struct instruction*);
+extern void execute_jlt (struct instruction*);
+extern void execute_jgt (struct instruction*);
+extern void execute_call (struct instruction*);
+extern void execute_pusharg (struct instruction*);
+extern void execute_funcenter (struct instruction*);
+extern void execute_funcexit (struct instruction*);
+extern void execute_newtable (struct instruction*);
+extern void execute_tablegetelem (struct instruction*);
+extern void execute_tablesetelem (struct instruction*);
+extern void execute_nop (struct instruction*);
+
+
+
 unsigned char executionFinished = 0;
 unsigned pc = 0;
 unsigned currLine = 0;
 unsigned codeSize = 0;
 unsigned totalActuals = 0;
-#define AVM_ENDING_PC codeSize
+
 
 void execution_cycle (void) {
     if (executionFinished) return;
@@ -386,46 +383,7 @@ char *avm_tostring(struct avm_memcell *m) {
     return (*tostringFuncs[m->type])(m);
 }
 
-// ------------------- ARITHMETIC
-typedef double (*arithmetic_func_t)(double x, double y);
 
-double add_impl (double x, double y) { return x+y; }
-double sub_impl (double x, double y) { return x-y; }
-double mul_impl (double x, double y) { return x*y; }
-double div_impl (double x, double y) { return x/y; }
-double mod_impl (double x, double y) { return ((unsigned) x) % ((unsigned) y); }
-
-arithmetic_func_t arithmeticFuncs[] = {
-    add_impl,
-    sub_impl,
-    mul_impl,
-    div_impl,
-    mod_impl
-};
-
-#define execute_add execute_arithmetic
-#define execute_sub execute_arithmetic
-#define execute_mul execute_arithmetic
-#define execute_div execute_arithmetic
-#define execute_mod execute_arithmetic
-void execute_arithmetic (struct instruction *instr) {
-    struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
-    struct avm_memcell *rv1 = avm_translate_operand(&instr->arg1, &ax);
-    struct avm_memcell *rv2 = avm_translate_operand(&instr->arg2, &bx);
-
-    assert(lv && (&stack[N-1] >= lv && lv < &stack[top] || lv == &retval));
-    assert(rv1 && rv2);
-
-    if (rv1->type != number_m || rv2->type != number_m) {
-        avm_error("Not a number in arithmetic!");
-        executionFinished = 1;
-        return;
-    }
-    arithmetic_func_t op = arithmeticFuncs[instr->opcode - add_v];
-    avm_memcellclear(lv);
-    lv->type = number_m;
-    lv->data.numVal = (*op)(rv1->data.numVal, rv2->data.numVal);
-}
 
 // ------------------- BOOLEAN
 
@@ -486,57 +444,7 @@ void execute_jeq (struct instruction *instr) {
 }
 
 
-// ------------------- TABLE
 
-void execute_newtable(struct instruction *instr) {
-    struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
-    assert(lv && (&stack[N-1] >= lv && lv < &stack[top] || lv == &retval));
-    avm_memcellclear(lv);
-    lv->type = table_m;
-    lv->data.tableVal = avm_tablenew();
-    avm_tableincrefcounter(lv->data.tableVal);
-}
-
-struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcell *index);
-void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content);
-
-void execute_tablegetelem(struct instruction *instr) {
-    struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
-    struct avm_memcell *t = avm_translate_operand(&instr->arg1, (struct avm_memcell *) 0);
-    struct avm_memcell *i = avm_translate_operand(&instr->arg2, &ax);
-    assert(lv && (&stack[N-1] >= lv && lv < &stack[top] || lv == &retval));
-    assert(t && &stack[N-1] >= t && t < &stack[top]);
-    assert(i);
-    avm_memcell(lv);
-    lv->type = nil_m;
-    if (t->type != table_m) {
-        avm_error("Illegal use of type '%s' as table!", typeStrings[t->type]);
-        return;
-    }
-    struct avm_memcell *content = avm_tablegetelem(t->data.tableVal, i);
-    if (content) {
-        avm_assign(lv, content);
-        return;
-    }
-    char *ts = avm_tostring(t);
-    char *is = avm_tostring(i);
-    avm_warning("\'%s[%s]\' not found!", ts, is);
-    free(ts);
-    free(is);
-}
-
-void execute_tablesetelem(struct instruction *instr) {
-    struct avm_memcell *t = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
-    struct avm_memcell *i = avm_translate_operand(&instr->arg1, &ax);
-    struct avm_memcell *c = avm_translate_operand(&instr->arg2, &bx);
-    assert(t && &stack[N-1] >= t && &stack[top]);
-    assert(i && c);
-    if (t->type != table_m) {
-        avm_error("Illegal use of type '%s' as table", t->type);
-        return;
-    }
-    avm_tablesetelem(t->data.tableVal, i, c);
-}
 
 // ---------------------------------------------------------------------------
 // AVM

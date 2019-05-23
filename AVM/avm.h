@@ -5,8 +5,19 @@
 #define AVM_WIPEOUT(m) memset(&(m), 0, sizeof(m))
 #define AVM_TABLE_HASHSIZE 211
 #define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
+#define AVM_NUMACTUALS_OFFSET   +4
+#define AVM_SAVEDPC_OFFSET      +3
+#define AVM_SAVEDTOP_OFFSET     +2
+#define AVM_SAVEDTOPSP_OFFSET   +1
+
+extern char *typeStrings[];
+extern unsigned char executionFinished ;
+extern unsigned pc ;
+extern unsigned currLine;
+unsigned codeSize;
+#define AVM_ENDING_PC codeSize
+
 struct instruction *code = (struct instruction *) 0;
-unsigned code_size;
 
 enum vmopcode {
     assign_v,
@@ -36,7 +47,7 @@ enum vmopcode {
     nop_v
 };
 
-enum vmarg_t {
+typedef enum vmarg_t {
     label_a     = 0,
     global_a    = 1,
     formal_a    = 2,
@@ -48,9 +59,9 @@ enum vmarg_t {
     userfunc_a  = 8,
     libfunc_a   = 9,
     retval_a    = 10
-};
+}vmarg_t;
 
-enum avm_memcell_t {
+typedef enum avm_memcell_t {
     number_m,
     string_m,
     bool_m,
@@ -59,7 +70,8 @@ enum avm_memcell_t {
     libfunc_m,
     nil_m,
     undef_m
-};
+}avm_memcell_t;
+
 
 struct vmarg {
     enum vmarg_t type;
@@ -80,7 +92,7 @@ struct userfunc {
     char *id;
 };
 
-struct avm_memcell {
+typedef struct avm_memcell  {
     enum avm_memcell_t type;
     union {
         double numVal;
@@ -90,11 +102,11 @@ struct avm_memcell {
         unsigned funcVal;
         char *libfuncVal;
     } data;
-} typedef avm_memc;
+} avm_memcell;
 
 struct avm_table_bucket {
-    avm_memc key;
-    avm_memc value;
+    avm_memcell key;
+    avm_memcell value;
     struct avm_table_bucket *next;
 };
 
@@ -112,7 +124,7 @@ struct avm_table {
 typedef void (*execute_func_t)(struct instruction *);
 
 // OPERAND TRANSLATE
-avm_memc ax, bx, cx, retval, stack[AVM_STACKSIZE];
+avm_memcell ax, bx, cx, retval, stack[AVM_STACKSIZE];
 unsigned top, topsp;
 // Reverse translation for constants:
 // getting constant value from index

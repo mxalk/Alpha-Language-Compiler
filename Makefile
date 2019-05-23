@@ -12,13 +12,12 @@ GREY="\033[0;37m"
 CYAN="\033[0;36m"
 NC="\033[0m" # No Color
 
-all: clean_start $(DIR) out
+all: clean_start $(DIR) out 
 	@echo -n ${NC}
 
-out: $(OBJECTS) writer.o parser.o scanner.o
+out: $(OBJECTS) writer.o reader.o parser.o scanner.o 
 	@echo -n ${CYAN}
 	$(CC) $(OBJECTS) writer.o parser.o scanner.o  $(CCFLAGS)
-
 	@echo -n ${NC}
 	@echo "========================== Compilation_Succesfull =========================="
 	
@@ -33,6 +32,11 @@ $(DIR):
 
 # out: parser flex
 # 	$(CC) $(CCFLAGS) $(LIBS) parser.c scanner.c
+
+reader.o: $(AVM)/reader.c
+	@echo -n ${GREY}
+	$(CC) -I$(STRUCTS) -I$(AVM) -c $< -o $@
+	@echo -n ${NC}
 
 writer.o: $(AVM)/writer.c
 	@echo -n ${GREY}
@@ -67,12 +71,19 @@ clean_start:
 
 clean:
 	@echo -n ${NC}
-	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o *.abc
+	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o reader.o *.abc
+	$(RM) tests_4h_5h/*.abc
 	rmdir obj/
 
 test: all
 	./out temp.txt
 
+clean_reader:
+	$(RM) reader.o reader
+
+reader: clean_reader reader.o
+	$(CC) reader.o -o reader -g
+	./reader
 
 t_success:	all
 	./out tests_4h_5h/basic_complex.asc

@@ -1,13 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "avm.h"
+#include "reader.h"
+
 #define MAGICNUMBER 194623425 //655*639*465 from 3655 3639 3465
 FILE *stream;
 FILE *bin_file;
 char* bin_file_name;
 
+int main(){
+    bin_file_name = "temp.abc";
+    avmbinaryfile();
+    printf("STRINGS\n");
+    for (unsigned i = 0; i<totalStringConsts; i++) {
+        printf("%u) %s\n", i, consts_getstring(i));
+    }
+    printf("NUMCONSTS\n");
+    for (unsigned i = 0; i<totalNumConsts; i++) {
+        printf("%u) %f\n", i, consts_getnumber(i));
+    }
+    printf("LIBFUNCS\n");
+    for (unsigned i = 0; i<totalNamedLibFuncs; i++) {
+        printf("%u) %s\n", i, libfuncs_getused(i));
+    }
+    printf("\n");
+    return 0;
+}
+
 int avmbinaryfile() {
-    bin_file = fopen(bin_file_name,"r");
+    bin_file = fopen(bin_file_name,"rb");
+    if (!bin_file) {
+        printf("BINARY FILE ERROR!!\n");
+        return 0;
+    }
     if(!magicnumber()) {
         fprintf(stderr,"\033[0;31mError reading magicnumber\033[0m\n");
         return 0;
@@ -26,7 +52,8 @@ int avmbinaryfile() {
 
 int magicnumber() {
     unsigned n;
-    readUnsigned(&n);
+    if(!readUnsigned(&n)) return 0;
+    printf("=========================================================\n");
     if (n != MAGICNUMBER) {
         fprintf(stderr,"\033[0;31mMAGIC NUMBER MISMATCH\033[0m\n");
         return 0;
@@ -94,14 +121,14 @@ int arrays_libfunctions() {
 }
 
 int t_code() {
-    if (!readUnsigned(&code_size)) {
+    if (!readUnsigned(&codeSize)) {
         return 0;
     }
     struct instruction *instr;
-    code = malloc(sizeof(struct instruction) * code_size);
-    for (int i = 0; i<code_size; i++) {
+    code = malloc(sizeof(struct instruction) * codeSize);
+    for (int i = 0; i<codeSize; i++) {
         instr = &code[i];
-        if (!readByte(&instr->opcode)) {
+        if (!readByte((char *)&instr->opcode)) {
             fprintf(stderr,"\033[0;31mError reading instruction(%d) opcode\033[0m\n", i);
             return 0;
         }
@@ -141,9 +168,9 @@ int t_code() {
             case and_v:
             case or_v:
             case not_v:
-                error("ILLEGAL OPCODE!");
+                fprintf(stderr,"\033[0;31mError reading instruction(%d), illegal opcode\033[0m\n", i);
             default:
-                error("INVALID OPCODE!");
+                fprintf(stderr,"\033[0;31mError reading instruction(%d), invalid opcode\033[0m\n", i);
                 assert(0);
         }
     }
@@ -151,7 +178,8 @@ int t_code() {
 }
 
 int operand(struct vmarg *vmarg) {
-    if (!readByte(&vmarg->type)) {
+    if (!readByte((char *)&vmarg->type)) {
+        fprintf(stderr,"\033[0;31mError reading operand type\033[0m\n");
         return 0;
     }
     switch (vmarg->type) {
@@ -165,24 +193,25 @@ int operand(struct vmarg *vmarg) {
         case nil_a:
         case userfunc_a:
             if (!readUnsigned(&vmarg->val)){
+                fprintf(stderr,"\033[0;31mError reading operand value\033[0m\n");
                 return 0;
             }
         case retval_a:
             break;
         default:
-            error("INVALID VMARG TYPE!");
-            assert(0);
+            fprintf(stderr,"\033[0;31mError invalid vmarg type(%u)\033[0m\n", vmarg->type);
+            return 0;
     }
     return 1;
 }
 
-int readString(char *str) {
+int readString(char **str) {
     unsigned s;
     if (!readUnsigned(&s)) {
         return 0;
     }
-    char *str = malloc(s+1);
-    if (!fread(str, sizeof(char), s, bin_file)){
+    *str = malloc(s+1);
+    if (!fread(*str, sizeof(char), s, bin_file)){
         return 0;
     }
     str[s] = '\0';
