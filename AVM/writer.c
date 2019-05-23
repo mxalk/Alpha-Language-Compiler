@@ -4,6 +4,10 @@
 #define MAGICNUMBER magic
 #define FILENAME "test.abc"
 #define BYTE char
+#define MODE "w"
+#define fwrite(...) fwrite(__VA_ARGS__)
+
+// extern void* Queue_get(Queue*,int);
 
 unsigned usrfunc(unsigned);
 void init_writter();
@@ -15,7 +19,8 @@ char *string_get(unsigned);
 unsigned total_str();
 unsigned size(char*);
 unsigned numbers();
-unsigned userfunctions();
+unsigned userfunctions_gen();
+unsigned libfunctions();
 unsigned usrfunc(unsigned);
 unsigned code();
 unsigned operand_gen(vmarg*);
@@ -31,12 +36,10 @@ int main(){
 void init_writter(){
     magic = (unsigned*)malloc(sizeof(unsigned));
     *magic= 194623425; //655*639*465 from 3655 3639 3465
-    generated_file = fopen(FILENAME,"wb");
+    generated_file = fopen(FILENAME,MODE);
 }
 
 void create_avmbinaryfile() {
-    // return magicnumber() && arrays() && code() ;
-    
 
     if(!magicnumber())
         fprintf(stderr,"\033[0;31mError writing magicnumber\033[0m\n");
@@ -55,7 +58,7 @@ int magicnumber() {
 	return fwrite(MAGICNUMBER, sizeof(unsigned), 1, generated_file);
 }
 int arrays() {
-    return strings() && numbers() && userfunctions() && libfunctions();
+    return strings() && numbers() && userfunctions_gen() && libfunctions();
 }
 int strings() {
     if(!total_str()){
@@ -93,7 +96,9 @@ char *string_get(unsigned index) {
 }
 
 unsigned size(char* buff) {
-    if(!fwrite(strlen(buff), sizeof(char), 1, generated_file)){
+    unsigned* size_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *size_ptr = strlen(buff);
+    if(!fwrite(size_ptr, sizeof(char), 1, generated_file)){
             return 0;
     }
     return 1;
@@ -114,7 +119,7 @@ unsigned numbers() {
     return 1;
 }
 
-unsigned userfunctions() {
+unsigned userfunctions_gen() {
     //total
     unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
     *total_ptr = totalUserFuncs;
@@ -160,7 +165,7 @@ unsigned libfunctions(){
     }
     for(int i = 0 ; i < totalNamedLibfuncs ;i++){
         
-        char* buff = strdup((char*)Queue_get(libfuncs,index));
+        char* buff = strdup((char*)Queue_get(libfuncs,i));
         assert(buff);
         if(!size(buff)){
             return 0;
