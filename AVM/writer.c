@@ -13,7 +13,7 @@ void init_writter(){
     
     int init_size = strlen(file_name),i = 0,k=0;
 	char delim[] = ".";
-    char* tok[init_size];
+    char* tok[init_size+1];
     char* file_name_dup = strdup(file_name);
 	char *ptr = strtok(file_name_dup, delim);
     // tok[i++] = strdup(ptr);
@@ -22,7 +22,7 @@ void init_writter(){
         tok[i++] = strdup(ptr);
 		ptr = strtok(NULL, delim);
 	}
-    gen_file_name = (char*)malloc(sizeof(file_name)+5);
+    gen_file_name = (char*)malloc(init_size+5);
         gen_file_name[0]= '\0';
     while(k<i-1){
         strcat(gen_file_name,strdup(tok[k++]));
