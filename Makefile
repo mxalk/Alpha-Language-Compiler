@@ -15,9 +15,9 @@ NC="\033[0m" # No Color
 all: clean_start $(DIR) out
 	@echo -n ${NC}
 
-out: $(OBJECTS) parser.o scanner.o writer.o
+out: $(OBJECTS) writer.o parser.o scanner.o
 	@echo -n ${CYAN}
-	$(CC) $(OBJECTS) parser.o scanner.o writer.o $(CCFLAGS)
+	$(CC) $(OBJECTS) writer.o parser.o scanner.o  $(CCFLAGS)
 
 	@echo -n ${NC}
 	@echo "========================== Compilation_Succesfull =========================="
@@ -63,7 +63,7 @@ clean_start:
 	@echo -n ${NC}
 	clear
 	@echo "=========================== Compilation_Started ==========================="
-	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output
+	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o
 
 clean:
 	@echo -n ${NC}
