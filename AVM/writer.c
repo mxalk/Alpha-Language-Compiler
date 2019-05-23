@@ -17,15 +17,11 @@ void init_writter(){
     char* file_name_dup = strdup(file_name);
 	char *ptr = strtok(file_name_dup, delim);
     // tok[i++] = strdup(ptr);
-        printf("===========================1==============================\n");
-
 	while(ptr != NULL)
 	{
         tok[i++] = strdup(ptr);
 		ptr = strtok(NULL, delim);
 	}
-        printf("==========================2===============================\n");
-
     gen_file_name = (char*)malloc(sizeof(file_name)+5);
         gen_file_name[0]= '\0';
     while(k<i-1){
