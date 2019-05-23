@@ -5,6 +5,7 @@
 #define AVM_WIPEOUT(m) memset(&(m), 0, sizeof(m))
 #define AVM_TABLE_HASHSIZE 211
 #define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
+struct instruction *code = (struct instruction *) 0;
 
 enum vmopcode {
     assign_v,
@@ -23,6 +24,7 @@ enum vmopcode {
     jge_v,
     jlt_v,
     jgt_v,
+	jump_v,
     call_v,
     pusharg_v,
     funcenter_v,
@@ -114,9 +116,18 @@ unsigned top, topsp;
 // Reverse translation for constants:
 // getting constant value from index
 
-double consts_getnumber(unsigned index);
-char *consts_getstring(unsigned index);
-char *libfuncs_getused(unsigned index);
+double *consts_number;
+double consts_getnumber(unsigned index) {
+    return consts_number[index];
+}
+char **consts_string;
+char *consts_getstring(unsigned index) {
+    return consts_string[index];
+}
+char **libfuncs_used;
+char *libfuncs_getused(unsigned index) {
+    return libfuncs_used[index];
+}
 
 void avm_memcellclear (struct avm_memcell *m);
 

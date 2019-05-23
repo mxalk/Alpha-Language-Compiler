@@ -3,12 +3,28 @@
 #include "./../Structs/t_libAVM.h"
 #define MAGICNUMBER magic
 #define FILENAME "test.abc"
+#define BYTE char
 
+unsigned usrfunc(unsigned);
+void init_writter();
+void create_avmbinaryfile();
+int magicnumber();
+int arrays();
+int strings();
+char *string_get(unsigned);
+unsigned total_str();
+unsigned size(char*);
+unsigned numbers();
+unsigned userfunctions();
+unsigned usrfunc(unsigned);
+unsigned code();
+unsigned operand_gen(vmarg*);
 
 unsigned *magic;
 FILE *generated_file;
 
 int main(){
+    
     return 0;
 }
 
@@ -31,8 +47,10 @@ void create_avmbinaryfile() {
     if(!code())
         fprintf(stderr,"\033[0;31mError writing code\033[0m\n");
 
-    printf("\033[0;32mBinary was succesfully generated\n\033[0m")
+    printf("\033[0;32mBinary was succesfully generated\n\033[0m");
 }
+
+
 int magicnumber() {
 	return fwrite(MAGICNUMBER, sizeof(unsigned), 1, generated_file);
 }
@@ -40,42 +58,145 @@ int arrays() {
     return strings() && numbers() && userfunctions() && libfunctions();
 }
 int strings() {
-    for(int i = -1 ; i < totalStringConsts ;i++)
-        string(i);
+    if(!total_str()){
+        fprintf(stderr,"\033[0;31mError writing total\033[0m\n");
+        return 0;
+    }
+    char* buff;
+    for(int i = 0 ; i < totalStringConsts ;i++){
+        
+        buff = string_get(i);
+        if(!size(buff)){
+            return 0;
+        }
+        if(!fwrite(buff, sizeof(char), strlen(buff), generated_file)){
+            return 0;
+        }
+
+    }
+    return 1;
 }
 
-unsigned total() {
-    // return readUnsigned();
+unsigned total_str() {
+    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *total_ptr = totalStringConsts;
+    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
+            return 0;
+    }
+    return 1;
 }
 
-char *string(unsigned index) {
+char *string_get(unsigned index) {
     char* buff = strdup(stringConsts[index]);
-    fwrite(strlen(buff), sizeof(char), 1, generated_file);
+    assert(buff);
+    return buff;
 }
 
-unsigned size() {
-    // return readUnsigned();
+unsigned size(char* buff) {
+    if(!fwrite(strlen(buff), sizeof(char), 1, generated_file)){
+            return 0;
+    }
+    return 1;
 }
 
-numbers() {
-    
+unsigned numbers() {
+    //total
+    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *total_ptr = totalNumConsts;
+    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
+            return 0;
+    }
+    for(int i = 0 ; i < totalNumConsts ; i++){
+        if(!fwrite(&numConsts[i], sizeof(unsigned), 1, generated_file)){
+            return 0;
+        } 
+    }
+    return 1;
 }
 
-userfunctions() {
-
+unsigned userfunctions() {
+    //total
+    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *total_ptr = totalUserFuncs;
+    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
+            return 0;
+    } 
+    for(int i = 0 ; i < totalUserFuncs ; i++){
+        if(!usrfunc(i)){
+            return 0;
+        }
+    }
+    return 1;
+    //for each
 }
 
-userfunc() {
-    // return address() && localsize() && id();
+unsigned usrfunc(unsigned index){
+    userfunc* iter = (userfunc*)Queue_get(userfunctions,index);
+    if(!fwrite(&iter->address, sizeof(unsigned), 1, generated_file)){
+        return 0;
+    } 
+    if(!fwrite(&iter->localSize, sizeof(unsigned), 1, generated_file)){
+        return 0;
+    }
+    char* id_ptr = strdup(iter->id);
+    assert(id_ptr);
+    unsigned* size_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *size_ptr = strlen(id_ptr);
+    if(!fwrite(size_ptr, sizeof(unsigned), 1, generated_file)){
+        return 0;
+    }    
+    if(!fwrite(&id_ptr, sizeof(char), strlen(id_ptr), generated_file)){
+        return 0;
+    }    
+    return 1; 
 }
 
+unsigned libfunctions(){
+    char* buff;
+    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *total_ptr = totalNamedLibfuncs;
+    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
+            return 0;
+    }
+    for(int i = 0 ; i < totalNamedLibfuncs ;i++){
+        
+        char* buff = strdup((char*)Queue_get(libfuncs,index));
+        assert(buff);
+        if(!size(buff)){
+            return 0;
+        }
+        if(!fwrite(buff, sizeof(char), strlen(buff), generated_file)){
+            return 0;
+        }
 
+    }
+    return 1;
+}
 
-// -------------------------------// paw na ftiaksw writer
-
-// // 
-// unsigned readUnsigned() {
-//     char *buff;
-//     fgets (buff, sizeof(unsigned), stream);
-//     return strtoul(buff, NULL, 10); 
-// }
+unsigned code(){
+    char* buff;
+    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
+    *total_ptr = totalInstructions;
+    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
+            return 0;
+    }
+    for(int i = 0 ; i < totalInstructions ;i++){
+        instruction t = instructions[i];
+        if(!fwrite(&t.opcode, sizeof(BYTE), 1, generated_file)){
+            return 0;
+        }
+        if(!operand_gen(&t.arg1)&&operand_gen(&t.arg2)&& operand_gen(&t.result)){
+            return 0;
+        }
+    }
+    return 1;
+}
+unsigned operand_gen(vmarg* v){
+    if(!fwrite(&v->type, sizeof(BYTE), 1, generated_file)){
+        return 0;
+    }
+    if(!fwrite(&v->val, sizeof(unsigned), 1, generated_file)){
+        return 0;
+    }
+    return 1;
+}

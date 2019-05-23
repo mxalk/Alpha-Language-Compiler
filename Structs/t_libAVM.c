@@ -368,7 +368,6 @@ void generate_AND(Quad *q)
 {
     q->taddress = nextinstructionlabel();
 	instruction t;
-
 	t.opcode = jeq_v;
 	make_operand(q->arg1, &t.arg1);
 	make_booloperand(&t.arg2, 0);
@@ -376,17 +375,23 @@ void generate_AND(Quad *q)
 	t.result.val = nextinstructionlabel() + 4;
 	emit_instr(&t);
 
+    reset_operand(&t.result);
+	reset_operand(&t.arg1);
+	reset_operand(&t.arg2);
 	make_operand(q->arg2, &t.arg1);
 	t.result.val = nextinstructionlabel() + 3;
 	emit_instr(&t);
 
+    reset_operand(&t.result);
+	reset_operand(&t.arg1);
+	reset_operand(&t.arg2);
 	t.opcode = assign_v;
 	make_booloperand (&t.arg1, 1);
-	reset_operand(&t.arg2);
 	make_operand(q->result, &t.result);
 	emit_instr(&t);
 
 	t.opcode = jump_v;
+	reset_operand(&t.result);
 	reset_operand(&t.arg1);
 	reset_operand(&t.arg2);
 	t.result.type = label_a;
@@ -772,8 +777,8 @@ void display_instr()
             case jge_v:
             case jlt_v:
             case jgt_v:
-            case tablesetelem_v:
             case tablegetelem_v:
+            case tablesetelem_v:
                 use_instr_result(instr.result);
                 use_instr_arg1(instr.arg1);
                 use_instr_arg2(instr.arg2);

@@ -160,7 +160,6 @@ unsigned pc = 0;
 unsigned currLine = 0;
 unsigned codeSize = 0;
 unsigned totalActuals = 0;
-struct instruction *code = (struct instruction *) 0;
 #define AVM_ENDING_PC codeSize
 
 void execution_cycle (void) {
@@ -172,7 +171,7 @@ void execution_cycle (void) {
     assert(pc < AVM_ENDING_PC);
     struct instruction *instr = code + pc;
     assert(instr->opcode >=0 && instr->opcode <= AVM_MAX_INSTRUCTIONS);
-    if (instr->srcLine) currLine = instr->srcLine;
+    if (instr->srcLine) currLine = instr->srcLine; // DEAL WITH SCRLINE IN READER
     unsigned oldPC = pc;
     (*executeFuncs[instr->opcode])(instr);
     if (pc == oldPC) ++pc;
