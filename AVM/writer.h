@@ -3,25 +3,22 @@
 #include <stdlib.h>
 #include "./../Structs/t_libAVM.h"
 
-#define MAGICNUMBER magic
 #define FILENAME "test.abc"
-#define BYTE char
 #define fwrite(...) fwrite(__VA_ARGS__)
 
 // extern void* Queue_get(Queue*,int);
 
-unsigned usrfunc(unsigned);
 void init_writter();
-void create_avmbinaryfile();
+void avmbinaryfile();
 int magicnumber();
 int arrays();
-int strings();
-char *string_get(unsigned);
-unsigned total_str();
-unsigned size(char*);
-unsigned numbers();
-unsigned userfunctions_gen();
-unsigned libfunctions();
-unsigned usrfunc(unsigned);
-unsigned code();
-unsigned operand_gen(vmarg*);
+int arrays_strings();
+int arrays_numbers();
+int arrays_userfunctions();
+int arrays_libfunctions();
+int t_code();
+int operand(vmarg* v);
+int writeString(char *buff);
+int writeUnsigned(unsigned buff);
+int writeDouble(double buff);
+int writeByte(char buff);

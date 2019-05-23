@@ -1,15 +1,14 @@
 #include "writer.h"
 #include <string.h>
 
-unsigned *magic;
-FILE *generated_file;
-char* gen_file_name;
+#define MAGICNUMBER magic_number //655*639*465 from 3655 3639 3465
+unsigned magic_number = 194623425;
+FILE *bin_file;
+char* bin_file_name;
 
-void init_writter(){
+void init_writter() {
     printf("=========================================================\n");
     printf("==================== to binary ==========================\n");
-    magic = (unsigned*)malloc(sizeof(unsigned));
-    *magic= 194623425; //655*639*465 from 3655 3639 3465
     
     int init_size = strlen(file_name),i = 0,k=0;
 	char delim[] = ".";
@@ -22,171 +21,110 @@ void init_writter(){
         tok[i++] = strdup(ptr);
 		ptr = strtok(NULL, delim);
 	}
-    gen_file_name = (char*)malloc(init_size+5);
-        gen_file_name[0]= '\0';
+    bin_file_name = (char*)malloc(init_size+5);
+        bin_file_name[0]= '\0';
     while(k<i-1){
-        strcat(gen_file_name,strdup(tok[k++]));
+        strcat(bin_file_name,strdup(tok[k++]));
     }
-    sprintf(gen_file_name,"%s%s",gen_file_name,".abc");
-    generated_file = fopen(gen_file_name,"wb");
+    sprintf(bin_file_name,"%s%s",bin_file_name,".abc");
+    bin_file = fopen(bin_file_name,"wb");
 }
 
-void create_avmbinaryfile() {
+void avmbinaryfile() {
     init_writter();
-    if(!magicnumber())
+    if(!magicnumber()) {
         fprintf(stderr,"\033[0;31mError writing magicnumber\033[0m\n");
-    
-    if(!arrays())
+        return;
+    }
+    if(!arrays()) {
         fprintf(stderr,"\033[0;31mError writing arrays\033[0m\n");
-
-    if(!code())
+        return;
+    }
+    if(!t_code()) {
         fprintf(stderr,"\033[0;31mError writing code\033[0m\n");
-
+        return;
+    }
     printf("<==\033[0;32m %s \033[0m\n",file_name);
     printf("==>\033[0;32m Compilation completed succesfully \033[0m\n");
-    printf("==>\033[0;32m %s \033[0m\n",strdup(gen_file_name));
+    printf("==>\033[0;32m %s \033[0m\n",strdup(bin_file_name));
     printf("=========================================================\n");
-
 }
-
 
 int magicnumber() {
-	return fwrite(MAGICNUMBER, sizeof(unsigned), 1, generated_file);
+	return writeUnsigned(MAGICNUMBER);
 }
+
 int arrays() {
-    return strings() && numbers() && userfunctions_gen() && libfunctions();
+    return arrays_strings() && arrays_numbers() && arrays_userfunctions() && arrays_libfunctions();
 }
-int strings() {
-    if(!total_str()){
-        fprintf(stderr,"\033[0;31mError writing total\033[0m\n");
+
+int arrays_strings() {
+    if(!writeUnsigned(totalStringConsts)) {
+        fprintf(stderr,"\033[0;31mError writing number of total strings\033[0m\n");
         return 0;
     }
-    char* buff;
-    for(int i = 0 ; i < totalStringConsts ;i++){
-        
-        buff = string_get(i);
-        if(!size(buff)){
-            return 0;
-        }
-        if(!fwrite(buff, sizeof(char), strlen(buff), generated_file)){
-            return 0;
-        }
-
+    for(int i = 0 ; i < totalStringConsts ;i++) if (!writeString(stringConsts[i])) {
+        fprintf(stderr,"\033[0;31mError writing string(%d)\033[0m\n", i);
+        return 0;
     }
     return 1;
 }
 
-unsigned total_str() {
-    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *total_ptr = totalStringConsts;
-    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
-            return 0;
+int arrays_numbers() {
+    if(!writeUnsigned(totalNumConsts)) {
+        fprintf(stderr,"\033[0;31mError writing number of total numbers\033[0m\n");
+        return 0;
+    }
+    for(int i = 0 ; i < totalNumConsts ; i++) if(!writeDouble(numConsts[i])) {
+        fprintf(stderr,"\033[0;31mError writing number(%d)\033[0m\n", i);
+        return 0;
     }
     return 1;
 }
 
-char *string_get(unsigned index) {
-    char* buff = strdup(stringConsts[index]);
-    assert(buff);
-    return buff;
-}
-
-unsigned size(char* buff) {
-    unsigned* size_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *size_ptr = strlen(buff);
-    if(!fwrite(size_ptr, sizeof(char), 1, generated_file)){
-            return 0;
+int arrays_userfunctions() {
+    if(!writeUnsigned(totalUserFuncs)) {
+        fprintf(stderr,"\033[0;31mError writing number of total userfuncs\033[0m\n");
+        return 0;
+    }
+    userfunc* iter;
+    for(int i = 0 ; i < totalUserFuncs ; i++) {
+        iter = (userfunc*)Queue_get(userfunctions,i);
+        if(!writeUnsigned(iter->address)) return 0;
+        if(!writeUnsigned(iter->localSize)) return 0;
+        if(!writeString(iter->id)) return 0;
     }
     return 1;
 }
 
-unsigned numbers() {
-    //total
-    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *total_ptr = totalNumConsts;
-    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
-            return 0;
-    }
-    for(int i = 0 ; i < totalNumConsts ; i++){
-        if(!fwrite(&numConsts[i], sizeof(unsigned), 1, generated_file)){
-            return 0;
-        } 
-    }
-    return 1;
-}
-
-unsigned userfunctions_gen() {
-    //total
-    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *total_ptr = totalUserFuncs;
-    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
-            return 0;
-    } 
-    for(int i = 0 ; i < totalUserFuncs ; i++){
-        if(!usrfunc(i)){
-            return 0;
-        }
-    }
-    return 1;
-    //for each
-}
-
-unsigned usrfunc(unsigned index){
-    userfunc* iter = (userfunc*)Queue_get(userfunctions,index);
-    if(!fwrite(&iter->address, sizeof(unsigned), 1, generated_file)){
+int arrays_libfunctions() {
+    if(!writeUnsigned(totalNamedLibfuncs)) {
+        fprintf(stderr,"\033[0;31mError writing number of total libfuncs\033[0m\n");
         return 0;
-    } 
-    if(!fwrite(&iter->localSize, sizeof(unsigned), 1, generated_file)){
-        return 0;
-    }
-    char* id_ptr = strdup(iter->id);
-    assert(id_ptr);
-    unsigned* size_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *size_ptr = strlen(id_ptr);
-    if(!fwrite(size_ptr, sizeof(unsigned), 1, generated_file)){
-        return 0;
-    }    
-    if(!fwrite(&id_ptr, sizeof(char), strlen(id_ptr), generated_file)){
-        return 0;
-    }    
-    return 1; 
-}
-
-unsigned libfunctions(){
-    char* buff;
-    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *total_ptr = totalNamedLibfuncs;
-    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
-            return 0;
     }
     for(int i = 0 ; i < totalNamedLibfuncs ;i++){
-        
-        char* buff = strdup((char*)Queue_get(libfuncs,i));
-        assert(buff);
-        if(!size(buff)){
+        if(!writeString((char*)Queue_get(libfuncs,i))) {
+            fprintf(stderr,"\033[0;31mError writing libfunc(%d)\033[0m\n", i);
             return 0;
         }
-        if(!fwrite(buff, sizeof(char), strlen(buff), generated_file)){
-            return 0;
-        }
-
     }
     return 1;
 }
 
-unsigned code(){
+int t_code() {
     char* buff;
-    unsigned* total_ptr = (unsigned*)malloc(sizeof(unsigned));
-    *total_ptr = totalInstructions;
-    if(!fwrite(total_ptr, sizeof(unsigned), 1, generated_file)){
+    if(!writeUnsigned(totalInstructions)) {
+        fprintf(stderr,"\033[0;31mError writing number of total instructions\033[0m\n");
             return 0;
     }
+    struct instruction *instr;
     for(int i = 0 ; i < totalInstructions ;i++){
-        instruction t = instructions[i];
-        if(!fwrite(&t.opcode, sizeof(BYTE), 1, generated_file)){
+        instr = &instructions[i];
+        if(!writeByte(instr->opcode)) {
+            fprintf(stderr,"\033[0;31mError writing instruction(%d) opcode\033[0m\n", i);
             return 0;
         }
-            switch (t.opcode) {
+        switch (instr->opcode) {
             case add_v:
             case sub_v:
             case mul_v:
@@ -200,36 +138,70 @@ unsigned code(){
             case jgt_v:
             case tablegetelem_v:
             case tablesetelem_v:
-                operand_gen(&t.arg2);
+                if(!operand(&instr->arg2)) {
+                    fprintf(stderr,"\033[0;31mError writing instruction(%d) arg2\033[0m\n", i);
+                    return 0;
+                }
             case assign_v:
-                operand_gen(&t.arg1);
+                if(!operand(&instr->arg1)) {
+                    fprintf(stderr,"\033[0;31mError writing instruction(%d) arg1\033[0m\n", i);
+                    return 0;
+                }
             case jump_v:
             case call_v:
             case pusharg_v:
             case funcenter_v:
             case funcexit_v:
             case newtable_v:
-                operand_gen(&t.result);
+                if(!operand(&instr->result)) {
+                    fprintf(stderr,"\033[0;31mError writing instruction(%d) result\033[0m\n", i);
+                    return 0;
+                }
             case nop_v:
                 break;
             case uminus_v:
             case and_v:
             case or_v:
             case not_v:
-                fprintf(stderr,"\033[0;31mError illigal opcode\033[0m\n");
+                fprintf(stderr,"\033[0;31mError writing instruction(%d), illegal opcode\033[0m\n", i);
             default:
-                fprintf(stderr,"\033[0;31mError invalid opcode\033[0m\n");
+                fprintf(stderr,"\033[0;31mError writing instruction(%d), invalid opcode\033[0m\n", i);
                 assert(0);
         }
     }
     return 1;
 }
-unsigned operand_gen(vmarg* v){
-    if(!fwrite(&v->type, sizeof(BYTE), 1, generated_file)){
+
+int operand(vmarg *v) {
+    if(!writeByte(v->type)) {
+        fprintf(stderr,"\033[0;31mError writing operand type\033[0m\n");
         return 0;
     }
-    if(!fwrite(&v->val, sizeof(unsigned), 1, generated_file)){
+    if(!writeUnsigned(v->val)) {
+        fprintf(stderr,"\033[0;31mError writing operand value\033[0m\n");
         return 0;
     }
+    return 1;
+}
+
+int writeString(char *str) {
+    unsigned s = strlen(str);
+    writeUnsigned(s);
+    if (!fwrite(str, sizeof(char), s, bin_file)) return 0;
+    return 1;
+}
+
+int writeUnsigned(unsigned u) {
+    if (!fwrite(&u, sizeof(unsigned), 1, bin_file)) return 0;
+    return 1; 
+}
+
+int writeDouble(double d) {
+    if (!fwrite(&d, sizeof(double), 1, bin_file)) return 0;
+    return 1;
+}
+
+int writeByte(char b) {
+    if (!fwrite(&b, sizeof(char), 1, bin_file)) return 0;
     return 1;
 }

@@ -811,7 +811,7 @@ void display_instr()
     }
     
 
-    create_avmbinaryfile();
+    avmbinaryfile();
 }
 
 void use_instr_result(vmarg result){

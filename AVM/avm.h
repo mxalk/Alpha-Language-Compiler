@@ -6,6 +6,7 @@
 #define AVM_TABLE_HASHSIZE 211
 #define AVM_MAX_INSTRUCTIONS (unsigned) nop_v
 struct instruction *code = (struct instruction *) 0;
+unsigned code_size;
 
 enum vmopcode {
     assign_v,
@@ -116,26 +117,26 @@ unsigned top, topsp;
 // Reverse translation for constants:
 // getting constant value from index
 
-double *consts_number;
-double consts_getnumber(unsigned index) {
-    return consts_number[index];
-}
-char **consts_string;
-char *consts_getstring(unsigned index) {
-    return consts_string[index];
-}
-char **libfuncs_used;
-char *libfuncs_getused(unsigned index) {
-    return libfuncs_used[index];
-}
-
 void avm_memcellclear (struct avm_memcell *m);
 
-double *numConsts;
-unsigned totalNumConsts;
-char **stringConsts;
 unsigned totalStringConsts;
-char **namedLibFuncs;
-unsigned totalNamedLibFuncs;
-struct userfunc *userFuncs;
+char **stringConsts;
+char *consts_getstring(unsigned index) {
+    return stringConsts[index];
+}
+
+unsigned totalNumConsts;
+double *numConsts;
+double consts_getnumber(unsigned index) {
+    return numConsts[index];
+}
+
 unsigned totalUserFuncs;
+struct userfunc *userFuncs;
+
+unsigned totalNamedLibFuncs;
+char **namedLibFuncs;
+char *libfuncs_getused(unsigned index) {
+    return namedLibFuncs[index];
+}
+
