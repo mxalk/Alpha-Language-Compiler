@@ -3,16 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#define avm_error(...)    fprintf(stderr,"\033[0;31mAVM:Error \033[0m\n");\
-                                        fprintf(stderr,__VA_ARGS__);\
-                                        fprintf(stderr,"\033[0m\n");\
-                                        exit(EXIT_FAILURE);
-#define avm_warning(...)    fprintf(stderr,"\033[0;33mAVM:Warning \033[0m\n");\
-                                        fprintf(stderr,__VA_ARGS__);\
-                                        fprintf(stderr,"\033[0m\n");
+
 
 #define AVM_STACKSIZE 4096
-#define N AVM_STACKSIZE
+#define N AVM_STACKSIZE-1
 #define AVM_STACKENV_SIZE 4
 #define AVM_WIPEOUT(m) memset(&(m), 0, sizeof(m))
 #define AVM_TABLE_HASHSIZE 211
@@ -30,7 +24,8 @@ unsigned codeSize;
 #define AVM_ENDING_PC codeSize
 struct instruction *code ;
 unsigned totalActuals;
-extern char *typeStrings[8];
+
+char *typeStrings[8];
 void execute_arithmetic (struct instruction *);
 
 void execute_assign (struct instruction*);
@@ -103,7 +98,8 @@ typedef enum vmarg_t {
     nil_a       = 7,
     userfunc_a  = 8,
     libfunc_a   = 9,
-    retval_a    = 10
+    retval_a    = 10,
+    empty_a    = 11
 }vmarg_t;
 
 typedef enum avm_memcell_t {
@@ -172,18 +168,19 @@ unsigned top, topsp;
 // ------------------- GLOBALS
 unsigned totalStringConsts;
 char **stringConsts;
-char *consts_getstring(unsigned index);
+char *consts_getstring(unsigned);
 
 unsigned totalNumConsts;
 double *numConsts;
-double consts_getnumber(unsigned index);
+double consts_getnumber(unsigned);
 
 unsigned totalUserFuncs;
 struct userfunc *userFuncs;
+struct userfunc userFuncs_get(unsigned);
 
 unsigned totalNamedLibFuncs;
 char **namedLibFuncs;
-char *libfuncs_getused(unsigned index);
+char *libfuncs_getused(unsigned);
 // ===========================================================================
 avm_memcell *avm_translate_operand (struct vmarg *, struct avm_memcell *) ;
 void avm_tableincrefcounter(struct avm_table *) ;
@@ -219,11 +216,24 @@ char *avm_tostring(struct avm_memcell *);
 // ------------------- BOOLEAN
 typedef unsigned char (*tobool_func_t)(struct avm_memcell *);
 unsigned char avm_tobool(struct avm_memcell *) ;
-// ------------------- COMPARISON
+// ------------------- AVM
 void avm_initialize (void) ;
 void avm_initstack();
+void avm_error(char *format, ...);
+void avm_warning(char *format, ...);
 // ------------------- LIBS
-void libfunc_print(void);
-void libfunc_typeof(void);
-void libfunc_totalarguments(void);
+library_func_t *library_func_t_addresses;
 
+void avm_register_libfuncs();
+void libfunc_print(void);
+void libfunc_input(void);
+void libfunc_objectmemberkeys(void);
+void libfunc_objecttotalmembers(void);
+void libfunc_objectcopy(void);
+void libfunc_totalarguments(void);
+void libfunc_argument(void);
+void libfunc_typeof(void);
+void libfunc_strtonum(void);
+void libfunc_sqrt(void);
+void libfunc_cos(void);
+void libfunc_sin(void);

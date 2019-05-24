@@ -59,20 +59,17 @@ void execute_arithmetic (struct instruction *instr) {
 
 // NOT SUPPORTED
 
-void execute_uminus(struct instruction *instr)
-{
-    avm_error("invalid type %d", instr->opcode);
+void execute_uminus(struct instruction *instr) {
+    avm_error("Unsuported op: %d", instr->opcode);
 }
 
-void execute_and(struct instruction *instr)
-{
-    avm_error("invalid type %d", instr->opcode);
+void execute_and(struct instruction *instr) {
+    avm_error("Unsuported op: %d", instr->opcode);
 }
-void execute_or(struct instruction *instr)
-{
-    avm_error("invalid type %d", instr->opcode);
+
+void execute_or(struct instruction *instr) {
+    avm_error("Unsuported op: %d", instr->opcode);
 }
-void execute_not(struct instruction *instr)
-{
-    avm_error("invalid type %d", instr->opcode);
+void execute_not(struct instruction *instr) {
+    avm_error("Unsuported op: %d", instr->opcode);
 }
