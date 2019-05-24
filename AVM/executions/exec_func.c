@@ -1,7 +1,7 @@
 #include "../avm.h"
 
 void execute_call(struct instruction *instr) {
-    struct avm_memcell *func = avm_translate_operand(&instr->result, &ax);
+    struct avm_memcell *func = avm_translate_operand(&instr->arg1, &ax);
     assert(func);
     avm_callsaveenvironment();
     char *s;

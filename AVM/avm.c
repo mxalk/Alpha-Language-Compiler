@@ -1,7 +1,20 @@
 #include "avm.h"
 #include "reader.h"
 #include <stdarg.h>
+#include <string.h>
 #include <math.h>
+
+char *typeStrings[] = {
+    "number",
+    "string",
+    "bool",
+    "table",
+    "userfunc",
+    "libfunc",
+    "nil",
+    "undef"
+};
+
 
 
 void avm_error(char *format, ...) {
@@ -188,9 +201,11 @@ void execution_cycle (void) {
     assert(instr->opcode >=0 && instr->opcode <= AVM_MAX_INSTRUCTIONS);
     if (instr->srcLine) currLine = instr->srcLine; // DEAL WITH SCRLINE IN READER
     unsigned oldPC = pc;
-    printf("\033[0;33mExec PC:%d  TOP:%d \033[0m\n",pc,top); //
+    printf("\033[0;33mExec PC:%d  TOP:%d OP:%d\033[0m\n",pc,top,instr->opcode); //
     (*executeFuncs[instr->opcode])(instr);
     if (pc == oldPC) ++pc;
+    // print_stack();
+    
 }
 
 // ---------------------------------------------------------------------------
@@ -251,11 +266,10 @@ void avm_push_envvalue(unsigned val) {
 
 struct userfunc *avm_getfuncinfo(unsigned address){
     avm_error("avm_getfuncinfo NOT YET IMPLEMENTED\n");
-
 }
 
 unsigned avm_get_envvalue(unsigned i) {
-    assert(stack[i].type = number_m);
+    assert(stack[i].type == number_m);
     unsigned val = (unsigned) stack[i].data.numVal;
     assert(stack[i].data.numVal == ((double) val));
     return val;
@@ -266,7 +280,6 @@ library_func_t avm_getlibraryfunc(char *id){
     for (i=0; i<totalNamedLibFuncs; i++) if (!strcmp(id, namedLibFuncs[i])) break;
     if (i == totalNamedLibFuncs) avm_error("libfunc not found!\n");
     return library_func_t_addresses[i];
-
 }
 
 // extern void avm_calllibfunc(char *funcName);
@@ -279,12 +292,9 @@ void avm_calllibfunc(char *id) {
     if (!executionFinished) execute_funcexit((struct instruction *) 0);
 }
 
-unsigned avm_get(unsigned x){
-    avm_error("avm_get NOT YET IMPLEMENTED\n");
-}
 
 unsigned avm_totalactuals(void) {
-    return avm_get(topsp + AVM_NUMACTUALS_OFFSET);
+    return avm_get_envvalue(topsp + AVM_NUMACTUALS_OFFSET);
 }
 
 struct avm_memcell *avm_getactual(unsigned i) {
@@ -304,37 +314,42 @@ void avm_registerlibfunc(char *id, library_func_t addr){
 
 char *number_tostring(struct avm_memcell *x){
     assert(x->type == number_m);
-    char *s = malloc(sizeof(char) * 32); // MEMORY LEAK
-    sprintf(s,"%f", x->data.numVal);
+    char *s = malloc(sizeof(char) * 32);
+    sprintf(s, "%f", x->data.numVal);
     return s;
 }
 char *string_tostring(struct avm_memcell *x){
     assert(x->type == string_m);
-    return x->data.strVal;
+    return strdup(x->data.strVal);
 }
 char *bool_tostring(struct avm_memcell *x){
     assert(x->type == bool_m);
-    if (x->data.boolVal) return "true";
-    return "alse";
+    if (x->data.boolVal) return strdup("true");
+    return strdup("false");
 }
 char *table_tostring(struct avm_memcell *x){
     avm_error("_tostrings NOT YET IMPLEMENTED\n");
 }
 char *userfunc_tostring(struct avm_memcell *x){
     assert(x->type == userfunc_m);
-    return userFuncs_get(x->data.funcVal).id;
+    struct userfunc f = userFuncs_get(x->data.funcVal);
+    unsigned address = f.address;
+    unsigned n = strlen(f.id) + 30; // 29 = 26 for static + 13 for uint + \0
+    char *s = malloc(sizeof(char) * n);
+    sprintf(s, "userfunction: %s , address: %u", f.id, f.address);
+    return s;
 }
 char *libfunc_tostring(struct avm_memcell *x){
     assert(x->type == libfunc_m);
-    return x->data.libfuncVal;
+    return strdup(x->data.libfuncVal);
 }
 char *nil_tostring(struct avm_memcell *x){
     assert(x->type == nil_m);
-    return "nil";
+    return strdup("nil");
 }
 char *undef_tostring(struct avm_memcell *x){
     assert(x->type == undef_m);
-    return "undef";
+    return strdup("undef");
 }
 
 tostring_func_t tostringFuncs[] = {
@@ -348,7 +363,6 @@ tostring_func_t tostringFuncs[] = {
     undef_tostring
 };
 
-// extern char *avm_tostring(struct avm_memcell *);
 char *avm_tostring(struct avm_memcell *m) {
     assert(m->type >= 0 && m->type <= undef_m);
     return (*tostringFuncs[m->type])(m);
@@ -394,15 +408,17 @@ unsigned char avm_tobool(struct avm_memcell *m) {
 
 void main(int argc, char *argv[]) {
     
-    display_instr();
+    // display_instr();
     if (argc != 2) avm_error("Error getting binary from argument %s",argv[1]);
     bin_file_name = strdup(argv[1]);
+    GlobalProgrammVarOffset = 0;
     if (!avmbinaryfile()) {
         fprintf(stderr,"\033[0;31mError initializing AVM\033[0m\n");
         return;
     }
     avm_initialize();
     while(!executionFinished) execution_cycle();
+    return;
 }
 
 
@@ -410,7 +426,7 @@ void avm_initialize (void) {
     //
     avm_initstack();
     avm_register_libfuncs();
-    top = N;
+    top = N - GlobalProgrammVarOffset;
 }
 
 void avm_initstack(){
@@ -419,9 +435,6 @@ void avm_initstack(){
         stack[i].type = undef_m;
     }
 }
-
-
-
 
 // ------------------- CONSTS
 
@@ -449,12 +462,12 @@ void avm_register_libfuncs() {
     avm_registerlibfunc("totalarguments", libfunc_totalarguments);
     avm_registerlibfunc("argument", libfunc_argument);
     avm_registerlibfunc("typeof", libfunc_typeof);
-    avm_registerlibfunc("argument", libfunc_strtonum);
-    avm_registerlibfunc("argument", libfunc_sqrt);
+    avm_registerlibfunc("strtonum", libfunc_strtonum);
+    avm_registerlibfunc("sqrt", libfunc_sqrt);
     avm_registerlibfunc("cos", libfunc_cos);
     avm_registerlibfunc("sin", libfunc_sin);
 }
-
+// checked by mxalk
 void libfunc_print(void) {
     unsigned n = avm_totalactuals();
     char *s;
@@ -466,12 +479,95 @@ void libfunc_print(void) {
 }
 
 void libfunc_input(void) {
+    unsigned n = avm_totalactuals();
+    if (n) {
+        avm_warning("No argument (not %d) exprected in \'input\'!", n);
+        retval.type = nil_m;
+        return;
+    }
+    unsigned chunk = 128, current_size = chunk;
+    char *buff = malloc(chunk);
+    if(buff == NULL) {
+        avm_warning("Unable to allocate memory for \'input\'!", n);
+        retval.type = nil_m;
+        return;
+    }
+    int c = EOF;
+    unsigned int i =0;
+    while (( c = getchar() ) != '\n' && c != EOF) {
+        buff[i++]=(char)c;
+        if (i == current_size) {
+            current_size = i + chunk;
+            buff = realloc(buff, current_size);
+        }
+    }
+    buff[i] = '\0';
+
+    // string = between double quotes
+    if (buff[0] == '"' && buff[strlen(buff)] == '"') {
+        avm_memcellclear(&retval);
+        retval.type = string_m;
+        retval.data.strVal = buff;
+        return;
+    }
+
+    // number = can be translated to number
+    double number = atof(buff);
+    if (number) {
+        avm_memcellclear(&retval);
+        retval.type = number_m;
+        retval.data.numVal = number;
+        return;
+    }
+
+    // boolean = contains false/true
+    if (strstr(buff, "false")) {
+        avm_memcellclear(&retval);
+        retval.type = bool_m;
+        retval.data.boolVal = 0;
+        return;
+    }
+    if (strstr(buff, "true")) {
+        avm_memcellclear(&retval);
+        retval.type = bool_m;
+        retval.data.boolVal = 1;
+        return;
+    }
+
+    // nil = contains nil
+    if (strstr(buff, "nil")) {
+        avm_memcellclear(&retval);
+        retval.type = nil_m;
+        return;
+    }
+
+    // string
+    avm_memcellclear(&retval);
+    retval.type = string_m;
+    retval.data.strVal = buff;
+    return;
 }
 
 void libfunc_objectmemberkeys(void) {
 }
-
+// checked by mxalk
 void libfunc_objecttotalmembers(void) {
+    unsigned n = avm_totalactuals();
+    if (n!=1) {
+        avm_warning("One argument (not %d) exprected in \'objecttotalmembers\'!", n);
+        retval.type = nil_m;
+        return;
+    }
+    struct avm_memcell *actual = avm_getactual(0);
+    if (actual->type != table_m) {
+        avm_warning("Table argument (not %s) exprected in \'objecttotalmembers\'!", typeStrings[actual->type]);
+        retval.type = nil_m;
+        return;
+    }
+    avm_memcellclear(&retval);
+    retval.type = number_m;
+    retval.data.numVal = actual->data.tableVal->total;
+    return;
 }
 
 void libfunc_objectcopy(void) {
@@ -484,13 +580,44 @@ void libfunc_totalarguments(void) {
         retval.type = nil_m;
         return;
     }
+    unsigned n = avm_totalactuals();
+    if (n) {
+        avm_warning("No argument (not %d) exprected in \'totalarguments\'!", n);
+        retval.type = nil_m;
+        return;
+    }
     avm_memcellclear(&retval);
     retval.type = number_m;
     retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
+    return;
 }
 
-//as total arguments
+// CHECK
 void libfunc_argument(void) {
+    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
+    if (!p_topsp) {
+        avm_warning("'argument' call outside a function!");
+        retval.type = nil_m;
+        return;
+    }
+    unsigned n = avm_totalactuals();
+    if (n!=1) {
+        avm_warning("One argument (not %d) exprected in \'argument\'!", n);
+        retval.type = nil_m;
+        return;
+    }
+    struct avm_memcell *actual = avm_getactual(0);
+    if (actual->type != number_m) {
+        avm_warning("Number argument (not %s) exprected in \'argument\'!", typeStrings[actual->type]);
+        retval.type = nil_m;
+        return;
+    }
+    avm_memcellclear(&retval);
+    retval.type = number_m;
+
+    // FIX
+    retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET - actual->data.numVal);
+    return;
 }
 // after here shoud be ok, checked by mxalk
 void libfunc_typeof(void) {
@@ -521,6 +648,7 @@ void libfunc_strtonum(void) {
     avm_memcellclear(&retval);
     retval.type = number_m;
     retval.data.numVal = atof(actual->data.strVal);
+    return;
 }
 
 void libfunc_sqrt(void) {
@@ -577,74 +705,22 @@ void libfunc_sin(void) {
     retval.data.numVal = sin(actual->data.numVal);
 }
 
+// ------------------- DISPLAY
 
-void display_instr()
-{
-    // printTables();
-    codeSize = 24;
-    printf("============================ tcode_read %d =============================\n",codeSize);
-    struct instruction instr;
-    unsigned sz = codeSize;
-    for (int i = 0; i < sz; i++)
-    {
-        printf("%3d: ",i);
-        instr = code[i];
-        
-        
-        
-        // printf("[op %2d] ",instr.opcode);
-        printf("\033[0;36m%20s \033[0m", instr.opcode);
-
-        switch(instr.opcode){
-            case add_v:
-            case sub_v:
-            case mul_v:
-            case div_v:
-            case mod_v:
-            case and_v:
-            case or_v:
-            case jeq_v:
-            case jne_v:
-            case jle_v:
-            case jge_v:
-            case jlt_v:
-            case jgt_v:
-            case tablegetelem_v:
-            case tablesetelem_v:
-                use_instr_result(instr.result);
-                use_instr_arg1(instr.arg1);
-                use_instr_arg2(instr.arg2);
-                break;
-            case assign_v:
-            case not_v:
-                use_instr_result(instr.result);
-                use_instr_arg1(instr.arg1);
-                break;
-            case jump_v:
-            case funcenter_v:
-            case funcexit_v:
-                use_instr_result(instr.result);
-                break;
-            case uminus_v:
-            case nop_v:
-                break;//TBI
-            case call_v:
-            case pusharg_v:
-            case newtable_v:
-                use_instr_arg1(instr.arg1);
-                break;
-            default:
-                assert(0);
-            
-                
-        }
-
-        printf("\n");
-    }
+void print_stack() {
     
+    int i = AVM_STACKSIZE;
+    printf("====== STACK ====== \n");
+    
+    while (--i) {
 
-    // avmbinaryfile();
+        printf("Cell:%d type:%d", i , stack[i].type);
+        printf("\n");
+        if (i == 4080) break;
+    }
+
 }
+
 
 void use_instr_result(struct vmarg result){
     struct userfunc* f1= NULL;
@@ -669,7 +745,7 @@ void use_instr_result(struct vmarg result){
                 printf("04_%u_[%f] ", result.val,numConsts[result.val]);
                 break;
             case string_a:
-                 printf("05_%u_[\"%s\"] ", result.val,strdup(stringConsts[result.val]));
+                 printf("05_%u_[\"%s\"] ", result.val,stringConsts[result.val]);
                 break;
             case bool_a:
                 printf("06_%u ", result.val);
@@ -678,10 +754,10 @@ void use_instr_result(struct vmarg result){
                 printf("07_nill");
                 break;
             case userfunc_a:
-                printf("08_%u_[%s] ", result.val,strdup((f1->id)));
+                printf("08_%u_[%s] ", result.val,(f1->id));
                 break;
             case libfunc_a:
-                printf("09_%u_[%s] ", result.val,strdup(namedLibFuncs[result.val]));
+                printf("09_%u_[%s] ", result.val,namedLibFuncs[result.val]);
                 break;
             case retval_a:
                 printf("10_(retval) ", result.val);
@@ -711,10 +787,10 @@ void use_instr_arg1(struct vmarg arg1){
                 printf("03_%u ", arg1.val);
                 break;
             case number_a:
-                printf("04_%u_[%f] ", arg1.val,numConsts[arg1.val]);
+                printf("04_%u_[%f] ", arg1.val, numConsts[arg1.val]);
                 break;
             case string_a:
-                 printf("05_%u_[\"%s\"] ", arg1.val,strdup(stringConsts[arg1.val]));
+                 printf("05_%u_[\"%s\"] ", arg1.val, stringConsts[arg1.val]);
                 break;
             case bool_a:
                 printf("06_%u ", arg1.val);
@@ -723,10 +799,10 @@ void use_instr_arg1(struct vmarg arg1){
                 printf("07_nill");
                 break;
             case userfunc_a:
-                printf("08_%u_[%s] ", arg1.val,strdup((f2->id)));
+                printf("08_%u_[%s] ", arg1.val, f2->id);
                 break;
             case libfunc_a:
-                printf("09_%u_[%s] ", arg1.val,strdup(namedLibFuncs[arg1.val]));
+                printf("09_%u_[%s] ", arg1.val, namedLibFuncs[arg1.val]);
                 break;
             case retval_a:
                 printf("10_(retval) ", arg1.val);
@@ -756,10 +832,10 @@ void use_instr_arg2( struct vmarg arg2){
                 printf("03_%u ", arg2.val);
                 break;
             case number_a:
-                printf("04_%u_[%f] ", arg2.val,numConsts[arg2.val]);
+                printf("04_%u_[%f] ", arg2.val, numConsts[arg2.val]);
                 break;
             case string_a:
-                 printf("05_%u_[\"%s\"] ", arg2.val,strdup(stringConsts[arg2.val]));
+                 printf("05_%u_[\"%s\"] ", arg2.val, stringConsts[arg2.val]);
                 break;
             case bool_a:
                 printf("06_%u ", arg2.val);
@@ -768,10 +844,10 @@ void use_instr_arg2( struct vmarg arg2){
                 printf("07_nill");
                 break;
             case userfunc_a:
-                printf("08_%u_[%s] ", arg2.val,strdup((f3->id)));
+                printf("08_%u_[%s] ", arg2.val, (f3->id));
                 break;
             case libfunc_a:
-                printf("09_%u_[%s] ", arg2.val,strdup(namedLibFuncs[arg2.val]));
+                printf("09_%u_[%s] ", arg2.val, namedLibFuncs[arg2.val]);
                 break;
             case retval_a:
                 printf("10_(retval) ", arg2.val);

@@ -1,7 +1,7 @@
 #include "../avm.h"
 
 void execute_newtable(struct instruction *instr) {
-    struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
+    struct avm_memcell *lv = avm_translate_operand(&instr->arg1, (struct avm_memcell *) 0);
     //assert(lv && (&stack[N-1] >= lv && lv < &stack[top] || lv == &retval));
     avm_memcellclear(lv);
     lv->type = table_m;

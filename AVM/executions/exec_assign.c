@@ -3,8 +3,8 @@
 void execute_assign(struct instruction *instr) {
     struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
     struct avm_memcell *rv = avm_translate_operand(&instr->arg1, &ax);
-    assert(&stack[N-1] >= lv);
-    assert(lv && (&stack[N-1] >= lv && lv > &stack[top] || lv == &retval));
+    assert(&stack[N] >= lv);
+    assert(lv && (&stack[N] >= lv && lv > &stack[top] || lv == &retval));
     assert(rv);
     avm_assign(lv, rv);
 }

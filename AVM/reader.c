@@ -47,6 +47,7 @@ int avmbinaryfile() {
         fprintf(stderr,"\033[0;31mError reading code\033[0m\n");
         return 0;
     }
+    printf("=======%u\n", codeSize);
     printf("=========================================================\n");
     return 1;
 }
@@ -122,7 +123,12 @@ int arrays_libfunctions() {
 }
 
 int t_code() {
+    if (!readUnsigned(&GlobalProgrammVarOffset)) {
+        fprintf(stderr,"\033[0;31mError reading number of globals\033[0m\n");
+        return 0;
+    }
     if (!readUnsigned(&codeSize)) {
+        fprintf(stderr,"\033[0;31mError reading number of total instructions\033[0m\n");
         return 0;
     }
     struct instruction *instr;
@@ -134,7 +140,7 @@ int t_code() {
             fprintf(stderr,"\033[0;31mError reading instruction(%d) opcode\033[0m\n", i);
             return 0;
         }
-                printf("%d/%d:%d\n",i,codeSize-1,instr->opcode);
+                printf("%d/%d:%d = ",i,codeSize-1,instr->opcode);
         switch (instr->opcode) {
             case add_v:
             case sub_v:
@@ -184,6 +190,7 @@ int t_code() {
                 fprintf(stderr,"\033[0;31mError reading instruction(%d), invalid opcode\033[0m\n", i);
                 assert(0);
         }
+        printf(" res: %u, a1: %u, a2: %u\n",instr->result.type,instr->arg1.type,instr->arg2.type);
     }
     return 1;
 }

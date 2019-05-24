@@ -24,6 +24,7 @@ unsigned codeSize;
 #define AVM_ENDING_PC codeSize
 struct instruction *code ;
 unsigned totalActuals;
+unsigned GlobalProgrammVarOffset;
 
 char *typeStrings[8];
 void execute_arithmetic (struct instruction *);

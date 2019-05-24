@@ -112,10 +112,13 @@ int arrays_libfunctions() {
 }
 
 int t_code() {
-    char* buff;
+    if(!writeUnsigned(programVarOffset)) {
+        fprintf(stderr,"\033[0;31mError writing number of globals\033[0m\n");
+        return 0;
+    }
     if(!writeUnsigned(currInstruction)) {
         fprintf(stderr,"\033[0;31mError writing number of total instructions\033[0m\n");
-            return 0;
+        return 0;
     }
     struct instruction *instr;
     for(int i = 0 ; i < currInstruction ;i++){
