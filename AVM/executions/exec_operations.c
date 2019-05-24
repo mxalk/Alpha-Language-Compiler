@@ -1,9 +1,26 @@
 #include "../avm.h"
-#define execute_add execute_arithmetic
-#define execute_sub execute_arithmetic
-#define execute_mul execute_arithmetic
-#define execute_div execute_arithmetic
-#define execute_mod execute_arithmetic
+
+// #define execute_add(x) execute_arithmetic(x)
+// #define execute_sub(x) execute_arithmetic(x)
+// #define execute_mul(x) execute_arithmetic(x)
+// #define execute_div(x) execute_arithmetic(x)
+// #define execute_mod(x) execute_arithmetic(x)
+
+void execute_add (struct instruction* x){
+    execute_arithmetic(x);
+};
+void execute_sub (struct instruction* x){
+    execute_arithmetic(x);
+};
+void execute_mul (struct instruction* x){
+    execute_arithmetic(x);
+};
+void execute_div (struct instruction* x){
+    execute_arithmetic(x);
+};  
+void execute_mod (struct instruction* x){
+    execute_arithmetic(x);
+};
 
 typedef double (*arithmetic_func_t)(double x, double y);
 
@@ -42,20 +59,20 @@ void execute_arithmetic (struct instruction *instr) {
 
 // NOT SUPPORTED
 
-void execute_uminus(instruction *instr)
+void execute_uminus(struct instruction *instr)
 {
     avm_error("invalid type %d", instr->opcode);
 }
 
-void execute_and(instruction *instr)
+void execute_and(struct instruction *instr)
 {
     avm_error("invalid type %d", instr->opcode);
 }
-void execute_or(instruction *instr)
+void execute_or(struct instruction *instr)
 {
     avm_error("invalid type %d", instr->opcode);
 }
-void execute_not(instruction *instr)
+void execute_not(struct instruction *instr)
 {
     avm_error("invalid type %d", instr->opcode);
 }

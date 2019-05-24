@@ -4,34 +4,30 @@
 #include "avm.h"
 #include "reader.h"
 
-#define MAGICNUMBER 194623425 //655*639*465 from 3655 3639 3465
-FILE *stream;
-FILE *bin_file;
-char* bin_file_name;
 
-int main(){
-    bin_file_name = "temp.abc";
-    avmbinaryfile();
-    printf("STRINGS\n");
-    for (unsigned i = 0; i<totalStringConsts; i++) {
-        printf("%u: %s\n", i, consts_getstring(i));
-    }
-    printf("NUMCONSTS\n");
-    for (unsigned i = 0; i<totalNumConsts; i++) {
-        printf("%u: %f\n", i, consts_getnumber(i));
-    }
-    printf("USRFUNCS\n");
-    for (unsigned i = 0; i<totalUserFuncs; i++) {
-        printf("%u: %u %u %s\n", i,userFuncs[i].address,userFuncs[i].localSize,userFuncs[i].id);
+// int main(){
+//     bin_file_name = "temp.abc";
+//     avmbinaryfile();
+//     printf("STRINGS\n");
+//     for (unsigned i = 0; i<totalStringConsts; i++) {
+//         printf("%u: %s\n", i, consts_getstring(i));
+//     }
+//     printf("NUMCONSTS\n");
+//     for (unsigned i = 0; i<totalNumConsts; i++) {
+//         printf("%u: %f\n", i, consts_getnumber(i));
+//     }
+//     printf("USRFUNCS\n");
+//     for (unsigned i = 0; i<totalUserFuncs; i++) {
+//         printf("%u: %u %u %s\n", i,userFuncs[i].address,userFuncs[i].localSize,userFuncs[i].id);
         
-    }
-    printf("LIBFUNCS\n");
-    for (unsigned i = 0; i<totalNamedLibFuncs; i++) {
-        printf("%u: %s\n", i, libfuncs_getused(i));
-    }
-    printf("\n");
-    return 0;
-}
+//     }
+//     printf("LIBFUNCS\n");
+//     for (unsigned i = 0; i<totalNamedLibFuncs; i++) {
+//         printf("%u: %s\n", i, libfuncs_getused(i));
+//     }
+//     printf("\n");
+//     return 0;
+// }
 
 int avmbinaryfile() {
     bin_file = fopen(bin_file_name,"rb");
@@ -131,7 +127,7 @@ int t_code() {
     }
     struct instruction *instr;
     code = (struct instruction*)malloc(sizeof(struct instruction) * codeSize);
-     printf("currInstr / totalInstr : opcode \n");
+    printf("currInstr / totalInstr : opcode \n");
     for (int i = 0; i<codeSize; i++) {
         instr = &code[i];
         if (!readByte((char *)&instr->opcode)) {
@@ -165,7 +161,10 @@ int t_code() {
             case jump_v:
             case funcenter_v:
             case funcexit_v:
-                operand(&instr->result);
+                if(!operand(&instr->result)) {
+                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
+                    return 0;
+                }
                 break;
             case call_v:
             case pusharg_v:

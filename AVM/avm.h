@@ -1,6 +1,18 @@
-
+#pragma once
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#define avm_error(...)    fprintf(stderr,"\033[0;31mAVM:Error \033[0m\n");\
+                                        fprintf(stderr,__VA_ARGS__);\
+                                        fprintf(stderr,"\033[0m\n");\
+                                        exit(EXIT_FAILURE);
+#define avm_warning(...)    fprintf(stderr,"\033[0;33mAVM:Warning \033[0m\n");\
+                                        fprintf(stderr,__VA_ARGS__);\
+                                        fprintf(stderr,"\033[0m\n");
 
 #define AVM_STACKSIZE 4096
+#define N AVM_STACKSIZE
 #define AVM_STACKENV_SIZE 4
 #define AVM_WIPEOUT(m) memset(&(m), 0, sizeof(m))
 #define AVM_TABLE_HASHSIZE 211
@@ -10,14 +22,47 @@
 #define AVM_SAVEDTOP_OFFSET     +2
 #define AVM_SAVEDTOPSP_OFFSET   +1
 
-extern char *typeStrings[];
-extern unsigned char executionFinished ;
-extern unsigned pc ;
-extern unsigned currLine;
+
+unsigned char executionFinished ;
+unsigned pc;
+unsigned currLine;
 unsigned codeSize;
 #define AVM_ENDING_PC codeSize
+struct instruction *code ;
+unsigned totalActuals;
+extern char *typeStrings[8];
+void execute_arithmetic (struct instruction *);
 
-struct instruction *code = (struct instruction *) 0;
+void execute_assign (struct instruction*);
+void execute_add (struct instruction*);
+void execute_sub (struct instruction*);
+void execute_mul (struct instruction*);
+void execute_div (struct instruction*);
+void execute_div (struct instruction*);
+void execute_mod (struct instruction*);
+void execute_mod (struct instruction*);
+void execute_uminus (struct instruction*);
+void execute_and (struct instruction*);
+void execute_and (struct instruction*);
+void execute_or (struct instruction*);
+void execute_not (struct instruction*);
+void execute_jeq (struct instruction*);
+void execute_jne (struct instruction*);
+void execute_jle (struct instruction*);
+void execute_jge (struct instruction*);
+void execute_jge (struct instruction*);
+void execute_jlt (struct instruction*);
+void execute_jgt (struct instruction*);
+void execute_jump (struct instruction*);
+void execute_call (struct instruction*);
+void execute_pusharg (struct instruction*);
+void execute_funcenter (struct instruction*);
+void execute_funcexit (struct instruction*);
+void execute_newtable (struct instruction*);
+void execute_tablegetelem (struct instruction*);
+void execute_tablesetelem (struct instruction*);
+void execute_nop (struct instruction*);
+
 
 enum vmopcode {
     assign_v,
@@ -121,34 +166,64 @@ struct avm_table {
     unsigned total;
 };
 
-typedef void (*execute_func_t)(struct instruction *);
 
-// OPERAND TRANSLATE
 avm_memcell ax, bx, cx, retval, stack[AVM_STACKSIZE];
 unsigned top, topsp;
-// Reverse translation for constants:
-// getting constant value from index
-
-void avm_memcellclear (struct avm_memcell *m);
-
+// ------------------- GLOBALS
 unsigned totalStringConsts;
 char **stringConsts;
-char *consts_getstring(unsigned index) {
-    return stringConsts[index];
-}
+char *consts_getstring(unsigned index);
 
 unsigned totalNumConsts;
 double *numConsts;
-double consts_getnumber(unsigned index) {
-    return numConsts[index];
-}
+double consts_getnumber(unsigned index);
 
 unsigned totalUserFuncs;
 struct userfunc *userFuncs;
 
 unsigned totalNamedLibFuncs;
 char **namedLibFuncs;
-char *libfuncs_getused(unsigned index) {
-    return namedLibFuncs[index];
-}
+char *libfuncs_getused(unsigned index);
+// ===========================================================================
+avm_memcell *avm_translate_operand (struct vmarg *, struct avm_memcell *) ;
+void avm_tableincrefcounter(struct avm_table *) ;
+void avm_tabledecrefcounter(struct avm_table *) ;
+void avm_tablebucketsinit(struct avm_table_bucket **) ;
+struct avm_table *avm_tablenew(void);
+void avm_tablebucketsdestroy(struct avm_table_bucket **) ;
+void avm_tabledestroy(struct avm_table *) ;
+void execution_cycle (void) ;
+// ---------------------------------------------------------------------------
+// INSTRUCTION IMPLEMENTATION
+// ---------------------------------------------------------------------------
+void avm_assign (struct avm_memcell *, struct avm_memcell *);
+typedef void (*memclear_func_t)(struct avm_memcell *);
+void avm_memcellclear(struct avm_memcell *) ;;
+// extern void avm_callsaveenvironment(void);
+void avm_callsaveenvironment (void);
+void avm_dec_top(void) ;
+void avm_push_envvalue(unsigned) ;
+void avm_callsaveenvironment(void);;
+unsigned avm_get_envvalue(unsigned) ;
+typedef void (*library_func_t)(void);
+library_func_t avm_getlibraryfunc(char *);
+struct userfunc *avm_getfuncinfo(unsigned address);
+void avm_calllibfunc(char *);
+unsigned avm_totalactuals(void) ;
+struct avm_memcell *avm_getactual(unsigned) ;
+void avm_registerlibfunc(char *, library_func_t);
+// ------------------- STRINGS
+typedef char *(*tostring_func_t)(struct avm_memcell *);
+// extern char *avm_tostring(struct avm_memcell *);
+char *avm_tostring(struct avm_memcell *);
+// ------------------- BOOLEAN
+typedef unsigned char (*tobool_func_t)(struct avm_memcell *);
+unsigned char avm_tobool(struct avm_memcell *) ;
+// ------------------- COMPARISON
+void avm_initialize (void) ;
+void avm_initstack();
+// ------------------- LIBS
+void libfunc_print(void);
+void libfunc_typeof(void);
+void libfunc_totalarguments(void);
 

@@ -1,4 +1,7 @@
+
 #include "avm.h"
+#include "reader.h"
+
 
 // ---------------------------------------------------------------------------
 // DYNAMIC ARRAYS
@@ -97,6 +100,33 @@ void avm_tabledestroy(struct avm_table *t) {
 // ---------------------------------------------------------------------------
 // DISPATCHER
 // ---------------------------------------------------------------------------
+extern void execute_assign (struct instruction*);
+extern void execute_add (struct instruction*);
+extern void execute_sub (struct instruction*);
+extern void execute_mul (struct instruction*);
+extern void execute_div (struct instruction*);
+extern void execute_mod (struct instruction*);
+extern void execute_uminus (struct instruction*);
+extern void execute_and (struct instruction*);
+extern void execute_or (struct instruction*);
+extern void execute_not (struct instruction*);
+extern void execute_jeq (struct instruction*);
+extern void execute_jne (struct instruction*);
+extern void execute_jle (struct instruction*);
+extern void execute_jge (struct instruction*);
+extern void execute_jlt (struct instruction*);
+extern void execute_jgt (struct instruction*);
+extern void execute_jump (struct instruction*);
+extern void execute_call (struct instruction*);
+extern void execute_pusharg (struct instruction*);
+extern void execute_funcenter (struct instruction*);
+extern void execute_funcexit (struct instruction*);
+extern void execute_newtable (struct instruction*);
+extern void execute_tablegetelem (struct instruction*);
+extern void execute_tablesetelem (struct instruction*);
+extern void execute_nop (struct instruction*);
+
+typedef void (*execute_func_t)(struct instruction *);
 
 execute_func_t executeFuncs[] = {
     execute_assign,
@@ -115,6 +145,7 @@ execute_func_t executeFuncs[] = {
     execute_jge,
     execute_jlt,
     execute_jgt,
+    execute_jump, // added extra
     execute_call,
     execute_pusharg,
     execute_funcenter,
@@ -124,40 +155,6 @@ execute_func_t executeFuncs[] = {
     execute_tablesetelem,
     execute_nop
 };
-
-extern void execute_assign (struct instruction*);
-extern void execute_add (struct instruction*);
-extern void execute_sub (struct instruction*);
-extern void execute_mul (struct instruction*);
-extern void execute_div (struct instruction*);
-extern void execute_mod (struct instruction*);
-extern void execute_uminus (struct instruction*);
-extern void execute_and (struct instruction*);
-extern void execute_or (struct instruction*);
-extern void execute_not (struct instruction*);
-extern void execute_jeq (struct instruction*);
-extern void execute_jne (struct instruction*);
-extern void execute_jle (struct instruction*);
-extern void execute_jge (struct instruction*);
-extern void execute_jlt (struct instruction*);
-extern void execute_jgt (struct instruction*);
-extern void execute_call (struct instruction*);
-extern void execute_pusharg (struct instruction*);
-extern void execute_funcenter (struct instruction*);
-extern void execute_funcexit (struct instruction*);
-extern void execute_newtable (struct instruction*);
-extern void execute_tablegetelem (struct instruction*);
-extern void execute_tablesetelem (struct instruction*);
-extern void execute_nop (struct instruction*);
-
-
-
-unsigned char executionFinished = 0;
-unsigned pc = 0;
-unsigned currLine = 0;
-unsigned codeSize = 0;
-unsigned totalActuals = 0;
-
 
 void execution_cycle (void) {
     if (executionFinished) return;
@@ -177,8 +174,6 @@ void execution_cycle (void) {
 // ---------------------------------------------------------------------------
 // INSTRUCTION IMPLEMENTATION
 // ---------------------------------------------------------------------------
-typedef void (*memclear_func_t)(struct avm_memcell *);
-
 extern void memclear_string (struct avm_memcell *m) {
     assert(m->data.strVal);
     free(m->data.strVal);
@@ -207,33 +202,7 @@ void avm_memcellclear(struct avm_memcell *m) {
     }
 }
 
-extern void avm_warning(char *format, ...);
-
-void execute_assign(struct instruction *instr) {
-    struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
-    struct avm_memcell *rv = avm_translate_operand(&instr->arg1, &ax);
-    assert(lv && (&stack[N-1] >= lv && lv > &stack[top] || lv == &retval));
-    assert(rv);
-    avm_assign(lv, rv);
-}
-
-// extern void avm_assign(struct avm_memcell *lv, struct avm_memcell *rv);
-void avm_assign (struct avm_memcell *lv, struct avm_memcell *rv) {
-    if (lv == rv) return;
-    if (lv->type == table_m && rv->type == table_m && lv->data.tableVal == rv->data.tableVal) return;
-    if (rv->type == undef_m) avm_warning("Assigning from 'undef' content!");
-    avm_memcellclear(lv);
-    memcpy(lv, rv, sizeof(struct avm_memcell));
-    if (lv->type == string_m)
-        lv->data.strVal = strdup(rv->data.strVal);
-    else if (lv->type == string_m)
-        avm_tableincrefcounter(lv->data.tableVal);
-}
-
-extern void avm_error(char *format, ...);
-extern void avm_calllibfunc(char *funcName);
-
-// extern void avm_callsaveenvironment(void);
+extern void avm_callsaveenvironment(void);
 void avm_callsaveenvironment (void) {
     avm_push_envvalue(totalActuals);
     avm_push_envvalue(pc+1);
@@ -241,32 +210,6 @@ void avm_callsaveenvironment (void) {
     avm_push_envvalue(topsp);
 }
 
-void execute_call(struct instruction *instr) {
-    struct avm_memcell *func = avm_translate_operand(&instr->result, &ax);
-    assert(func);
-    avm_callsaveenvironment();
-    switch (func->type) {
-        case userfunc_m:
-            pc = func->data.funcVal;
-            assert(pc < AVM_ENDING_PC);
-            assert(code[pc].opcode == funcenter_v);
-            break;
-        case string_m:
-            avm_calllibfunc(func->data.strVal);
-            break;
-        case libfunc_m:
-            avm_calllibfunc(func->data.funcVal);
-            break;
-        case table_m:
-            avm_calllibfunc(func->data.tableVal);
-            break;
-        default:
-            char *s = avm_tostring(func);
-            avm_error("Call: cannot bind '%s' to function!", s);
-            free(s);
-            executionFinished = 1;
-    }
-}
 
 void avm_dec_top(void) {
     if (!top) {
@@ -284,24 +227,9 @@ void avm_push_envvalue(unsigned val) {
     avm_dec_top();
 }
 
-void avm_callsaveenvironment(void) {
-    avm_push_envvalue(totalActuals);
-    avm_push_envvalue(pc + 1);
-    avm_push_envvalue(top + totalActuals + 2);
-    avm_push_envvalue(topsp);
-}
+struct userfunc *avm_getfuncinfo(unsigned address){
+    avm_error("avm_getfuncinfo NOT YET IMPLEMENTED\n");
 
-extern struct usrfunc *avm_getfuncinfo(unsigned address);
-
-void execute_funcenter(struct instruction *instr) {
-    struct avm_memcell *func = avm_translate_operand(&instr->result, &ax);
-    assert(func);
-    assert(pc == func->data.funcVal);
-
-    totalActuals = 0;
-    struct userfunc *funcInfo = avm_getfuncinfo(pc);
-    topsp = top;
-    top = top - funcInfo->localSize;
 }
 
 unsigned avm_get_envvalue(unsigned i) {
@@ -311,33 +239,27 @@ unsigned avm_get_envvalue(unsigned i) {
     return val;
 }
 
-void execute_funcexit(struct instruction *unused) {
-    unsigned oldTop = top;
-    top = avm_get_envvalue(topsp + AVM_SAVEDTOP_OFFSET);
-    pc = avm_get_envvalue(topsp + AVM_SAVEDPC_OFFSET);
-    topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
-    while(++oldTop <= top) avm_memcellclear(&stack[oldTop]);
+library_func_t avm_getlibraryfunc(char *id){
+    avm_error("avm_getlibraryfunc NOT YET IMPLEMENTED\n");
+
 }
 
-typedef void (*library_func_t)(void);
-library_func_t avm_getlibraryfunc(char *id);
-
+// extern void avm_calllibfunc(char *funcName);
 void avm_calllibfunc(char *id) {
     library_func_t f = avm_getlibraryfunc(id);
-    if (!f) {
-        avm_error("Unsupported lib func '%s' called!", id);
-        executionFinished = 1;
-    } else {
-        topsp = top;
-        totalActuals = 0;
-        (*f)();
-        if (!executionFinished) execute_funcexit((struct instruction *) 0);
-    }
+    if (!f) avm_error("Unsupported lib func '%s' called!", id);
+    topsp = top;
+    totalActuals = 0;
+    (*f)();
+    if (!executionFinished) execute_funcexit((struct instruction *) 0);
+}
+
+unsigned avm_get(unsigned x){
+    avm_error("avm_get NOT YET IMPLEMENTED\n");
 }
 
 unsigned avm_totalactuals(void) {
-    return avm_get
-    (topsp + AVM_NUMACTUALS_OFFSET);
+    return avm_get(topsp + AVM_NUMACTUALS_OFFSET);
 }
 
 struct avm_memcell *avm_getactual(unsigned i) {
@@ -345,26 +267,40 @@ struct avm_memcell *avm_getactual(unsigned i) {
     return &stack[topsp + AVM_STACKENV_SIZE + 1 + i];
 }
 
-void avm_registerlibfunc(char *id, library_func_t addr);
+void avm_registerlibfunc(char *id, library_func_t addr){
+    avm_error("avm_registerlibfunc NOT YET IMPLEMENTED\n");
 
-void execute_pusharg(struct instruction *instr) {
-    struct avm_memcell *arg = avm_translate_operand(&instr->arg1, &ax);
-    avm_assign(&stack[top], arg);
-    totalActuals++;
-    avm_dec_top();
 }
 
-// ------------------- STRINGS
-typedef char * (*tostring_func_t)(struct avm_memcell *);
 
-extern char *number_tostring(struct avm_memcell *);
-extern char *string_tostring(struct avm_memcell *);
-extern char *bool_tostring(struct avm_memcell *);
-extern char *table_tostring(struct avm_memcell *);
-extern char *userfunc_tostring(struct avm_memcell *);
-extern char *libfunc_tostring(struct avm_memcell *);
-extern char *nil_tostring(struct avm_memcell *);
-extern char *undef_tostring(struct avm_memcell *);
+// ------------------- STRINGS
+
+
+
+char *number_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *string_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *bool_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *table_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *userfunc_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *libfunc_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *nil_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
+char *undef_tostring(struct avm_memcell * x){
+    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+}
 
 tostring_func_t tostringFuncs[] = {
     number_tostring,
@@ -387,7 +323,6 @@ char *avm_tostring(struct avm_memcell *m) {
 
 // ------------------- BOOLEAN
 
-typedef unsigned char (*tobool_func_t)(struct avm_memcell *);
 
 unsigned char number_tobool (struct avm_memcell *m) {return m->data.numVal != 0;}
 unsigned char string_tobool (struct avm_memcell *m) {return m->data.strVal[0] != 0;}
@@ -416,45 +351,48 @@ unsigned char avm_tobool(struct avm_memcell *m) {
 
 // ------------------- COMPARISON
 
-char *typeStrings[] = {
-    "number",
-    "string",
-    "bool",
-    "table",
-    "userfunc",
-    "libfunc",
-    "nil",
-    "undef"
-};
-
-void execute_jeq (struct instruction *instr) {
-    assert(instr->result.type == label_a);
-    struct avm_memcell *rv1 = avm_translate_operand(&instr->arg1, &ax);
-    struct avm_memcell *rv2 = avm_translate_operand(&instr->arg2, &bx);
-
-    unsigned char result = 0;
-    if (rv1->type == undef_m || rv2->type == undef_m) avm_error("'undef' involved in equality");
-    else if (rv1->type == nil_m || rv2->type == nil_m) result = rv1->type == rv2->type;
-    else if (rv1->type == bool_m || rv2->type == bool_m) result = (avm_tobool(rv1) == avm_tobool(rv2));
-    else if (rv1->type != rv2->type) avm_error("%s == %s is illegal", typeStrings[rv1->type], typeStrings[rv2->type]);
-    else {
-        // EQUALITY CHECK WITH DISPATCHING
-    }
-    if (!executionFinished && result) pc = instr->result.val;
-}
-
-
 
 
 // ---------------------------------------------------------------------------
 // AVM
 // ---------------------------------------------------------------------------
 
+void main(int argc, char *argv[]) {
+    if (argc != 2)avm_error("Error getting binary from argument %s",argv[1]);
+    bin_file_name = strdup(argv[1]);
+    if (!avmbinaryfile()) {
+        fprintf(stderr,"\033[0;31mError initializing AVM\033[0m\n");
+        return;
+    }
+    avm_initialize();
+    while(!executionFinished) execution_cycle();
+}
+
 
 void avm_initialize (void) {
+    //
     avm_initstack();
     avm_registerlibfunc("print", libfunc_print);
     avm_registerlibfunc("typeof", libfunc_typeof);
+}
+
+void avm_initstack(){
+    for(unsigned i = 0 ; i<AVM_STACKSIZE ; ++i){
+        AVM_WIPEOUT(stack[i]);
+        stack[i].type = undef_m;
+    }
+}
+
+// ------------------- GLOBALS
+
+char *consts_getstring(unsigned index) {
+    return stringConsts[index];
+}
+double consts_getnumber(unsigned index) {
+    return numConsts[index];
+}
+char *libfuncs_getused(unsigned index) {
+    return namedLibFuncs[index];
 }
 
 // ------------------- LIBS

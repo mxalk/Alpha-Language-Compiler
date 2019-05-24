@@ -1,25 +1,29 @@
 CC=gcc
 CCFLAGS= -o $@ -g
-SHELL:=/bin/sh
+SHELL:=/bin/zsh
 STRUCTS := Structs
 AVM := AVM
 OBJ := obj
+EXEC := AVM/executions
+EXECOBJ := AVM/executions/obj
 DIR = obj/
+EXECSOURCES := $(EXEC)/exec_assign.c $(EXEC)/exec_func.c $(EXEC)/exec_jumps.c $(EXEC)/exec_nop.c $(EXEC)/exec_operations.c $(EXEC)/exec_table.c 
 SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c $(STRUCTS)/t_libAVM.c 
 OBJECTS := $(patsubst $(STRUCTS)/%.c, $(OBJ)/%.o, $(SOURCES))
+EXECOBJECTS := $(patsubst $(EXEC)/%.c, $(EXECOBJ)/%.o, $(EXECSOURCES))
 
 GREY="\033[0;37m"
 CYAN="\033[0;36m"
 NC="\033[0m" # No Color
 
-all: clean_start $(DIR) out 
+all: clean_start $(DIR) out $(EXECOBJ) avm
 	@echo -n ${NC}
+	@echo "========================== Compilation_Succesfull =========================="
 
-out: $(OBJECTS) writer.o reader.o parser.o scanner.o 
+out: $(OBJECTS) writer.o parser.o scanner.o 
 	@echo -n ${CYAN}
 	$(CC) $(OBJECTS) writer.o parser.o scanner.o  $(CCFLAGS)
 	@echo -n ${NC}
-	@echo "========================== Compilation_Succesfull =========================="
 	
 
 $(OBJ)/%.o: $(STRUCTS)/%.c 
@@ -30,10 +34,26 @@ $(OBJ)/%.o: $(STRUCTS)/%.c
 $(DIR):
 	mkdir $@
 
+$(EXECOBJ):
+	mkdir $@
+
 # out: parser flex
 # 	$(CC) $(CCFLAGS) $(LIBS) parser.c scanner.c
 
+$(EXECOBJ)/%.o: $(EXEC)/%.c 
+	@echo -n ${GREY}
+	$(CC) -I$(AVM) -c $< -o $@
+	@echo -n ${NC} 
+
+avm:  reader.o $(EXECOBJECTS) avm.o 
+	$(CC) $(EXECOBJECTS) reader.o avm.o   $(CCFLAGS)
+
 reader.o: $(AVM)/reader.c
+	@echo -n ${GREY}
+	$(CC) -I$(STRUCTS) -I$(AVM) -c $< -o $@
+	@echo -n ${NC}
+
+avm.o: $(AVM)/avm.c
 	@echo -n ${GREY}
 	$(CC) -I$(STRUCTS) -I$(AVM) -c $< -o $@
 	@echo -n ${NC}
@@ -55,7 +75,7 @@ scanner.o: scanner.c
 
 parser.c: parser.y
 	@echo -n ${CYAN}
-	bison --yacc --defines=parser.h --output=parser.c -v parser.y -Wno-conflicts-sr
+	bison --yacc --defines=parser.h --output=parser.c -v parser.y -Wnone
 	@echo -n ${NC}
 
 scanner.c: scanner.l
@@ -67,7 +87,7 @@ clean_start:
 	@echo -n ${NC}
 	clear
 	@echo "=========================== Compilation_Started ==========================="
-	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o
+	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o reader.o $(EXECOBJ)/*.o
 
 clean:
 	@echo -n ${NC}

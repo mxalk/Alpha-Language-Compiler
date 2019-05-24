@@ -1,5 +1,9 @@
 #pragma once
 
+#define MAGICNUMBER 194623425 //655*639*465 from 3655 3639 3465
+FILE *stream;
+FILE *bin_file;
+char* bin_file_name;
 
 int avmbinaryfile();
 int magicnumber();

@@ -9,8 +9,13 @@ void execute_newtable(struct instruction *instr) {
     avm_tableincrefcounter(lv->data.tableVal);
 }
 
-struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcell *index);
-void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content);
+struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcell *index){
+    avm_error("avm_tablegetelem NOT YET IMPLEMENTED\n");
+
+}
+void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content){
+    avm_error("avm_tablesetelem NOT YET IMPLEMENTED\n");
+}
 
 void execute_tablegetelem(struct instruction *instr) {
     struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
@@ -18,8 +23,8 @@ void execute_tablegetelem(struct instruction *instr) {
     struct avm_memcell *i = avm_translate_operand(&instr->arg2, &ax);
     //assert(lv && (&stack[N-1] >= lv && lv < &stack[top] || lv == &retval));
     //assert(t && &stack[N-1] >= t && t < &stack[top]);
-    assert(i);
-    avm_memcell(lv);
+    // assert(i);
+    avm_memcellclear(lv);
     lv->type = nil_m;
     if (t->type != table_m) {
         avm_error("Illegal use of type '%s' as table!", typeStrings[t->type]);
