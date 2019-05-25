@@ -163,7 +163,6 @@ struct avm_table {
     unsigned total;
 };
 
-
 avm_memcell ax, bx, cx, retval, stack[AVM_STACKSIZE];
 unsigned top, topsp;
 // ------------------- GLOBALS

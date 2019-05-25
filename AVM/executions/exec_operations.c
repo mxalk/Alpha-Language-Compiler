@@ -62,11 +62,9 @@ void execute_arithmetic (struct instruction *instr) {
 void execute_uminus(struct instruction *instr) {
     avm_error("Unsuported op: %d", instr->opcode);
 }
-
 void execute_and(struct instruction *instr) {
     avm_error("Unsuported op: %d", instr->opcode);
 }
-
 void execute_or(struct instruction *instr) {
     avm_error("Unsuported op: %d", instr->opcode);
 }

@@ -38,10 +38,6 @@ void avm_warning(char *format, ...) {
 // DYNAMIC ARRAYS
 // ---------------------------------------------------------------------------
 
-/*Η συνάρτηση αυτή θα καλείται
-όπως χρειάζεται στις συναρτήσεις
-που υλοποιούν τις εντολές της
-εικονικής μηχανής*/
 avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) {
     switch (arg->type) {
         // VARIABLES
@@ -58,7 +54,7 @@ avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) 
             return reg;
         case string_a:
             reg->type = string_m;
-            reg->data.strVal = strdup(consts_getstring(arg->val));
+            reg->data.strVal = consts_getstring(arg->val);
             return reg;
         case bool_a:
             reg->type = bool_m;
@@ -81,52 +77,6 @@ avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) 
     }
 }
 
-void avm_tableincrefcounter(struct avm_table *t) {
-    ++t->refCounter;
-}
-
-void avm_tabledecrefcounter(struct avm_table *t) {
-    assert(t->refCounter > 0);
-    if (!--t->refCounter) avm_tabledestroy(t);
-}
-
-void avm_tablebucketsinit(struct avm_table_bucket **p) {
-    for (unsigned i=0; i<AVM_TABLE_HASHSIZE; i++) p[i] = (struct avm_table_bucket *) 0;
-}
-
-struct avm_table *avm_tablenew(void) {
-    struct avm_table *t = (struct avm_table *) malloc(sizeof(struct avm_table));
-    AVM_WIPEOUT(*t);
-    t->refCounter = t->total = 0;
-    avm_tablebucketsinit(t->strIndexed);
-    avm_tablebucketsinit(t->numIndexed);
-    avm_tablebucketsinit(t->ufncIndexed);
-    avm_tablebucketsinit(t->lfncIndexed);
-    avm_tablebucketsinit(t->boolIndexed);
-    return t;
-}
-
-void avm_tablebucketsdestroy(struct avm_table_bucket **p) {
-    for (unsigned i=0; i<AVM_TABLE_HASHSIZE; i++, p++) {
-        for (struct avm_table_bucket *b = *p; b;) {
-            struct avm_table_bucket *del = b;
-            b = b->next;
-            avm_memcellclear(&del->key);
-            avm_memcellclear(&del->value);
-            free(del);
-        }
-        p[i] = (struct avm_table_bucket *) 0;
-    }
-}
-
-void avm_tabledestroy(struct avm_table *t) {
-    avm_tablebucketsdestroy(t->strIndexed);
-    avm_tablebucketsdestroy(t->numIndexed);
-    avm_tablebucketsdestroy(t->ufncIndexed);
-    avm_tablebucketsdestroy(t->lfncIndexed);
-    avm_tablebucketsdestroy(t->boolIndexed);
-    free(t);
-}
 
 // ---------------------------------------------------------------------------
 // DISPATCHER
@@ -198,7 +148,7 @@ void execution_cycle (void) {
     assert(instr->opcode >=0 && instr->opcode <= AVM_MAX_INSTRUCTIONS);
     if (instr->srcLine) currLine = instr->srcLine; // DEAL WITH SCRLINE IN READER
     unsigned oldPC = pc;
-    printf("\033[0;33mExec PC:%d  TOP:%d OP:%d\033[0m\n",pc,top,instr->opcode); //
+    printf("\033[0;33mExec PC:%u  TOP:%u OP:%u\033[0m\n",pc,top,instr->opcode); //
     (*executeFuncs[instr->opcode])(instr);
     if (pc == oldPC) ++pc;
     // print_stack();
@@ -236,7 +186,7 @@ void avm_memcellclear(struct avm_memcell *m) {
     }
 }
 
-extern void avm_callsaveenvironment(void);
+// extern void avm_callsaveenvironment(void);
 void avm_callsaveenvironment (void) {
     avm_push_envvalue(totalActuals);
     avm_push_envvalue(pc+1);
@@ -317,7 +267,9 @@ char *number_tostring(struct avm_memcell *x){
 }
 char *string_tostring(struct avm_memcell *x){
     assert(x->type == string_m);
-    return strdup(x->data.strVal);
+    char *buff = malloc(strlen(x->data.strVal)+2);
+    sprintf(buff, "'%s'", x->data.strVal);
+    return buff;
 }
 char *bool_tostring(struct avm_memcell *x){
     assert(x->type == bool_m);
@@ -325,13 +277,96 @@ char *bool_tostring(struct avm_memcell *x){
     return strdup("false");
 }
 char *table_tostring(struct avm_memcell *x){
-    avm_error("_tostrings NOT YET IMPLEMENTED\n");
+    assert(x->type == table_m);
+    struct avm_table_bucket *bucket;
+    char *buff = malloc(128), *key, *value;
+    unsigned i;
+    size_t curr_buff_size = 128, pair_size, curr_buff_filled_size = 0;
+    for (i = 0; i<AVM_TABLE_HASHSIZE; i++) {
+        bucket = x->data.tableVal->numIndexed[i];
+        while (bucket) {
+            key = avm_tostring(&bucket->key);
+            value = avm_tostring(&bucket->value);
+            pair_size = strlen(key) + strlen(value) + 5;
+            while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
+                buff = realloc(buff, 2*curr_buff_size);
+                curr_buff_size *= 2;
+            }
+            sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
+            curr_buff_filled_size += pair_size;
+            free(key);
+            free(value);
+            bucket = bucket->next;
+        }
+        bucket = x->data.tableVal->strIndexed[i];
+        while (bucket) {
+            key = avm_tostring(&bucket->key);
+            value = avm_tostring(&bucket->value);
+            pair_size = strlen(key) + strlen(value) + 5;
+            while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
+                buff = realloc(buff, 2*curr_buff_size);
+                curr_buff_size *= 2;
+            }
+            sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
+            curr_buff_filled_size += pair_size;
+            free(key);
+            free(value);
+            bucket = bucket->next;
+        }
+        bucket = x->data.tableVal->boolIndexed[i];
+        while (bucket) {
+            key = avm_tostring(&bucket->key);
+            value = avm_tostring(&bucket->value);
+            pair_size = strlen(key) + strlen(value) + 5;
+            while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
+                buff = realloc(buff, 2*curr_buff_size);
+                curr_buff_size *= 2;
+            }
+            sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
+            curr_buff_filled_size += pair_size;
+            free(key);
+            free(value);
+            bucket = bucket->next;
+        }
+        bucket = x->data.tableVal->ufncIndexed[i];
+        while (bucket) {
+            key = avm_tostring(&bucket->key);
+            value = avm_tostring(&bucket->value);
+            pair_size = strlen(key) + strlen(value) + 5;
+            while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
+                buff = realloc(buff, 2*curr_buff_size);
+                curr_buff_size *= 2;
+            }
+            sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
+            curr_buff_filled_size += pair_size;
+            free(key);
+            free(value);
+            bucket = bucket->next;
+        }
+        bucket = x->data.tableVal->lfncIndexed[i];
+        while (bucket) {
+            key = avm_tostring(&bucket->key);
+            value = avm_tostring(&bucket->value);
+            pair_size = strlen(key) + strlen(value) + 5;
+            while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
+                buff = realloc(buff, 2*curr_buff_size);
+                curr_buff_size *= 2;
+            }
+            sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
+            curr_buff_filled_size += pair_size;
+            free(key);
+            free(value);
+            bucket = bucket->next;
+        }
+    }
+    sprintf(buff + curr_buff_filled_size-2, "\0\0");
+    return buff;
 }
 char *userfunc_tostring(struct avm_memcell *x){
     assert(x->type == userfunc_m);
     struct userfunc f = userFuncs_get(x->data.funcVal);
     unsigned address = f.address;
-    unsigned n = strlen(f.id) + 30; // 29 = 26 for static + 13 for uint + \0
+    unsigned n = strlen(f.id) + 50; // 29 = 26 for static + 13 for uint + \0
     char *s = malloc(sizeof(char) * n);
     sprintf(s, "userfunction: %s , address: %u", f.id, f.address);
     return s;
@@ -361,7 +396,7 @@ tostring_func_t tostringFuncs[] = {
 };
 
 char *avm_tostring(struct avm_memcell *m) {
-    assert(m->type >= 0 && m->type <= undef_m);
+    assert(m->type >= 0 && m->type <= 7);
     return (*tostringFuncs[m->type])(m);
 }
 
@@ -391,7 +426,7 @@ tobool_func_t toboolFuncs[] = {
 };
 
 unsigned char avm_tobool(struct avm_memcell *m) {
-    assert(m->type >= 0 && m->type < undef_m);
+    assert(m->type >= 0 && m->type < 7);
     return (*toboolFuncs[m->type])(m);
 }
 
@@ -414,7 +449,6 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-
 void avm_initialize (void) {
     warnings = 0;
     GlobalProgrammVarOffset = 0;
@@ -425,6 +459,7 @@ void avm_initialize (void) {
     }
     avm_initstack();
     avm_register_libfuncs();
+    printf("GlobalProgrammVarOffset %d\n",GlobalProgrammVarOffset);
     top = N - GlobalProgrammVarOffset;
 }
 
@@ -444,7 +479,7 @@ double consts_getnumber(unsigned index) {
     return numConsts[index];
 }
 struct userfunc userFuncs_get(unsigned index) {
-    return userFuncs[index];
+    return userFuncs[index-1];
 }
 char *libfuncs_getused(unsigned index) {
     return namedLibFuncs[index];
@@ -719,7 +754,6 @@ void print_stack() {
     }
 
 }
-
 
 void use_instr_result(struct vmarg result){
     struct userfunc* f1= NULL;

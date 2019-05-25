@@ -199,7 +199,7 @@ if(e==NULL){
         case boolexpr_e:
         case newtable_e:
             arg->val = e->sym->offset;
-            printf("%d %d\n",e->type,e->sym->space);
+            printf("~make_operand for %d %d\n",e->type,e->sym->space);
             switch (e->sym->space) {
                 case programvar:
                     arg->type = global_a;

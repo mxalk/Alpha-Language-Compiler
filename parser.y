@@ -714,9 +714,10 @@ idlist:	ID{
 	// printf("idlist -> ID:%s\n",alpha_yylval.stringValue);
 	$1;
 	if(dummy==NULL){
-		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopeoffset());
+		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopespace());
 		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 		dummy->offset = currscopeoffset();
+		dummy->space = currscopespace();
 			dummy->stype = var_s;
 	  inccurrscopeoffset();
 	}
@@ -728,6 +729,7 @@ idlist:	ID{
 			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 			dummy->offset = currscopeoffset();
 			dummy->stype = var_s;
+			dummy->space = currscopespace();
 			inccurrscopeoffset();
 		}else{
 			printf("===> %s\n",alpha_yylval.stringValue);
@@ -750,6 +752,7 @@ ids: COMMA ID{
 		printf("-->%s with %d\n",alpha_yylval.stringValue,currscopeoffset());
 		dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 		dummy->offset = currscopeoffset();
+		dummy->space = currscopespace();
 				dummy->stype = var_s;
 		inccurrscopeoffset();
 
@@ -761,6 +764,7 @@ ids: COMMA ID{
 		else if(dummy->scope == 0){
 			dummy = insert(alpha_yylval.stringValue,FORMAL,getScope(),alpha_yylineno);
 			dummy->offset = currscopeoffset();
+			dummy->space = currscopespace();
 				dummy->stype = var_s;
 
 			inccurrscopeoffset();

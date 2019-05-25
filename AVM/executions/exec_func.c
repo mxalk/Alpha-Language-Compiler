@@ -25,17 +25,20 @@ void execute_call(struct instruction *instr) {
             executionFinished = 1;
             break;
     }
+    // printf("%d %u")
 }
 
 void execute_funcenter(struct instruction *instr) {
     struct avm_memcell *func = avm_translate_operand(&instr->result, &ax);
     assert(func);
-    assert(pc == func->data.funcVal);
+    // assert(pc == func->data.funcVal);
 
     totalActuals = 0;
-    struct userfunc *funcInfo = avm_getfuncinfo(pc);
+    struct userfunc *funcInfo = avm_getfuncinfo(func->data.funcVal);
     topsp = top;
+    printf("%u\n", top);
     top = top - funcInfo->localSize;
+    printf("%u\n", top);
 }
 
 void execute_funcexit(struct instruction *unused) {
