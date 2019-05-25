@@ -2,13 +2,16 @@
 
 void execute_assign(struct instruction *instr) {
     
-    printf("Execute_assign: Result: %s Arg1: %s\n", type[instr->result.type], type[instr->arg1.type]);
+    printf("Execute_assign: Result: %u Arg1: %u\n", instr->result.type, instr->arg1.type);
 
     struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
     struct avm_memcell *rv = avm_translate_operand(&instr->arg1, &ax);
+
+    printf("lv: %u rv: %u\n", lv->type, rv->type);
+
     // assert(&stack[N] >= lv);
     // assert(lv);
-    assert(lv && (&stack[N] >= lv && lv > &stack[top] || lv == &retval));
+    //assert(lv && (&stack[N] >= lv && lv > &stack[top] || lv == &retval));
     assert(rv);
     avm_assign(lv, rv);
 }
@@ -23,4 +26,6 @@ void avm_assign (struct avm_memcell *lv, struct avm_memcell *rv) {
         lv->data.strVal = strdup(rv->data.strVal);
     else if (lv->type == table_m)
         avm_tableincrefcounter(lv->data.tableVal);
+
+    lv->type = rv->type;
 }

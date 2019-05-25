@@ -1,7 +1,6 @@
 #include "../avm.h"
 
 void execute_newtable(struct instruction *instr) {
-    
     struct avm_memcell *lv = avm_translate_operand(&instr->arg1, (struct avm_memcell *) 0);
     assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
     avm_memcellclear(lv);
@@ -192,8 +191,8 @@ void execute_tablegetelem(struct instruction *instr) {
 
     //assert(lv == &retval);
     //assert((&stack[N] >= lv && lv < &stack[top]) );
-    //assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
-    //assert(t && &stack[N] >= t && t < &stack[top]);
+    assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
+    assert(t && &stack[N] >= t && t < &stack[top]);
     assert(i);
     avm_memcellclear(lv);
     lv->type = nil_m;
@@ -206,11 +205,11 @@ void execute_tablegetelem(struct instruction *instr) {
         avm_assign(lv, content);
         return;
     }else{
-        //char *ts = avm_tostring(t);
-        //char *is = avm_tostring(i);
-        avm_warning("\'%s[%s]\' not found!");//, ts, is);
-        //free(ts);
-        //free(is);
+        char *ts = avm_tostring(t);
+        char *is = avm_tostring(i);
+        avm_warning("\'%s[%s]\' not found!", ts, is);
+        free(ts);
+        free(is);
     }
 }
 
@@ -250,9 +249,6 @@ struct avm_table *avm_tablenew(void) {
     avm_tablebucketsinit(t->ufncIndexed);
     avm_tablebucketsinit(t->lfncIndexed);
     avm_tablebucketsinit(t->boolIndexed);
-    avm_tablebucketsinit(t->ufncIndexed);
-    avm_tablebucketsinit(t->lfncIndexed);
-    avm_tablebucketsinit(t->boolIndexed);
     return t;
 }
 
@@ -275,5 +271,5 @@ void avm_tabledestroy(struct avm_table *t) {
     avm_tablebucketsdestroy(t->ufncIndexed);
     avm_tablebucketsdestroy(t->lfncIndexed);
     avm_tablebucketsdestroy(t->boolIndexed);
-    // free(t);
+    free(t);
 }

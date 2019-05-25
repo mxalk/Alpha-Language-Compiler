@@ -119,6 +119,11 @@ clean:
 
 test: all
 	./out temp.txt
+	# valgrind --leak-check=full \
+    #      --show-leak-kinds=all \
+    #      --track-origins=yes \
+    #      --verbose \
+    #      ./avm_exec temp.abc
 	./avm_exec temp.abc
 
 clean_reader:
