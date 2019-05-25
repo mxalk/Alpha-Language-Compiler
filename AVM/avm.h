@@ -16,7 +16,7 @@
 #define AVM_SAVEDTOP_OFFSET     +2
 #define AVM_SAVEDTOPSP_OFFSET   +1
 
-
+extern unsigned warnings;
 unsigned char executionFinished ;
 unsigned pc;
 unsigned currLine;

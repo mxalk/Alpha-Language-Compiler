@@ -9,12 +9,12 @@ void execute_jump (struct instruction *instr) {
 void execute_jeq (struct instruction *instr) {
     
     assert(instr->result.type == label_a);
-    printf("ar1_instr====%d\n", instr->arg1.type);
-    printf("ar2_instr====%d\n", instr->arg2.type);
+    // printf("ar1_instr====%d\n", instr->arg1.type);
+    // printf("ar2_instr====%d\n", instr->arg2.type);
     struct avm_memcell *rv1 = avm_translate_operand(&instr->arg1, &ax);
     struct avm_memcell *rv2 = avm_translate_operand(&instr->arg2, &bx);
-    printf("ar1====%d\n", rv1->type);
-    printf("ar2====%d\n", rv2->type);
+    // printf("ar1====%d\n", rv1->type);
+    // printf("ar2====%d\n", rv2->type);
 
     unsigned char result = 0;
     if (rv1->type == undef_m || rv2->type == undef_m) {

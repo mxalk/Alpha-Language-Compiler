@@ -8,6 +8,7 @@ void execute_call(struct instruction *instr) {
     switch (func->type) {
         case userfunc_m:
             pc = func->data.funcVal;
+            printf("instr->arg1.val:%d pc:%d code[pc].opcode:%d\n",instr->arg1.val,pc,code[pc].opcode);
             assert(pc < AVM_ENDING_PC);
             assert(code[pc].opcode == funcenter_v);
             break;

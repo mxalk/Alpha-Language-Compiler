@@ -696,18 +696,25 @@ void backpatch(Queue *q, unsigned int funcend_position)
 {
     // printf("bp\n");
     assert(q);
-    unsigned int i= 0 ;;
+    unsigned int i= 0 ;
+    unsigned sz = Queue_getSize(q)-1;
+    unsigned flag = 1;
     unsigned int *k;
     while(k = (unsigned int*) Queue_dequeue(q))
     {
-        // vmarg *ret = (vmarg *)malloc(sizeof(vmarg));
-        // ret->type = retval_a;
-        // ret->val = funcend_position;
-        printf("BP %d %d\n",*k,i++);
+        printf("BP %d %d %d\n",*k,i++,sz);
+        if(flag){
+            instructions[*k].result.val = funcend_position+1; // initial jump
+            flag = 0;
+            sz--;
+            continue;
+        }
         instructions[*k].result.val = funcend_position;
+        sz--;
     }
     return;
 }
+
 
 void add_incomplete_jump(unsigned insrtNo, unsigned jump_to)
 {

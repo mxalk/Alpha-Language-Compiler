@@ -192,7 +192,7 @@ int operand(vmarg *v) {
 }
 
 int writeString(char *str) {
-    unsigned s = strlen(str)+1;
+    unsigned s = strlen(str);
     writeUnsigned(s);
     if (!fwrite(str, sizeof(char), s, bin_file)) return 0;
     return 1;

@@ -15,27 +15,24 @@ char *typeStrings[] = {
     "undef"
 };
 
-
-
 void avm_error(char *format, ...) {
     va_list args;
     va_start(args, format);
     fprintf(stdout,"\033[0;31mAVM:ERROR: ");
-    fprintf(stdout, format, args);
+    vfprintf(stdout, format, args);
     fprintf(stdout,"\033[0m\n");
     va_end(args);
     executionFinished = 1;
-    //exit(EXIT_FAILURE);
 }
 
 void avm_warning(char *format, ...) {
     va_list args;
     va_start(args, format);
     fprintf(stdout,"\033[0;33mAVM:WARNING: ");
-    fprintf(stdout, format, args);
+    vfprintf(stdout, format, args);
     fprintf(stdout,"\033[0m\n");
     va_end(args);
-    exit(EXIT_FAILURE);
+    warnings++;
 }
 // ---------------------------------------------------------------------------
 // DYNAMIC ARRAYS
@@ -73,7 +70,7 @@ avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) 
         //  FUNCTIONS
         case userfunc_a:
             reg->type = userfunc_m;
-            reg->data.funcVal = arg->val;
+            reg->data.funcVal = userFuncs[arg->val].address + 1;
             return reg;
         case libfunc_a:
             reg->type = libfunc_m;
@@ -265,7 +262,7 @@ void avm_push_envvalue(unsigned val) {
 }
 
 struct userfunc *avm_getfuncinfo(unsigned address){
-    avm_error("avm_getfuncinfo NOT YET IMPLEMENTED\n");
+    return &userFuncs[address];
 }
 
 unsigned avm_get_envvalue(unsigned i) {
@@ -278,7 +275,7 @@ unsigned avm_get_envvalue(unsigned i) {
 library_func_t avm_getlibraryfunc(char *id){
     unsigned i;
     for (i=0; i<totalNamedLibFuncs; i++) if (!strcmp(id, namedLibFuncs[i])) break;
-    if (i == totalNamedLibFuncs) avm_error("libfunc not found!\n");
+    if (i == totalNamedLibFuncs) avm_error("Libfunc '%s' not found!\n", id);
     return library_func_t_addresses[i];
 }
 
@@ -406,24 +403,26 @@ unsigned char avm_tobool(struct avm_memcell *m) {
 // AVM
 // ---------------------------------------------------------------------------
 
-void main(int argc, char *argv[]) {
-    
+int main(int argc, char *argv[]) {
     // display_instr();
     if (argc != 2) avm_error("Error getting binary from argument %s",argv[1]);
     bin_file_name = strdup(argv[1]);
-    GlobalProgrammVarOffset = 0;
-    if (!avmbinaryfile()) {
-        fprintf(stderr,"\033[0;31mError initializing AVM\033[0m\n");
-        return;
-    }
     avm_initialize();
     while(!executionFinished) execution_cycle();
-    return;
+    if (warnings) printf("\n\033[0;32mExecutable \'%s\' returned with %u warning(s)!\033[0m\n\n",  argv[1], warnings);
+    else printf("\n\033[0;32mExecutable \'%s\' returned succesfully!\033[0m\n\n",  argv[1]);
+    return 0;
 }
 
 
 void avm_initialize (void) {
-    //
+    warnings = 0;
+    GlobalProgrammVarOffset = 0;
+    if (!avmbinaryfile()) {
+        fprintf(stderr,"\033[0;31mError initializing AVM\033[0m\n");
+        exit(EXIT_FAILURE);
+        return ;
+    }
     avm_initstack();
     avm_register_libfuncs();
     top = N - GlobalProgrammVarOffset;
@@ -467,7 +466,7 @@ void avm_register_libfuncs() {
     avm_registerlibfunc("cos", libfunc_cos);
     avm_registerlibfunc("sin", libfunc_sin);
 }
-// checked by mxalk
+
 void libfunc_print(void) {
     unsigned n = avm_totalactuals();
     char *s;
@@ -547,10 +546,10 @@ void libfunc_input(void) {
     retval.data.strVal = buff;
     return;
 }
-
+// IMPLEMENT DIS
 void libfunc_objectmemberkeys(void) {
 }
-// checked by mxalk
+
 void libfunc_objecttotalmembers(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
@@ -569,7 +568,7 @@ void libfunc_objecttotalmembers(void) {
     retval.data.numVal = actual->data.tableVal->total;
     return;
 }
-
+// IMPLEMENT DIS
 void libfunc_objectcopy(void) {
 }
 

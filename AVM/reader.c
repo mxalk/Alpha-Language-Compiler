@@ -32,22 +32,21 @@
 int avmbinaryfile() {
     bin_file = fopen(bin_file_name,"rb");
     if (!bin_file) {
-        printf("BINARY FILE ERROR!!\n");
+        avm_error("BINARY FILE ERROR");
         return 0;
     }
     if(!magicnumber()) {
-        fprintf(stderr,"\033[0;31mError reading magicnumber\033[0m\n");
+        avm_error("Error reading magicnumber");
         return 0;
     }
     if(!arrays()) {
-        fprintf(stderr,"\033[0;31mError reading arrays\033[0m\n");
+        avm_error("Error reading arrays");
         return 0;
     }
     if(!t_code()) {
-        fprintf(stderr,"\033[0;31mError reading code\033[0m\n");
+        avm_error("Error reading code");
         return 0;
     }
-    printf("=======%u\n", codeSize);
     printf("=========================================================\n");
     return 1;
 }
@@ -57,7 +56,7 @@ int magicnumber() {
     if(!readUnsigned(&n)) return 0;
     printf("=========================================================\n");
     if (n != MAGICNUMBER) {
-        fprintf(stderr,"\033[0;31mMAGIC NUMBER MISMATCH\033[0m\n");
+        avm_error("MAGIC NUMBER MISMATCH");
         return 0;
     }
     return 1;
@@ -69,12 +68,12 @@ int arrays() {
 
 int arrays_strings() {
     if(!readUnsigned(&totalStringConsts)) {
-        fprintf(stderr,"\033[0;31mError reading number of total strings\033[0m\n");
+        avm_error("Error reading number of total strings");
         return 0;
     }
     stringConsts = malloc(sizeof(char *) * totalStringConsts);
     for (int i = 0; i<totalStringConsts; i++) if (!readString(&stringConsts[i])) {
-        fprintf(stderr,"\033[0;31mError reading string(%d)\033[0m\n", i);
+        avm_error("Error reading string(%d)", i);
         return 0;
     }
     return 1;
@@ -82,12 +81,12 @@ int arrays_strings() {
 
 int arrays_numbers() {
     if(!readUnsigned(&totalNumConsts)) {
-        fprintf(stderr,"\033[0;31mError reading number of total numbers\033[0m\n");
+        avm_error("Error reading number of total numbers");
         return 0;
     }
     numConsts = malloc(sizeof(double) * totalNumConsts);
     for (int i = 0; i<totalNumConsts; i++) if(!readDouble(&numConsts[i])) {
-        fprintf(stderr,"\033[0;31mError reading number(%d)\033[0m\n", i);
+        avm_error("Error reading number(%d)", i);
         return 0;
     }
     return 1;
@@ -95,7 +94,7 @@ int arrays_numbers() {
 
 int arrays_userfunctions() {
     if(!readUnsigned(&totalUserFuncs)) {
-        fprintf(stderr,"\033[0;31mError reading number of total userfuncs\033[0m\n");
+        avm_error("Error reading number of total userfuncs");
         return 0;
     }
     struct userfunc *iter;
@@ -111,12 +110,12 @@ int arrays_userfunctions() {
 
 int arrays_libfunctions() {
      if(!readUnsigned(&totalNamedLibFuncs)) {
-        fprintf(stderr,"\033[0;31mError reading number of total libfuncs\033[0m\n");
+        avm_error("Error reading number of total libfuncs");
         return 0;
     }
-    namedLibFuncs = malloc(sizeof(char *) * totalNamedLibFuncs);
+    namedLibFuncs = (char**)malloc(sizeof(char *) * totalNamedLibFuncs);
     for (int i = 0; i<totalNamedLibFuncs; i++) if (!readString(&namedLibFuncs[i])) {
-        fprintf(stderr,"\033[0;31mError reading libfunc(%d)\033[0m\n", i);
+        avm_error("Error reading libfunc(%d)", i);
         return 0;
     }
     return 1;
@@ -124,23 +123,23 @@ int arrays_libfunctions() {
 
 int t_code() {
     if (!readUnsigned(&GlobalProgrammVarOffset)) {
-        fprintf(stderr,"\033[0;31mError reading number of globals\033[0m\n");
+        avm_error("Error reading number of globals");
         return 0;
     }
     if (!readUnsigned(&codeSize)) {
-        fprintf(stderr,"\033[0;31mError reading number of total instructions\033[0m\n");
+        avm_error("Error reading number of total instructions");
         return 0;
     }
     struct instruction *instr;
     code = (struct instruction*)malloc(sizeof(struct instruction) * codeSize);
-    printf("currInstr / totalInstr : opcode \n");
+// printf("currInstr / totalInstr : opcode \n");
     for (int i = 0; i<codeSize; i++) {
         instr = &code[i];
         if (!readByte((char *)&instr->opcode)) {
-            fprintf(stderr,"\033[0;31mError reading instruction(%d) opcode\033[0m\n", i);
+            avm_error("Error reading instruction(%d) opcode", i);
             return 0;
         }
-                printf("%d/%d:%d = ",i,codeSize-1,instr->opcode);
+// printf("%d/%d:%d = ",i,codeSize-1,instr->opcode);
         switch (instr->opcode) {
             case add_v:
             case sub_v:
@@ -156,19 +155,19 @@ int t_code() {
             case tablegetelem_v:
             case tablesetelem_v:
                 if(!operand(&instr->arg2)) {
-                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg2\033[0m\n", i);
+                    avm_error("Error reading instruction(%d) arg2", i);
                     return 0;
                 }
             case assign_v:
                 if(!operand(&instr->arg1)) {
-                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
+                    avm_error("Error reading instruction(%d) arg1", i);
                     return 0;
                 }
             case jump_v:
             case funcenter_v:
             case funcexit_v:
                 if(!operand(&instr->result)) {
-                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
+                    avm_error("Error reading instruction(%d) arg1", i);
                     return 0;
                 }
                 break;
@@ -176,7 +175,7 @@ int t_code() {
             case pusharg_v:
             case newtable_v:
                 if(!operand(&instr->arg1)) {
-                    fprintf(stderr,"\033[0;31mError reading instruction(%d) arg1\033[0m\n", i);
+                    avm_error("Error reading instruction(%d) arg1", i);
                     return 0;
                 }
             case nop_v:
@@ -185,19 +184,19 @@ int t_code() {
             case and_v:
             case or_v:
             case not_v:
-                fprintf(stderr,"\033[0;31mError reading instruction(%d), illegal opcode\033[0m\n", i);
+                avm_error("Error reading instruction(%d), illegal opcode", i);
             default:
-                fprintf(stderr,"\033[0;31mError reading instruction(%d), invalid opcode\033[0m\n", i);
+                avm_error("Error reading instruction(%d), invalid opcode", i);
                 assert(0);
         }
-        printf(" res: %u, a1: %u, a2: %u\n",instr->result.type,instr->arg1.type,instr->arg2.type);
+// printf(" res: %u, a1: %u, a2: %u\n",instr->result.type,instr->arg1.type,instr->arg2.type);
     }
     return 1;
 }
 
 int operand(struct vmarg *vmarg) {
     if (!readByte((char *)&vmarg->type)) {
-        fprintf(stderr,"\033[0;31mError reading operand type\033[0m\n");
+        avm_error("Error reading operand type");
         return 0;
     }
     switch (vmarg->type) {
@@ -212,13 +211,13 @@ int operand(struct vmarg *vmarg) {
         case userfunc_a:
         case libfunc_a:
             if (!readUnsigned(&vmarg->val)){
-                fprintf(stderr,"\033[0;31mError reading operand value\033[0m\n");
+                avm_error("Error reading operand value");
                 return 0;
             }
         case retval_a:
             break;
         default:
-            fprintf(stderr,"\033[0;31mError invalid vmarg type(%u)\033[0m\n", vmarg->type);
+            avm_error("Error invalid vmarg type(%u)", vmarg->type);
             return 0;
     }
     return 1;
@@ -229,7 +228,7 @@ int readString(char **str) {
     if (!readUnsigned(&s)) {
         return 0;
     }
-    *str = malloc(s+1);
+    *str = (char *)malloc(s+1);
     if (!fread(*str, sizeof(char), s, bin_file)){
         return 0;
     }
