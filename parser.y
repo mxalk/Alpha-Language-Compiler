@@ -171,7 +171,7 @@ stmt_star: stmt stmt_star {
 		} else $$ = NULL;
 	}| {printf("stmt_star ->  nothing\n"); $$=NULL;};
 
-expr:			assignexpr  {printf("expr ->  assignexpr\n");}
+expr:			assignexpr  {printf("expr ->  assignexpr\n");$$ = $1;}
 			|expr aop expr {
 				printf("expr ->  expr op expr %d\n",alpha_yylineno);
 				Expr* expr0 = new_expr(arithexpr_e);
@@ -322,8 +322,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = $1;
 			};
 
-assignexpr:		lvalue{
-					// fprintf(stderr,"%s %d %d %d\n",alpha_yylval.stringValue,alpha_yylineno,getScope(),((Scope *)Stack_get(GSS, GSS->size - getScope() - 1))->isFunction);
+assignexpr:		lvalue ASSIGN expr {
 					dummy = lookup($lvalue->sym->name,LCL,alpha_yylineno,0,0,0); //type(arg:#4) is not important when we are expecting this var
 					if( dummy != NULL){
 						//if(dummy->scope == 0){
@@ -334,15 +333,13 @@ assignexpr:		lvalue{
 							}
 						//}
 					}
-					
-			} ASSIGN expr {
 					Expr* assign_ret;
 					if ($1->type == tableitem_e) {
-							emit(tablesetelem,$1,$1->index,$4,0);// that is: lvalue[index] = expr
+							emit(tablesetelem,$1,$1->index,$3,0);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					} else {
-							emit(assign,$4,NULL,$1,0);// that is: lvalue = expr
+							emit(assign,$3,NULL,$1,0);// that is: lvalue = expr
 							assign_ret = new_expr(assignexpr_e);
 							assign_ret->sym = new_temp();
 							emit(assign, $1, NULL, assign_ret,0);
@@ -407,7 +404,7 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 				$2;
 				$$ = dcolon;
 				}
-			|member {printf("lvalue ->  member\n"); $$ = emit_iftableitem($1);;};
+			|member {printf("lvalue ->  member\n"); $$ = $1;};
 
 member: 		lvalue DOT ID {printf("member ->  lvalue . ID = %s\n", alpha_yylval.stringValue);
 				// increaseScope(0); // giati increase scope? // exw arxisei na to afairw arakse

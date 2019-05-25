@@ -2,7 +2,7 @@
 
 void execute_newtable(struct instruction *instr) {
     struct avm_memcell *lv = avm_translate_operand(&instr->arg1, (struct avm_memcell *) 0);
-    assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
+    //assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
     avm_memcellclear(lv);
     lv->type = table_m;
     lv->data.tableVal = avm_tablenew();
@@ -187,7 +187,6 @@ void execute_tablegetelem(struct instruction *instr) {
     printf("retval %u \n", retval);
     printf("instr->result %d \n", instr->result.val);
     printf("type %d \n", lv->type);
-
 
     //assert(lv == &retval);
     //assert((&stack[N] >= lv && lv < &stack[top]) );

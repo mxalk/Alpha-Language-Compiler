@@ -11,7 +11,7 @@ void execute_assign(struct instruction *instr) {
 
     // assert(&stack[N] >= lv);
     // assert(lv);
-    //assert(lv && (&stack[N] >= lv && lv > &stack[top] || lv == &retval));
+    assert(lv && (&stack[N] >= lv && lv > &stack[top] || lv == &retval));
     assert(rv);
     avm_assign(lv, rv);
 }
