@@ -239,7 +239,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					value = emit_iftableitem($1);
 					emit(assign,value,NULL,term,0);
 					emit(add,value,newexpr_constnum(1),value,0);
-					emit(tablesetelem,$1,$1->index,value,0);
+					emit(tablesetelem,value,$1->index,$1,0);
 				}else{
 					emit(assign,$1,NULL,term,0);
 					emit(add,$1,newexpr_constnum(1),$1,0);
@@ -262,7 +262,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					if($2->type == tableitem_e){
 						term = emit_iftableitem($2);
 						emit(add,term,newexpr_constnum(1),term,0);
-						emit(tablesetelem,$2,$2->index,term,0);
+						emit(tablesetelem,term,$2->index,$2,0);
 					}else{
 						emit(add,$2,newexpr_constnum(1),$2,0);
 						term = new_expr(arithexpr_e);
@@ -309,7 +309,7 @@ term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 					if($2->type == tableitem_e){
 						term = emit_iftableitem($2);
 						emit(sub,term,newexpr_constnum(1),term,0);
-						emit(tablesetelem,$2,$2->index,term,0);
+						emit(tablesetelem,term,$2->index,$2,0);
 					}else{
 						emit(sub,$2,newexpr_constnum(1),$2,0);
 						term = new_expr(arithexpr_e);
@@ -335,7 +335,7 @@ assignexpr:		lvalue ASSIGN expr {
 					}
 					Expr* assign_ret;
 					if ($1->type == tableitem_e) {
-							emit(tablesetelem,$1,$1->index,$3,0);// that is: lvalue[index] = expr
+							emit(tablesetelem,$3,$1->index,$1,0);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					} else {
@@ -522,7 +522,7 @@ objectdef:		BRAC_O elist BRAC_C  {printf("objectdef ->  [ elist ]\n");
 		if(elist!=NULL){
         printf("elist->size %d\n",elist->size);
         for(i = 0 ; i <elist->size; i++){
-            emit(tablesetelem,t,newexpr_constnum(iter++),Queue_get(elist,i),0);
+            emit(tablesetelem,newexpr_constnum(iter++),Queue_get(elist,i),t,0);
         }
     }
 		$$ = t;

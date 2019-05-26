@@ -173,8 +173,8 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
             break;
         case table_m:
         case nil_m:
-        case undef_m:
-            avm_error("invalid index");
+        case undef_m:            
+            avm_warning("avm tablesetelem: nil or a undef");
             break;
     }
 
@@ -189,9 +189,9 @@ void execute_tablegetelem(struct instruction *instr) {
     // printf("type %d \n", lv->type);
 
     // assert(lv);
-    //assert((&stack[N] >= lv && lv < &stack[top]) );
-    assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
-    assert(t && &stack[N] >= t && t < &stack[top]);
+    // assert((&stack[N] >= lv && lv < &stack[top]) );
+    // assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
+    // assert(t && &stack[N] >= t && t < &stack[top]);
     assert(i);
     avm_memcellclear(lv);
     lv->type = nil_m;
@@ -219,16 +219,16 @@ void execute_tablesetelem(struct instruction *instr) {
     assert(t && &stack[N] >= t && &stack[top]);
     assert(i && c);
     if (t->type != table_m) {
-        avm_error("Illegal use of type '%s' as table", t->type);
+        avm_error("Illegal use of type '%s' as table", typeStrings[t->type]);
         return;
     }
     avm_tablesetelem(t->data.tableVal, i, c);
-    printf("----------%s\n", avm_tostring(t));
 }
 
 
 void avm_tableincrefcounter(struct avm_table *t) {
     ++t->refCounter;
+    //printf("\e[95m refcount(after incr): %d \e[0m\n", t->refCounter);
 }
 
 void avm_tabledecrefcounter(struct avm_table *t) {

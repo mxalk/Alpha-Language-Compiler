@@ -126,6 +126,10 @@ test: all
     #      ./avm_exec temp.abc
 	./avm_exec temp.abc
 
+antest: all
+	./out antest.txt
+	./avm_exec antest.abc
+
 clean_reader:
 	$(RM) reader.o reader
 

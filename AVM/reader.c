@@ -71,11 +71,12 @@ int arrays_strings() {
         avm_error("Error reading number of total strings");
         return 0;
     }
-    stringConsts = malloc(sizeof(char *) * totalStringConsts);
+    stringConsts =(char **) malloc(sizeof(char *) * totalStringConsts);
     for (int i = 0; i<totalStringConsts; i++) if (!readString(&stringConsts[i])) {
         avm_error("Error reading string(%d)", i);
         return 0;
     }
+    printf("totalStringConsts: %u '%s'\n", totalStringConsts, stringConsts[0]);
     return 1;
 }
 
@@ -233,7 +234,7 @@ int readString(char **str) {
     if (!fread(*str, sizeof(char), s, bin_file)){
         return 0;
     }
-    str[s] = '\0';
+    (*str)[s] = '\0';
     return 1;
 }
 

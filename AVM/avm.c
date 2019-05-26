@@ -148,7 +148,7 @@ void execution_cycle (void) {
     assert(instr->opcode >=0 && instr->opcode <= AVM_MAX_INSTRUCTIONS);
     if (instr->srcLine) currLine = instr->srcLine; // DEAL WITH SCRLINE IN READER
     unsigned oldPC = pc;
-    printf("\033[0;33mExec PC:%u  TOP:%u OP:%u\033[0m\n",pc,top,instr->opcode); //
+    printf("\033[0;33mExec PC:%u  TOP:%u OP:%u\033[0m\n",pc,top,instr->opcode); 
     (*executeFuncs[instr->opcode])(instr);
     if (pc == oldPC) ++pc;
     // print_stack();
@@ -267,7 +267,7 @@ char *number_tostring(struct avm_memcell *x){
 }
 char *string_tostring(struct avm_memcell *x){
     assert(x->type == string_m);
-    char *buff = malloc(strlen(x->data.strVal)+2);
+    char *buff = malloc(strlen(x->data.strVal)+3);
     sprintf(buff, "'%s'", x->data.strVal);
     return buff;
 }
