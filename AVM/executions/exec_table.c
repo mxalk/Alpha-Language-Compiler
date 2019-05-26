@@ -188,10 +188,10 @@ void execute_tablegetelem(struct instruction *instr) {
     printf("instr->result %d \n", instr->result.val);
     printf("type %d \n", lv->type);
 
-    //assert(lv == &retval);
+    // assert(lv);
     //assert((&stack[N] >= lv && lv < &stack[top]) );
-    assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
-    assert(t && &stack[N] >= t && t < &stack[top]);
+    // assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
+    // assert(t && &stack[N] >= t && t < &stack[top]);
     assert(i);
     avm_memcellclear(lv);
     lv->type = nil_m;

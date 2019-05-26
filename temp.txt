@@ -1,18 +1,10 @@
-//function x(i,j) { return i+y; }
-//x(1,2);
-//function lala(i,j) { return i+y; }
-//function lala2(i,j,k) { return i+y; }
 
-if (not a){
-    a = 2;
-}
-t = [{"hi":0}];
+t = [{"hi":0},{0:"vaggelis"},{1:"Manos"},{2:"Antwnhs"}];
 
-x1 = "prepei na mpei 1 fora";
-x2 = "prepei na mpei 1 fora";
+f = [{0:(function foo(a){
+    print(a);
+})}];
 
-print();
 
-function foo(a,x){
-    return;
-}
+circle = [ {"pi" : pi = 3.141628}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
+f[0](t[circle["x"]+1]);
