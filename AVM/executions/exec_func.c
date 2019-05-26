@@ -8,7 +8,6 @@ void execute_call(struct instruction *instr) {
     switch (func->type) {
         case userfunc_m:
             pc = func->data.funcVal;
-            printf("instr->arg1.val:%d pc:%d code[pc].opcode:%d\n",instr->arg1.val,pc,code[pc].opcode);
             assert(pc < AVM_ENDING_PC);
             assert(code[pc].opcode == funcenter_v);
             break;
@@ -36,9 +35,7 @@ void execute_funcenter(struct instruction *instr) {
     totalActuals = 0;
     struct userfunc *funcInfo = avm_getfuncinfo(func->data.funcVal);
     topsp = top;
-    printf("%u\n", top);
     top = top - funcInfo->localSize;
-    printf("%u\n", top);
 }
 
 void execute_funcexit(struct instruction *unused) {

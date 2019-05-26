@@ -94,7 +94,7 @@ struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcel
 void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content){
     struct avm_table_bucket *bucket, *new_cell;
     unsigned b = hsh(index);
-    printf("table set elem of type:%d\n",index->type);
+    // printf("table set elem of type:%d\n",content->type);
     switch (index->type) {
         case number_m:
             bucket = table->numIndexed[b];
@@ -184,14 +184,14 @@ void execute_tablegetelem(struct instruction *instr) {
     struct avm_memcell *lv = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
     struct avm_memcell *t = avm_translate_operand(&instr->arg1, (struct avm_memcell *) 0);
     struct avm_memcell *i = avm_translate_operand(&instr->arg2, &ax);
-    printf("retval %u \n", retval);
-    printf("instr->result %d \n", instr->result.val);
-    printf("type %d \n", lv->type);
+    // printf("retval %u \n", retval);
+    // printf("instr->result %d \n", instr->result.val);
+    // printf("type %d \n", lv->type);
 
     // assert(lv);
     //assert((&stack[N] >= lv && lv < &stack[top]) );
-    // assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
-    // assert(t && &stack[N] >= t && t < &stack[top]);
+    assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
+    assert(t && &stack[N] >= t && t < &stack[top]);
     assert(i);
     avm_memcellclear(lv);
     lv->type = nil_m;
@@ -204,11 +204,11 @@ void execute_tablegetelem(struct instruction *instr) {
         avm_assign(lv, content);
         return;
     }else{
-        char *ts = avm_tostring(t);
-        char *is = avm_tostring(i);
-        avm_warning("\'%s[%s]\' not found!", ts, is);
-        free(ts);
-        free(is);
+        // char *ts = avm_tostring(t);
+        // char *is = avm_tostring(i);
+        avm_warning(" not found!");//, ts, is);
+        // free(ts);
+        // free(is);
     }
 }
 
@@ -223,6 +223,7 @@ void execute_tablesetelem(struct instruction *instr) {
         return;
     }
     avm_tablesetelem(t->data.tableVal, i, c);
+    printf("----------%s\n", avm_tostring(t));
 }
 
 

@@ -66,7 +66,7 @@ avm_memcell *avm_translate_operand (struct vmarg *arg, struct avm_memcell *reg) 
         //  FUNCTIONS
         case userfunc_a:
             reg->type = userfunc_m;
-            reg->data.funcVal = userFuncs[arg->val].address + 1;
+            reg->data.funcVal = userFuncs[arg->val].address;
             return reg;
         case libfunc_a:
             reg->type = libfunc_m;
@@ -211,8 +211,8 @@ void avm_push_envvalue(unsigned val) {
     avm_dec_top();
 }
 
-struct userfunc *avm_getfuncinfo(unsigned address){
-    return &userFuncs[address];
+struct userfunc *avm_getfuncinfo(unsigned address) {
+    return &userFuncs[code[address].result.val];
 }
 
 unsigned avm_get_envvalue(unsigned i) {
@@ -364,11 +364,11 @@ char *table_tostring(struct avm_memcell *x){
 }
 char *userfunc_tostring(struct avm_memcell *x){
     assert(x->type == userfunc_m);
-    struct userfunc f = userFuncs_get(x->data.funcVal);
-    unsigned address = f.address;
-    unsigned n = strlen(f.id) + 50; // 29 = 26 for static + 13 for uint + \0
+    struct userfunc* f = avm_getfuncinfo(x->data.funcVal);
+    unsigned address = f->address;
+    unsigned n = strlen(f->id) + 50; // 29 = 26 for static + 13 for uint + \0
     char *s = malloc(sizeof(char) * n);
-    sprintf(s, "userfunction: %s , address: %u", f.id, f.address);
+    sprintf(s, "userfunction: %s , address: %u", f->id, f->address);
     return s;
 }
 char *libfunc_tostring(struct avm_memcell *x){
@@ -459,7 +459,6 @@ void avm_initialize (void) {
     }
     avm_initstack();
     avm_register_libfuncs();
-    printf("GlobalProgrammVarOffset %d\n",GlobalProgrammVarOffset);
     top = N - GlobalProgrammVarOffset;
 }
 
@@ -478,9 +477,7 @@ char *consts_getstring(unsigned index) {
 double consts_getnumber(unsigned index) {
     return numConsts[index];
 }
-struct userfunc userFuncs_get(unsigned index) {
-    return userFuncs[index-1];
-}
+
 char *libfuncs_getused(unsigned index) {
     return namedLibFuncs[index];
 }

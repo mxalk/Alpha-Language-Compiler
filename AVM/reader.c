@@ -104,6 +104,7 @@ int arrays_userfunctions() {
         if(!readUnsigned(&iter->address)) return 0;
         if(!readUnsigned(&iter->localSize)) return 0;
         if(!readString(&iter->id)) return 0;
+        iter->address++;
     }
     return 1;
 }
