@@ -407,9 +407,12 @@ void generate_PARAM(Quad *quad)
     quad->taddress = nextinstructionlabel();
     instruction t;
     t.opcode = pusharg_v;
-    // printf("%f\n",quad->result->value.numConst);
-    // _stop_;
+    reset_operand(&t.arg1);
+    reset_operand(&t.arg2);
     reset_operand(&t.result);
+    printf("%d\n",quad->result->type);
+    if(quad->result->type==libfunc_a)printf("=====%s\n",quad->result->value.strConst);
+    // _stop_;
     make_operand(quad->result, &t.arg1);
     emit_instr(&t);
 }

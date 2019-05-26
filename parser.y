@@ -34,6 +34,9 @@ unsigned int in_function = 0;
 %define api.prefix {alpha_yy}
 // %name-prefix="alpha_yy"
 %define parse.error verbose
+
+//%expect 1
+
 %start program
 
 %union{
@@ -58,6 +61,70 @@ unsigned int in_function = 0;
 			unsigned int enter;
 		}for_quads;
 }
+
+%token <stringValue> ID 
+%token <intValue> INTNUM 
+%token <floatValue> REALNUM
+%token <stringValue> STRING
+
+%token LINECOMM 
+%token BLOCKCOMM 
+%token IF 
+%token ELSE 
+%token WHILE 
+%token FOR 
+%token FUNCTION 
+%token RETURN 
+%token BREAK 
+%token CONTINUE 
+%token AND 
+%token NOT 
+%token OR 
+%token LOCAL
+%token TRUE 
+%token FALSE 
+%token NIL 
+
+%token CURL_O 
+%token CURL_C
+%token BRAC_O
+%token BRAC_C 
+%token ANGL_O 
+%token ANGL_C 
+%token SEMI 
+%token COMMA 
+%token COLON 
+%token DCOLON 
+%token DOT 
+%token DOTDOT 
+
+%token ASSIGN
+%token PLUS 
+%token MINUS 
+%token MUL 
+%token DIV 
+%token PERC 
+%token EQUALS 
+%token NEQUALS 
+%token INCR 
+%token DECR 
+%token GREATER 
+%token LESS 
+%token GREATER_E 
+%token LESS_E
+
+%right		ASSIGN
+%left			OR
+%left			AND
+%nonassoc EQUALS NEQUALS
+%nonassoc GREATER GREATER_E LESS LESS_E
+%left  		PLUS MINUS
+%left  		MUL DIV PERC 
+%right 		NOT INCR DECR UMINUS
+%left  		DOT DOTDOT
+%left  		BRAC_O BRAC_C
+%left  		ANGL_O ANGL_C
+
 %type <symbol> funcdef
 %type <symbol> funcname
 %type <expression> funcprefix
@@ -93,28 +160,6 @@ unsigned int in_function = 0;
 %type <iop>M
 %type <iop>N
 %type <for_quads>forprefix
-
-
-
-%token <stringValue> ID 
-%token <intValue> INTNUM 
-%token <floatValue> REALNUM
-%token <stringValue> STRING
-%token LINECOMM BLOCKCOMM IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL 
-%token CURL_O CURL_C BRAC_O BRAC_C ANGL_O ANGL_C SEMI COMMA COLON DCOLON DOT DOTDOT 
-%token ASSIGN PLUS MINUS MUL DIV PERC EQUALS NEQUALS INCR DECR GREATER LESS GREATER_E LESS_E
-
-%right ASSIGN
-%left  OR
-%left  AND
-%nonassoc EQUALS NEQUALS
-%nonassoc GREATER GREATER_E LESS LESS_E
-%left  PLUS MINUS
-%left  MUL DIV PERC 
-%right NOT INCR DECR UMINUS
-%left  DOT DOTDOT
-%left  BRAC_O BRAC_C
-%left  ANGL_O ANGL_C
 
 %destructor { free($$);  }ID
 %%
@@ -365,15 +410,14 @@ primary:		lvalue	{printf("primary ->  lvalue\n");
 lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type of var it is*/
 				// $$ = $1;
 				Scope* curr_scope = (Scope *)Stack_get(GSS, 0);
-				int expected =0;// curr_scope->isFunction?1:0;
+				// int expected =0;// curr_scope->isFunction?1:0;
 				fprintf(stderr,"%d %s\n",getScope(),alpha_yylval.stringValue);
 				$1;
-				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,expected,0,0);
+				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,0);
 				if (dummy==NULL) {
 					dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
 					dummy->space = currscopespace();
 					dummy->offset = currscopeoffset();
-					dummy->stype = var_s;
 					inccurrscopeoffset();
 				}
 				$$ = lvalue_expr(dummy);
@@ -385,7 +429,6 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 				dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
 				dummy->space = currscopespace();
 				dummy->offset = currscopeoffset();
-				dummy->stype = var_s;
 				$2;
 				inccurrscopeoffset();
 				$$ = lvalue_expr(dummy);
@@ -589,7 +632,7 @@ funcdef: funcprefix funcargs funcbody{
 	functionLocalOffset = *((unsigned int*)Stack_pop(global_func_stack));
 	$$ = $1->sym;
 	emit(funcend,$1,NULL,NULL,0);
-	//$1->sym->offset = currscopeoffset();
+	// $1->sym->offset = currscopeoffset();
 	// inccurrscopeoffset();
 };
 

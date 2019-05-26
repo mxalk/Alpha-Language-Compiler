@@ -111,12 +111,14 @@ Expr* lvalue_expr (SymbolTableRecord* sym){
     printf("%s\n",sym->name);
     e->next = (Expr*)0;
     e->sym = sym;
+    printf("lvalu_expr %d\n",sym->stype);
     switch(sym->stype){
         case var_s:         e->type = var_e; break;
         case programfunc_s: e->type = programfunc_e; break;
         case libraryfunc_s: e->type = libraryfunc_e; break;
         default: assert(0);
     }
+    printf("lvalu_expr -> expr->type %d\n",e->type);
     return e;
 }
 

@@ -75,6 +75,11 @@ SymbolTableRecord *lookup(char *name, enum SymType type, unsigned int line, unsi
                         sprintf(buffer, "library function cannot be shadowed with func: \'%s\'", name);
                         alpha_yyerror(buffer);
                 }
+                if(record->type == LIBFUNC)
+                        record->stype = libraryfunc_s;
+                else if(record->type == USRFUNC)
+                        record->stype = programfunc_s;
+                else record->stype = var_s;
         }
         //  printGSS();
         // printRecord(record);

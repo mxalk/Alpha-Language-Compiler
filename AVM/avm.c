@@ -148,7 +148,8 @@ void execution_cycle (void) {
     assert(instr->opcode >=0 && instr->opcode <= AVM_MAX_INSTRUCTIONS);
     if (instr->srcLine) currLine = instr->srcLine; // DEAL WITH SCRLINE IN READER
     unsigned oldPC = pc;
-    printf("\033[0;33mExec PC:%u  TOP:%u OP:%u\033[0m\n",pc,top,instr->opcode); 
+
+    // printf("\033[0;33mExec PC:%u  TOP:%u OP:%u\033[0m\n",pc,top,instr->opcode); 
     (*executeFuncs[instr->opcode])(instr);
     if (pc == oldPC) ++pc;
     // print_stack();
@@ -267,9 +268,7 @@ char *number_tostring(struct avm_memcell *x){
 }
 char *string_tostring(struct avm_memcell *x){
     assert(x->type == string_m);
-    char *buff = malloc(strlen(x->data.strVal)+3);
-    sprintf(buff, "%s", x->data.strVal);
-    return buff;
+    return strdup(x->data.strVal);
 }
 char *bool_tostring(struct avm_memcell *x){
     assert(x->type == bool_m);
@@ -444,8 +443,8 @@ int main(int argc, char *argv[]) {
     bin_file_name = strdup(argv[1]);
     avm_initialize();
     while(!executionFinished) execution_cycle();
-    if (warnings) printf("\n\033[0;32mExecutable \'%s\' returned with %u warning(s)!\033[0m\n\n",  argv[1], warnings);
-    else printf("\n\033[0;32mExecutable \'%s\' returned succesfully!\033[0m\n\n",  argv[1]);
+    if (warnings) printf("\n\033[0;32mExecutable '%s' returned with %u warning(s)!\033[0m\n\n",  argv[1], warnings);
+    else printf("\n\033[0;32mExecutable '%s' returned succesfully!\033[0m\n\n",  argv[1]);
     return 0;
 }
 
@@ -513,14 +512,14 @@ void libfunc_print(void) {
 void libfunc_input(void) {
     unsigned n = avm_totalactuals();
     if (n) {
-        avm_warning("No argument (not %d) expected in \'input\'!", n);
+        avm_warning("'input()': no argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     unsigned chunk = 128, current_size = chunk;
     char *buff = malloc(chunk);
     if(buff == NULL) {
-        avm_warning("Unable to allocate memory for \'input\'!", n);
+        avm_warning("'input()': unable to allocate memory!", n);
         retval.type = nil_m;
         return;
     }
@@ -586,13 +585,13 @@ void libfunc_objectmemberkeys(void) {
 void libfunc_objecttotalmembers(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'objecttotalmembers\'!", n);
+        avm_warning("'objecttotalmembers()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != table_m) {
-        avm_warning("Table argument (not %s) expected in \'objecttotalmembers\'!", typeStrings[actual->type]);
+        avm_warning("'objecttotalmembers()': table argument (not %s) expected!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -608,13 +607,13 @@ void libfunc_objectcopy(void) {
 void libfunc_totalarguments(void) {
     unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
     if (!p_topsp) {
-        avm_warning("'totalarguments' call outside a function!");
+        avm_warning("'totalarguments()': call outside a function!");
         retval.type = nil_m;
         return;
     }
     unsigned n = avm_totalactuals();
     if (n) {
-        avm_warning("No argument (not %d) expected in \'totalarguments\'!", n);
+        avm_warning("'totalarguments()': no argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
@@ -624,56 +623,82 @@ void libfunc_totalarguments(void) {
     return;
 }
 
-// CHECK
 void libfunc_argument(void) {
     unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
     if (!p_topsp) {
-        avm_warning("'argument' call outside a function!");
+        avm_warning("'argument()': call outside of function!");
         retval.type = nil_m;
         return;
     }
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'argument\'!", n);
+        avm_warning("'argument()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) expected in \'argument\'!", typeStrings[actual->type]);
+        avm_warning("'argument()': number argument (not %s) expected!", typeStrings[actual->type]);
+        retval.type = nil_m;
+        return;
+    } 
+    avm_memcellclear(&retval);
+    unsigned actuals = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
+    if (actuals <= (unsigned)actual->data.numVal)  {
+        avm_warning("'argument()': surrounding function only has %u arguments, not %u!", actuals, (unsigned)actual->data.numVal+1);
         retval.type = nil_m;
         return;
     }
-    avm_memcellclear(&retval);
-    retval.type = number_m;
-
-    // FIX
-    retval.data.numVal = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET - actual->data.numVal);
+    avm_memcell m = stack[p_topsp + AVM_STACKENV_SIZE + 1 + (unsigned)actual->data.numVal];
+    retval.type = m.type;
+    switch (m.type) {
+        case number_m:
+            retval.data.numVal = m.data.numVal;
+            break;
+        case string_m:
+            retval.data.strVal = strdup(m.data.strVal);
+            break;
+        case bool_m:
+            retval.data.boolVal = m.data.boolVal;
+            break;
+        case userfunc_m:
+            retval.data.funcVal = m.data.funcVal;
+            break;
+        case libfunc_m:
+            retval.data.libfuncVal = strdup(m.data.libfuncVal);
+            break;
+        case table_m:
+            retval.data.tableVal = m.data.tableVal;
+            break;
+        case nil_m:
+        case undef_m:
+            break;
+    }
     return;
 }
-// after here shoud be ok, checked by mxalk
+
 void libfunc_typeof(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'typeof\'!", n);
+        avm_warning("'typeof()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     avm_memcellclear(&retval);
     retval.type = string_m;
-    retval.data.strVal = typeStrings[avm_getactual(0)->type];
+    retval.data.strVal = strdup(typeStrings[avm_getactual(0)->type]);
 }
 
 void libfunc_strtonum(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'strtonum\'!", n);
+        avm_warning("'strtonum()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != string_m) {
-        avm_warning("String argument (not %s) expected in \'strtonum\'!", typeStrings[actual->type]);
+        avm_warning("'strtonum()': string argument (not %s) expected!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -686,13 +711,13 @@ void libfunc_strtonum(void) {
 void libfunc_sqrt(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'sqrt\'!", n);
+        avm_warning("'sqrt()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) expected in \'sqrt\'!", typeStrings[actual->type]);
+        avm_warning("'sqrt()': number argument (not %s) expected!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -704,13 +729,13 @@ void libfunc_sqrt(void) {
 void libfunc_cos(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'cos\'!", n);
+        avm_warning("'cos()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) expected in \'cos\'!", typeStrings[actual->type]);
+        avm_warning("'cos()': number argument (not %s) expected!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -722,13 +747,13 @@ void libfunc_cos(void) {
 void libfunc_sin(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) expected in \'sin\'!", n);
+        avm_warning("'sin()': one argument (not %d) expected!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) expected in \'sin\'!", typeStrings[actual->type]);
+        avm_warning("'sin()': number argument (not %s) expected!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
