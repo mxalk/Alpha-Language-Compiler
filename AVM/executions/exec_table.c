@@ -38,7 +38,7 @@ unsigned hsh(struct avm_memcell * index ){
         case table_m:
         case nil_m:
         case undef_m:
-            avm_error("invalid index");
+            avm_warning("hash invalid index");
             break;
     }
     return key % AVM_TABLE_HASHSIZE;
@@ -86,10 +86,12 @@ struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcel
         case table_m:
         case nil_m:
         case undef_m:
-            avm_error("invalid index");
+            avm_warning("invalid table index type (%s)", typeStrings[index->type]);
             break;
     }
-    return NULL;
+    struct avm_memcell *new_mem = malloc(sizeof(struct avm_memcell));
+    new_mem->type = nil_m;
+    return new_mem;
 }
 void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content){
     struct avm_table_bucket *bucket, *new_cell;
@@ -100,6 +102,7 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
             bucket = table->numIndexed[b];
             while(bucket) {
                 if (bucket->key.data.numVal == index->data.numVal) {
+                    printf("---%s\n", typeStrings[content->type]);
                     bucket->value = *content;
                     return;
                 }
@@ -171,8 +174,8 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
             new_cell->value = *content;
             table->lfncIndexed[b] = new_cell;
             break;
-        case table_m:
         case nil_m:
+        case table_m:
         case undef_m:            
             avm_warning("avm tablesetelem: nil or a undef");
             break;

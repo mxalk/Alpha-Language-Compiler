@@ -286,7 +286,7 @@ void generate_relational(vmopcode op, Quad *quad)
     // printf("rel gen %s %d %d\n", vmopcode_name[op],quad->label,currprocessedquads);
     if (quad->label < currprocessedquads){
         printf("rel gen %s %d %d\n", vmopcode_name[op],quad->label,currprocessedquads);
-        t.result.val = quads[quad->label].taddress;
+        t.result.val = quads[quad->label].taddress-1;
     }
     else{
         printf("rel gen ij %s %d %d\n", vmopcode_name[op],quad->label,currprocessedquads);

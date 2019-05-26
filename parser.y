@@ -335,7 +335,7 @@ assignexpr:		lvalue ASSIGN expr {
 					}
 					Expr* assign_ret;
 					if ($1->type == tableitem_e) {
-							emit(tablesetelem,$3,$1->index,$1,0);// that is: lvalue[index] = expr
+							emit(tablesetelem,$1->index,$3,$1,0);// that is: lvalue[index] = expr
 							assign_ret = emit_iftableitem ($1);	// Will always emit. 
 							assign_ret->type = assignexpr_e;
 					} else {

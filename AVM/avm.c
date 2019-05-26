@@ -268,7 +268,7 @@ char *number_tostring(struct avm_memcell *x){
 char *string_tostring(struct avm_memcell *x){
     assert(x->type == string_m);
     char *buff = malloc(strlen(x->data.strVal)+3);
-    sprintf(buff, "'%s'", x->data.strVal);
+    sprintf(buff, "%s", x->data.strVal);
     return buff;
 }
 char *bool_tostring(struct avm_memcell *x){
@@ -302,12 +302,12 @@ char *table_tostring(struct avm_memcell *x){
         while (bucket) {
             key = avm_tostring(&bucket->key);
             value = avm_tostring(&bucket->value);
-            pair_size = strlen(key) + strlen(value) + 5;
+            pair_size = strlen(key) + strlen(value) + 7;
             while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
                 buff = realloc(buff, 2*curr_buff_size);
                 curr_buff_size *= 2;
             }
-            sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
+            sprintf(buff + curr_buff_filled_size, "{'%s':%s}, ", key, value);
             curr_buff_filled_size += pair_size;
             free(key);
             free(value);
@@ -504,15 +504,16 @@ void libfunc_print(void) {
     char *s;
     for (unsigned i = 0; i<n; i++) {
         s = avm_tostring(avm_getactual(i));
-        puts(s);
+        printf("%s", s);
         free(s);
     }
+    printf("\n");
 }
 
 void libfunc_input(void) {
     unsigned n = avm_totalactuals();
     if (n) {
-        avm_warning("No argument (not %d) exprected in \'input\'!", n);
+        avm_warning("No argument (not %d) expected in \'input\'!", n);
         retval.type = nil_m;
         return;
     }
@@ -585,13 +586,13 @@ void libfunc_objectmemberkeys(void) {
 void libfunc_objecttotalmembers(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'objecttotalmembers\'!", n);
+        avm_warning("One argument (not %d) expected in \'objecttotalmembers\'!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != table_m) {
-        avm_warning("Table argument (not %s) exprected in \'objecttotalmembers\'!", typeStrings[actual->type]);
+        avm_warning("Table argument (not %s) expected in \'objecttotalmembers\'!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -613,7 +614,7 @@ void libfunc_totalarguments(void) {
     }
     unsigned n = avm_totalactuals();
     if (n) {
-        avm_warning("No argument (not %d) exprected in \'totalarguments\'!", n);
+        avm_warning("No argument (not %d) expected in \'totalarguments\'!", n);
         retval.type = nil_m;
         return;
     }
@@ -633,13 +634,13 @@ void libfunc_argument(void) {
     }
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'argument\'!", n);
+        avm_warning("One argument (not %d) expected in \'argument\'!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) exprected in \'argument\'!", typeStrings[actual->type]);
+        avm_warning("Number argument (not %s) expected in \'argument\'!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -654,7 +655,7 @@ void libfunc_argument(void) {
 void libfunc_typeof(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'typeof\'!", n);
+        avm_warning("One argument (not %d) expected in \'typeof\'!", n);
         retval.type = nil_m;
         return;
     }
@@ -666,13 +667,13 @@ void libfunc_typeof(void) {
 void libfunc_strtonum(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'strtonum\'!", n);
+        avm_warning("One argument (not %d) expected in \'strtonum\'!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != string_m) {
-        avm_warning("String argument (not %s) exprected in \'strtonum\'!", typeStrings[actual->type]);
+        avm_warning("String argument (not %s) expected in \'strtonum\'!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -685,13 +686,13 @@ void libfunc_strtonum(void) {
 void libfunc_sqrt(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'sqrt\'!", n);
+        avm_warning("One argument (not %d) expected in \'sqrt\'!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) exprected in \'sqrt\'!", typeStrings[actual->type]);
+        avm_warning("Number argument (not %s) expected in \'sqrt\'!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -703,13 +704,13 @@ void libfunc_sqrt(void) {
 void libfunc_cos(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'cos\'!", n);
+        avm_warning("One argument (not %d) expected in \'cos\'!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) exprected in \'cos\'!", typeStrings[actual->type]);
+        avm_warning("Number argument (not %s) expected in \'cos\'!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
@@ -721,13 +722,13 @@ void libfunc_cos(void) {
 void libfunc_sin(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
-        avm_warning("One argument (not %d) exprected in \'sin\'!", n);
+        avm_warning("One argument (not %d) expected in \'sin\'!", n);
         retval.type = nil_m;
         return;
     }
     struct avm_memcell *actual = avm_getactual(0);
     if (actual->type != number_m) {
-        avm_warning("Number argument (not %s) exprected in \'sin\'!", typeStrings[actual->type]);
+        avm_warning("Number argument (not %s) expected in \'sin\'!", typeStrings[actual->type]);
         retval.type = nil_m;
         return;
     }
