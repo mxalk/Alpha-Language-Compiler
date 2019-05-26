@@ -4,6 +4,9 @@ function Area (circle){
 	return ::pi * circle.r * circle.r;
 }
 
+x = input();
+print("Your input: ", x);
+
 print("Arguments outside of function: ", argument(0));
 function test () {
 	print("Total arguments: ", totalarguments());
@@ -20,3 +23,10 @@ print(sqrt(4), " ", sqrt(9), " ", sqrt(16), " ", sqrt(25));
 print(strtonum("1") + 1, " = 2");
 print("Area: ", typeof(Area), "\n\"lalala\": ", typeof("lalala"), "\n3: ", typeof(3), "\ncircle: ", typeof(circle), "\ntypeof: ", typeof(typeof));
 print("lalala: ", typeof(lalala));
+
+circle2 = objectcopy(Area);
+circle2 = objectcopy(circle);
+circle2["pi"] = 0;
+print(circle, " ", circle2);
+
+print(objecttotalmembers(circle));

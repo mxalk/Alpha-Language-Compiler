@@ -183,6 +183,15 @@ char **namedLibFuncs;
 char *libfuncs_getused(unsigned);
 // ===========================================================================
 avm_memcell *avm_translate_operand (struct vmarg *, struct avm_memcell *) ;
+unsigned hsh(struct avm_memcell * index );
+struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcell *index);
+void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content);
+void avm_tableincrefcounter(struct avm_table *t);
+void avm_tabledecrefcounter(struct avm_table *t);
+void avm_tablebucketsinit(struct avm_table_bucket **p);
+struct avm_table *avm_tablenew(void);
+void avm_tablebucketsdestroy(struct avm_table_bucket **p);
+void avm_tabledestroy(struct avm_table *t);
 void avm_tableincrefcounter(struct avm_table *) ;
 void avm_tabledecrefcounter(struct avm_table *) ;
 void avm_tablebucketsinit(struct avm_table_bucket **) ;

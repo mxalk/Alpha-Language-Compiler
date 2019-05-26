@@ -102,7 +102,6 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
             bucket = table->numIndexed[b];
             while(bucket) {
                 if (bucket->key.data.numVal == index->data.numVal) {
-                    printf("---%s\n", typeStrings[content->type]);
                     bucket->value = *content;
                     return;
                 }

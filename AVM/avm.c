@@ -581,7 +581,7 @@ void libfunc_input(void) {
 // IMPLEMENT DIS
 void libfunc_objectmemberkeys(void) {
 }
-
+// FIX + assign nil to table
 void libfunc_objecttotalmembers(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
@@ -600,8 +600,51 @@ void libfunc_objecttotalmembers(void) {
     retval.data.numVal = actual->data.tableVal->total;
     return;
 }
-// IMPLEMENT DIS
+
 void libfunc_objectcopy(void) {
+    unsigned n = avm_totalactuals();
+    if (n!=1) {
+        avm_warning("'objectcopy()': one argument (not %d) expected!", n);
+        retval.type = nil_m;
+        return;
+    }
+    struct avm_memcell *actual = avm_getactual(0);
+    if (actual->type != table_m) {
+        avm_warning("'objectcopy()': table argument (not %s) expected!", typeStrings[actual->type]);
+        retval.type = nil_m;
+        return;
+    } 
+    avm_memcellclear(&retval);
+    retval.type = table_m;
+    retval.data.tableVal = avm_tablenew();
+    struct avm_table_bucket *bucket;
+    for (int i=0; i<AVM_TABLE_HASHSIZE; i++) {
+        bucket = actual->data.tableVal->numIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &bucket->key, &bucket->value);
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->strIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &bucket->key, &bucket->value);
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->boolIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &bucket->key, &bucket->value);
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->ufncIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &bucket->key, &bucket->value);
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->lfncIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &bucket->key, &bucket->value);
+            bucket = bucket->next;
+        }
+    }
 }
 
 void libfunc_totalarguments(void) {
@@ -645,7 +688,7 @@ void libfunc_argument(void) {
     avm_memcellclear(&retval);
     unsigned actuals = avm_get_envvalue(p_topsp + AVM_NUMACTUALS_OFFSET);
     if (actuals <= (unsigned)actual->data.numVal)  {
-        avm_warning("'argument()': surrounding function only has %u arguments, not %u!", actuals, (unsigned)actual->data.numVal+1);
+        avm_warning("'argument()': surrounding function has only %u arguments, not %u!", actuals, (unsigned)actual->data.numVal+1);
         retval.type = nil_m;
         return;
     }
