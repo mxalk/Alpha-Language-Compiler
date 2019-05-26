@@ -1,24 +1,11 @@
-function Stack () {
+circle = [ {"pi" : pi = 3.141628}, {"r" : 0}, {"x" : 0}, {"y" : 0}];
 
-	return [
-		{"class" : "Stack"},
-		{"next"  : 0},
-		{"data"  : []},
-		{"empty" : (function (self){
-			return self.next == 0;
-		})},
-		
-		{"push"	 : (function (self, data){
-			self.data[self.next++] = data;
-		})},
-		
-		{"pop"	 : (function (self){
-			if (self.next > 0)
-				self.data[--self.next] = nil;
-		})},
-		
-		{"top" 	 : (function (self){
-			return self.data[self.next-1];
-		})}
-	];
+function Area (circle){
+	return ::pi * circle.r * circle.r;
 }
+
+print(circle);
+print("sin(0): ", sin(0), "\nsin(180*pi): ", sin(180*pi), "\ncos(0): ", cos(0), "\ncos(180*pi): ", cos(180*pi));
+print(sqrt(4), " ", sqrt(9), " ", sqrt(16), " ", sqrt(25));
+
+print(strtonum("1") + 1, " = 2");

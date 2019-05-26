@@ -370,36 +370,33 @@ void generate_AND(Quad *q)
 	instruction t;
 	t.opcode = jeq_v;
 	make_operand(q->arg1, &t.arg1);
-	make_booloperand(&t.arg2, 0);
+	make_booloperand(&t.arg2, false);
 	t.result.type = label_a;
 	t.result.val = nextinstructionlabel() + 4;
 	emit_instr(&t);
 
-    reset_operand(&t.result);
-	reset_operand(&t.arg1);
-	reset_operand(&t.arg2);
+    
 	make_operand(q->arg2, &t.arg1);
 	t.result.val = nextinstructionlabel() + 3;
 	emit_instr(&t);
 
     reset_operand(&t.result);
 	reset_operand(&t.arg1);
-	reset_operand(&t.arg2);
+
 	t.opcode = assign_v;
-	make_booloperand (&t.arg1, 1);
+	make_booloperand (&t.arg1, true);
 	make_operand(q->result, &t.result);
 	emit_instr(&t);
 
 	t.opcode = jump_v;
 	reset_operand(&t.result);
-	reset_operand(&t.arg1);
-	reset_operand(&t.arg2);
+
 	t.result.type = label_a;
 	t.result.val = nextinstructionlabel() + 2;
 	emit_instr(&t);
 
 	t.opcode = assign_v;
-	make_booloperand (&t.arg1, 0);
+	make_booloperand (&t.arg1, false);
 	reset_operand(&t.arg2);
 	make_operand(q->result, &t.result);
 	emit_instr(&t);
