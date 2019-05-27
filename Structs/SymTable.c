@@ -119,6 +119,13 @@ SymbolTableRecord *lookupGlobal(char *name, enum SymType type, unsigned int line
                         }
                         node = node->next;
                 }
+        if(record){
+                if(record->type == LIBFUNC)
+                        record->stype = libraryfunc_s;
+                else if(record->type == USRFUNC)
+                        record->stype = programfunc_s;
+                else record->stype = var_s;
+        }
         return record;
 }
 SymbolTableRecord* insert(char *name, enum SymType type, unsigned int scope, unsigned int line)

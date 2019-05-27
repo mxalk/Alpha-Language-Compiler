@@ -514,7 +514,6 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 					// $$ = $2;
 				printf("lvalue ->  DCOLON ID\n");
 				dummy = lookupGlobal(alpha_yylval.stringValue,GLBL,alpha_yylineno,1);
-				dummy->stype = var_s;
 				if(dummy==NULL){
 						char *buffer = (char*)malloc(30+strlen(alpha_yylval.stringValue));
 						sprintf(buffer, "Global variable %s not defined \n",alpha_yylval.stringValue);
