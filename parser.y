@@ -493,6 +493,11 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,0);
 				if (dummy==NULL) {
 					dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
+					if(dummy->type == LIBFUNC)
+                        dummy->stype = libraryfunc_s;
+                else if(dummy->type == USRFUNC)
+                        dummy->stype = programfunc_s;
+                else dummy->stype = var_s;
 					dummy->space = currscopespace();
 					dummy->offset = currscopeoffset();
 					inccurrscopeoffset();
@@ -504,6 +509,11 @@ lvalue:			ID {printf("lvalue -> ID = \n") ; /*scope lookup and decide what type 
 				dummy =	lookup(alpha_yylval.stringValue,getScope()?LCL:GLBL,alpha_yylineno,0,0,1);
 				// ki an uparxei hdh local? de prepei na einai opws panw if dummy == NULL ?
 				dummy = insert(alpha_yylval.stringValue,getScope()?LCL:GLBL,getScope(),alpha_yylineno);
+				if(dummy->type == LIBFUNC)
+                        dummy->stype = libraryfunc_s;
+                else if(dummy->type == USRFUNC)
+                        dummy->stype = programfunc_s;
+                else dummy->stype = var_s;
 				dummy->space = currscopespace();
 				dummy->offset = currscopeoffset();
 				$2;
