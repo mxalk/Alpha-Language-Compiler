@@ -35,7 +35,7 @@ unsigned int in_function = 0;
 // %name-prefix="alpha_yy"
 %define parse.error verbose
 
-//%expect 1
+%expect 1
 
 %start program
 
@@ -578,15 +578,19 @@ call:			call ANGL_O elist ANGL_C {printf("call ->  call ( elist )\n");
 				af_t* callsuffix = $2;
 				// callsuffix->elist = Queue_init();
 				if(callsuffix->method){
-					Expr* lval = $1;
-					Expr* self= lval;
-					lval = emit_iftableitem(member_item(self,callsuffix->name));
+					Expr* self = $1;
+					Expr* lval= emit_iftableitem(member_item(self,callsuffix->name));
 					if(!callsuffix->elist)callsuffix->elist = Queue_init();
 					Queue_enqueue(callsuffix->elist,(Expr*)self);
+					$$ = make_call(lval,callsuffix->elist);
+					printf("call ->  lvalue callsuffix \n");
+					curr_elist = NULL;
+					
+				}else{
+					$$ = make_call($1,callsuffix->elist);
+					printf("call ->  lvalue callsuffix \n");
+					curr_elist = NULL;
 				}
-				$$ = make_call($1,callsuffix->elist);
-				printf("call ->  lvalue callsuffix \n");
-				curr_elist = NULL;
 
 			}
 			|ANGL_O funcdef ANGL_C ANGL_O elist ANGL_C {printf("call ->  ( funcdef ) ( elist )  \n");

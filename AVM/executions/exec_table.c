@@ -1,5 +1,9 @@
 #include "../avm.h"
 
+void printtable(struct avm_table *t) {
+    printf("================================ %u\n", t->boolIndexed[106]);
+}
+
 void execute_newtable(struct instruction *instr) {
     struct avm_memcell *lv = avm_translate_operand(&instr->arg1, (struct avm_memcell *) 0);
     //assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
@@ -58,7 +62,7 @@ struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcel
         case string_m:
             bucket = table->strIndexed[b];
             while(bucket) {
-                if (bucket->key.data.strVal == index->data.strVal) return &bucket->value;
+                if (!strcmp(bucket->key.data.strVal, index->data.strVal)) return &bucket->value;
                 bucket = bucket->next;
             }
             break;
@@ -89,14 +93,14 @@ struct avm_memcell *avm_tablegetelem (struct avm_table *table, struct avm_memcel
             avm_warning("invalid table index type (%s)", typeStrings[index->type]);
             break;
     }
-    struct avm_memcell *new_mem = malloc(sizeof(struct avm_memcell));
+    struct avm_memcell *new_mem = (struct avm_memcell *)malloc(sizeof(struct avm_memcell));
     new_mem->type = nil_m;
     return new_mem;
 }
 void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struct avm_memcell *content){
     struct avm_table_bucket *bucket, *new_cell;
     unsigned b = hsh(index);
-    // printf("table set elem of type:%d\n",content->type);
+    if(content->type == table_m) avm_tableincrefcounter(content->data.tableVal);
     switch (index->type) {
         case number_m:
             bucket = table->numIndexed[b];
@@ -107,7 +111,7 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
                 }
                 bucket = bucket->next;
             }
-            new_cell = malloc(sizeof(struct avm_table_bucket));
+            new_cell = (struct avm_table_bucket *) malloc(sizeof(struct avm_table_bucket));
             new_cell->next = table->numIndexed[b];
             new_cell->key = *index;
             new_cell->value = *content;
@@ -116,13 +120,13 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
         case string_m:
             bucket = table->strIndexed[b];
             while(bucket) {
-                if (bucket->key.data.strVal == index->data.strVal) {
+                if (!strcmp(bucket->key.data.strVal, index->data.strVal)) {
                     bucket->value = *content;
                     return;
                 }
                 bucket = bucket->next;
             }
-            new_cell = malloc(sizeof(struct avm_table_bucket));
+            new_cell = (struct avm_table_bucket *) malloc(sizeof(struct avm_table_bucket));
             new_cell->next = table->strIndexed[b];
             new_cell->key = *index;
             new_cell->value = *content;
@@ -137,7 +141,7 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
                 }
                 bucket = bucket->next;
             }
-            new_cell = malloc(sizeof(struct avm_table_bucket));
+            new_cell = (struct avm_table_bucket *) malloc(sizeof(struct avm_table_bucket));
             new_cell->next = table->boolIndexed[b];
             new_cell->key = *index;
             new_cell->value = *content;
@@ -152,7 +156,7 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
                 }
                 bucket = bucket->next;
             }
-            new_cell = malloc(sizeof(struct avm_table_bucket));
+            new_cell = (struct avm_table_bucket *) malloc(sizeof(struct avm_table_bucket));
             new_cell->next = table->ufncIndexed[b];
             new_cell->key = *index;
             new_cell->value = *content;
@@ -167,7 +171,7 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
                 }
                 bucket = bucket->next;
             }
-            new_cell = malloc(sizeof(struct avm_table_bucket));
+            new_cell = (struct avm_table_bucket *) malloc(sizeof(struct avm_table_bucket));
             new_cell->next = table->lfncIndexed[b];
             new_cell->key = *index;
             new_cell->value = *content;
@@ -175,10 +179,11 @@ void avm_tablesetelem (struct avm_table *table, struct avm_memcell *index, struc
             break;
         case nil_m:
         case table_m:
-        case undef_m:            
+        case undef_m:
             avm_warning("avm tablesetelem: nil or a undef");
             break;
     }
+    table->total++;
 
 }
 
@@ -190,15 +195,18 @@ void execute_tablegetelem(struct instruction *instr) {
     // printf("instr->result %d \n", instr->result.val);
     // printf("type %d \n", lv->type);
 
-    // assert(lv);
-    // assert((&stack[N] >= lv && lv < &stack[top]) );
+    // assert(lv == &retval); // kai edo stamatei
+    // assert(&stack[N] >= lv && lv < &stack[top]); // kai edo
+
+    
+    // // autes einai oi default
     // assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
     // assert(t && &stack[N] >= t && t < &stack[top]);
     assert(i);
     avm_memcellclear(lv);
     lv->type = nil_m;
     if (t->type != table_m) {
-        avm_error("Illegal use of type '%s' as table!", typeStrings[t->type]);
+        avm_error("Illegal use of type '%s' as table! PC %d", typeStrings[t->type],pc);
         return;
     }
     struct avm_memcell *content = avm_tablegetelem(t->data.tableVal, i);
@@ -214,6 +222,94 @@ void execute_tablegetelem(struct instruction *instr) {
     }
 }
 
+void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
+    struct avm_table_bucket *bucket, *bucket_next;
+    unsigned b = hsh(index);
+    switch (index->type) {
+        case number_m:
+            bucket = table->numIndexed[b];
+            if (bucket && bucket->key.data.numVal == index->data.numVal) {
+                table->numIndexed[b] = bucket->next;
+                break;
+            }
+            if (!bucket) break;
+            while (bucket_next = bucket->next) {
+                if (bucket_next && bucket_next->key.data.numVal == index->data.numVal) {
+                    bucket->next = bucket_next->next;
+                    break;
+                }
+                bucket = bucket->next;
+            }
+            break;
+        case string_m:
+            bucket = table->strIndexed[b];
+            if (bucket && !strcmp(bucket->key.data.strVal, index->data.strVal)) {
+                table->strIndexed[b] = bucket->next;
+                break;
+            }
+            if (!bucket) break;
+            while (bucket_next = bucket->next) {
+                if (bucket_next && !strcmp(bucket_next->key.data.strVal, index->data.strVal)) {
+                    bucket->next = bucket_next->next;
+                    break;
+                }
+                bucket = bucket->next;
+            }
+            break;
+        case bool_m:
+            bucket = table->boolIndexed[b];
+            if (bucket && bucket->key.data.boolVal == index->data.boolVal) {
+                table->boolIndexed[b] = bucket->next;
+                break;
+            }
+            if (!bucket) break;
+            while (bucket_next = bucket->next) {
+                if (bucket_next && bucket_next->key.data.boolVal == index->data.boolVal) {
+                    bucket->next = bucket_next->next;
+                    break;
+                }
+                bucket = bucket->next;
+            }
+            break;
+        case userfunc_m:
+            bucket = table->ufncIndexed[b];
+            if (bucket && bucket->key.data.funcVal == index->data.funcVal) {
+                table->ufncIndexed[b] = bucket->next;
+                break;
+            }
+            if (!bucket) break;
+            while (bucket_next = bucket->next) {
+                if (bucket_next && bucket_next->key.data.funcVal == index->data.funcVal) {
+                    bucket->next = bucket_next->next;
+                    break;
+                }
+                bucket = bucket->next;
+            }
+            break;
+        case libfunc_m:
+            bucket = table->lfncIndexed[b];
+            if (bucket && bucket->key.data.libfuncVal == index->data.libfuncVal) {
+                table->lfncIndexed[b] = bucket->next;
+                break;
+            }
+            if (!bucket) break;
+            while (bucket_next = bucket->next) {
+                if (bucket_next && bucket_next->key.data.libfuncVal == index->data.libfuncVal) {
+                    bucket->next = bucket_next->next;
+                    break;
+                }
+                bucket = bucket->next;
+            }
+            break;
+        case nil_m:
+        case table_m:
+        case undef_m:
+            avm_warning("avm table_removeindex: nil or a undef");
+            break;
+    }
+    table->total--;
+}
+
 void execute_tablesetelem(struct instruction *instr) {
     struct avm_memcell *t = avm_translate_operand(&instr->result, (struct avm_memcell *) 0);
     struct avm_memcell *i = avm_translate_operand(&instr->arg1, &ax);
@@ -221,12 +317,12 @@ void execute_tablesetelem(struct instruction *instr) {
     assert(t && &stack[N] >= t && &stack[top]);
     assert(i && c);
     if (t->type != table_m) {
-        avm_error("Illegal use of type '%s' as table", typeStrings[t->type]);
+        avm_error("Illegal use of type '%s' as table. PC %d", typeStrings[t->type],pc);
         return;
     }
-    avm_tablesetelem(t->data.tableVal, i, c);
+    if (c->type == nil_m) avm_tableremoveindex(t->data.tableVal, i);
+    else avm_tablesetelem(t->data.tableVal, i, c);
 }
-
 
 void avm_tableincrefcounter(struct avm_table *t) {
     ++t->refCounter;
@@ -235,15 +331,17 @@ void avm_tableincrefcounter(struct avm_table *t) {
 
 void avm_tabledecrefcounter(struct avm_table *t) {
     assert(t->refCounter > 0);
+    // printf("DEC REF COUNTER: %u\n", t->refCounter);
     if (!--t->refCounter) avm_tabledestroy(t);
 }
 
 void avm_tablebucketsinit(struct avm_table_bucket **p) {
-    for (unsigned i=0; i<AVM_TABLE_HASHSIZE; i++) p[i] = (struct avm_table_bucket *) 0;
+    // change it from i++ to ++i 
+    for (unsigned i=0; i<AVM_TABLE_HASHSIZE; ++i) p[i] = (struct avm_table_bucket *) 0;
 }
 
 struct avm_table *avm_tablenew(void) {
-    struct avm_table *t = (struct avm_table *) malloc(sizeof(struct avm_table));
+    struct avm_table *t = (struct avm_table *) malloc(sizeof(struct avm_table)*2);
     AVM_WIPEOUT(*t);
     t->refCounter = t->total = 0;
     avm_tablebucketsinit(t->numIndexed);
@@ -251,13 +349,35 @@ struct avm_table *avm_tablenew(void) {
     avm_tablebucketsinit(t->ufncIndexed);
     avm_tablebucketsinit(t->lfncIndexed);
     avm_tablebucketsinit(t->boolIndexed);
+    
     return t;
 }
 
+// void avm_tablebucketsdestroy(struct avm_table_bucket **p) {
+//     printf("-address %u\n", p[106]);
+//     struct avm_table_bucket *bucket, *bucket_next;
+//     for (unsigned i=0; i<AVM_TABLE_HASHSIZE; i++, p++) {
+//         if (p[i]) printf("address %u %u\n", i, p[i]);
+//         bucket = p[i];
+//         while (bucket) {
+//             printf("-------1 %u\n", bucket);
+//             bucket_next = bucket->next;
+//             printf("-------2\n");
+//             avm_memcellclear(&bucket->key);
+//             avm_memcellclear(&bucket->value);
+//             printf("-------3\n");
+//             free(bucket);
+//             bucket = bucket_next;
+//         }
+//         p[i] = (struct avm_table_bucket *) 0;
+//     }
+// }
+
 void avm_tablebucketsdestroy(struct avm_table_bucket **p) {
+    struct avm_table_bucket *b, *del;
     for (unsigned i=0; i<AVM_TABLE_HASHSIZE; i++, p++) {
-        for (struct avm_table_bucket *b = *p; b;) {
-            struct avm_table_bucket *del = b;
+        for (b = *p; b;) {
+            del = b;
             b = b->next;
             avm_memcellclear(&del->key);
             avm_memcellclear(&del->value);

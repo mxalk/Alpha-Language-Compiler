@@ -10,14 +10,15 @@ void execute_assign(struct instruction *instr) {
 
 void avm_assign (struct avm_memcell *lv, struct avm_memcell *rv) {
     if (lv == rv) return;
-    if (lv->type == table_m && rv->type == table_m && lv->data.tableVal == rv->data.tableVal) return;
+    // if (lv->type == table_m && rv->type == table_m && lv->data.tableVal == rv->data.tableVal) return;
     if (rv->type == undef_m) avm_warning("Assigning from 'undef' content!");
     avm_memcellclear(lv);
     memcpy(lv, rv, sizeof(struct avm_memcell));
+    // printf("%d %d\n",rv->type,pc);
     if (lv->type == string_m)
         lv->data.strVal = strdup(rv->data.strVal);
     else if (lv->type == table_m)
         avm_tableincrefcounter(lv->data.tableVal);
 
-    lv->type = rv->type;
+    // lv->type = rv->type;
 }

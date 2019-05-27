@@ -7,7 +7,7 @@ OBJ := obj
 EXEC := AVM/executions
 EXECOBJ := AVM/executions/obj
 DIR = obj/
-EXECSOURCES := $(EXEC)/exec_assign.c $(EXEC)/exec_func.c $(EXEC)/exec_jumps.c $(EXEC)/exec_nop.c $(EXEC)/exec_operations.c $(EXEC)/exec_table.c 
+EXECSOURCES := $(EXEC)/exec_assign.c $(EXEC)/exec_func.c $(EXEC)/exec_jumps.c $(EXEC)/exec_operations.c $(EXEC)/exec_table.c 
 SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c $(STRUCTS)/t_libAVM.c 
 OBJECTS := $(patsubst $(STRUCTS)/%.c, $(OBJ)/%.o, $(SOURCES))
 EXECOBJECTS := $(patsubst $(EXEC)/%.c, $(EXECOBJ)/%.o, $(EXECSOURCES))
@@ -138,29 +138,29 @@ reader: clean_reader reader.o
 	./reader
 
 t_success:	all
-	./out tests_4h_5h/basic_complex.asc
-	./out tests_4h_5h/basic_simple.asc
-	./out tests_4h_5h/calc.asc
-	./out tests_4h_5h/Circle.asc
-	./out tests_4h_5h/delegation.asc
-	./out tests_4h_5h/err1.asc
-	./out tests_4h_5h/err2.asc
-	./out tests_4h_5h/err3.asc
-	./out tests_4h_5h/err4.asc
-	./out tests_4h_5h/err5.asc
-	./out tests_4h_5h/err6.asc
-	./out tests_4h_5h/funcs.asc
-	./out tests_4h_5h/hercules.asc
-	./out tests_4h_5h/libfuncs.asc
-	./out tests_4h_5h/line_point.asc
-	./out tests_4h_5h/queens.asc
-	./out tests_4h_5h/Random.asc
-	./out tests_4h_5h/ShadowedFunctions.asc
-	./out tests_4h_5h/tables1.asc
-	./out tests_4h_5h/tables2.asc
-	./out tests_4h_5h/tables3.asc
-	./out tests_4h_5h/tables_bonus.asc
-	./out tests_4h_5h/Tree1.asc
-	./out tests_4h_5h/Tree2.asc
-	./out tests_4h_5h/visitor.asc
-
+	./out tests_4h_5h/basic_complex.asc		# ok
+	./out tests_4h_5h/basic_simple.asc		# ok
+	./out tests_4h_5h/calc.asc				# ok
+	./out tests_4h_5h/Circle.asc			# ok
+	./out tests_4h_5h/delegation.asc		# cannot bind nil to funct
+	./out tests_4h_5h/err1.asc				# ok
+	./out tests_4h_5h/err2.asc				# 
+	./out tests_4h_5h/err3.asc				#
+	./out tests_4h_5h/err4.asc				# ok
+	./out tests_4h_5h/err5.asc				# ok
+	./out tests_4h_5h/err6.asc				# 
+	./out tests_4h_5h/funcs.asc				# ok
+	./out tests_4h_5h/hercules.asc			#
+	./out tests_4h_5h/libfuncs.asc			# segmentation
+	./out tests_4h_5h/line_point.asc		# ok
+	./out tests_4h_5h/queens.asc			# ok
+	./out tests_4h_5h/Random.asc			# ok
+	./out tests_4h_5h/ShadowedFunctions.asc	# ok
+	./out tests_4h_5h/tables1.asc			#
+	./out tests_4h_5h/tables2.asc			#
+	./out tests_4h_5h/tables3.asc			#
+	./out tests_4h_5h/tables_bonus.asc		#
+	./out tests_4h_5h/Tree1.asc				# ok
+	./out tests_4h_5h/Tree2.asc				#
+	./out tests_4h_5h/visitor.asc			#
+			

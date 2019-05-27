@@ -262,7 +262,7 @@ void avm_registerlibfunc(char *id, library_func_t addr){
 
 char *number_tostring(struct avm_memcell *x){
     assert(x->type == number_m);
-    char *s = malloc(sizeof(char) * 32);
+    char *s = (char *) malloc(sizeof(char) * 100);
     sprintf(s, "%f", x->data.numVal);
     return s;
 }
@@ -278,7 +278,7 @@ char *bool_tostring(struct avm_memcell *x){
 char *table_tostring(struct avm_memcell *x){
     assert(x->type == table_m);
     struct avm_table_bucket *bucket;
-    char *buff = malloc(128), *key, *value;
+    char *buff = (char *) malloc(128), *key, *value;
     unsigned i;
     size_t curr_buff_size = 128, pair_size, curr_buff_filled_size = 0;
     for (i = 0; i<AVM_TABLE_HASHSIZE; i++) {
@@ -288,7 +288,7 @@ char *table_tostring(struct avm_memcell *x){
             value = avm_tostring(&bucket->value);
             pair_size = strlen(key) + strlen(value) + 5;
             while (curr_buff_filled_size + pair_size + 2 > curr_buff_size) {
-                buff = realloc(buff, 2*curr_buff_size);
+                buff = realloc(buff, 2*curr_buff_size); 
                 curr_buff_size *= 2;
             }
             sprintf(buff + curr_buff_filled_size, "{%s:%s}, ", key, value);
@@ -366,7 +366,7 @@ char *userfunc_tostring(struct avm_memcell *x){
     struct userfunc* f = avm_getfuncinfo(x->data.funcVal);
     unsigned address = f->address;
     unsigned n = strlen(f->id) + 50; // 29 = 26 for static + 13 for uint + \0
-    char *s = malloc(sizeof(char) * n);
+    char *s = (char *) malloc(sizeof(char) * n);
     sprintf(s, "userfunction: %s , address: %u", f->id, f->address);
     return s;
 }
@@ -483,7 +483,7 @@ char *libfuncs_getused(unsigned index) {
 
 // ------------------- LIBS
 void avm_register_libfuncs() {
-    library_func_t_addresses = malloc(sizeof(library_func_t) * totalNamedLibFuncs);
+    library_func_t_addresses = (library_func_t *) malloc(sizeof(library_func_t) * totalNamedLibFuncs);
     avm_registerlibfunc("print", libfunc_print);
     avm_registerlibfunc("input", libfunc_input);
     avm_registerlibfunc("objectmemberkeys", libfunc_objectmemberkeys);
@@ -506,7 +506,7 @@ void libfunc_print(void) {
         printf("%s", s);
         free(s);
     }
-    printf("\n");
+    //printf("\n");
 }
 
 void libfunc_input(void) {
@@ -517,7 +517,7 @@ void libfunc_input(void) {
         return;
     }
     unsigned chunk = 128, current_size = chunk;
-    char *buff = malloc(chunk);
+    char *buff = (char *) malloc(chunk);
     if(buff == NULL) {
         avm_warning("'input()': unable to allocate memory!", n);
         retval.type = nil_m;
@@ -580,8 +580,60 @@ void libfunc_input(void) {
 }
 // IMPLEMENT DIS
 void libfunc_objectmemberkeys(void) {
+    unsigned n = avm_totalactuals();
+    if (n!=1) {
+        avm_warning("'objectmemberkeys()': one argument (not %d) expected!", n);
+        retval.type = nil_m;
+        return;
+    }
+    struct avm_memcell *actual = avm_getactual(0);
+    if (actual->type != table_m) {
+        avm_warning("'objectmemberkeys()': table argument (not %s) expected!", typeStrings[actual->type]);
+        retval.type = nil_m;
+        return;
+    }
+    avm_memcellclear(&retval);
+    retval.type = table_m;
+    retval.data.tableVal = avm_tablenew();
+    unsigned i = 0;
+    struct avm_memcell index;
+    index.type = number_m;
+    index.data.numVal = 0;
+    struct avm_table_bucket *bucket;
+    for (int i=0; i<AVM_TABLE_HASHSIZE; i++) {
+        bucket = actual->data.tableVal->numIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &index, &bucket->key);
+            index.data.numVal++;
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->strIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &index, &bucket->key);
+            index.data.numVal++;
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->boolIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &index, &bucket->key);
+            index.data.numVal++;
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->ufncIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &index, &bucket->key);
+            index.data.numVal++;
+            bucket = bucket->next;
+        }
+        bucket = actual->data.tableVal->lfncIndexed[i];
+        while (bucket) {
+            avm_tablesetelem(retval.data.tableVal, &index, &bucket->key);
+            index.data.numVal++;
+            bucket = bucket->next;
+        }
+    }
 }
-// FIX + assign nil to table
+
 void libfunc_objecttotalmembers(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {
@@ -597,7 +649,7 @@ void libfunc_objecttotalmembers(void) {
     }
     avm_memcellclear(&retval);
     retval.type = number_m;
-    retval.data.numVal = actual->data.tableVal->total;
+    retval.data.numVal = (double)actual->data.tableVal->total;
     return;
 }
 

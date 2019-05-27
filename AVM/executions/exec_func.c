@@ -17,9 +17,11 @@ void execute_call(struct instruction *instr) {
         case libfunc_m:
             avm_calllibfunc(func->data.libfuncVal);
             break;
+        case table_m:
+            avm_error("DES %u %u\n", pc, instr->srcLine);
         default:
             s = avm_tostring(func);
-            avm_error("Call: cannot bind '%s' to function!", s);
+            avm_error("Line %u: Call: cannot bind '%s' to function! PC %d",instr->srcLine, s,pc);
             free(s);
             executionFinished = 1;
             break;

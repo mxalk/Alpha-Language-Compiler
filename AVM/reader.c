@@ -76,7 +76,6 @@ int arrays_strings() {
         avm_error("Error reading string(%d)", i);
         return 0;
     }
-    printf("totalStringConsts: %u '%s'\n", totalStringConsts, stringConsts[0]);
     return 1;
 }
 
@@ -85,7 +84,7 @@ int arrays_numbers() {
         avm_error("Error reading number of total numbers");
         return 0;
     }
-    numConsts = malloc(sizeof(double) * totalNumConsts);
+    numConsts =(double*) malloc(sizeof(double) * totalNumConsts);
     for (int i = 0; i<totalNumConsts; i++) if(!readDouble(&numConsts[i])) {
         avm_error("Error reading number(%d)", i);
         return 0;
@@ -137,6 +136,10 @@ int t_code() {
 printf("currInstr / totalInstr : opcode \n");
     for (int i = 0; i<codeSize; i++) {
         instr = &code[i];
+        if (!readUnsigned((unsigned *)&instr->srcLine)) {
+            avm_error("Error reading instruction(%d) srcLine", i);
+            return 0;
+        }
         if (!readByte((char *)&instr->opcode)) {
             avm_error("Error reading instruction(%d) opcode", i);
             return 0;

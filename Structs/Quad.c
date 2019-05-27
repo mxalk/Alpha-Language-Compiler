@@ -126,6 +126,9 @@ Expr* make_call(Expr* lvalue, Queue* elist){ //elist = arg list
     Expr* func = emit_iftableitem(lvalue);
     int i = 0;
     //for each in reverse elist do
+    printf("lvalue type %s \n",lvalue->sym->name);
+    // assert(lvalue->type == programfunc_e||
+	// lvalue->type == libraryfunc_e);
     if(elist){
         printf("elist->size %d\n",elist->size);
         for(i = 0 ; i <elist->size; i++){

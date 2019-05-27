@@ -123,6 +123,10 @@ int t_code() {
     struct instruction *instr;
     for(int i = 0 ; i < currInstruction ;i++){
         instr = &instructions[i];
+        if(!writeUnsigned(instr->srcLine)) {
+            fprintf(stderr,"\033[0;31mError writing instruction(%d) srcLine\033[0m\n", i);
+            return 0;
+        }
         if(!writeByte(instr->opcode)) {
             fprintf(stderr,"\033[0;31mError writing instruction(%d) opcode\033[0m\n", i);
             return 0;

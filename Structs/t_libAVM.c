@@ -144,6 +144,8 @@ void expand_instructions()
 void generate(vmopcode op, Quad *quad)
 {
     instruction t;
+    printf("LINE %u\n", quad->line);
+    t.srcLine = quad->line;
     t.opcode = op;
     if (quad->arg1)
     {
@@ -176,9 +178,10 @@ void generateCode(void) // main target code function
     for (i = 0; i < currQuad; i++)
     {
         assert(quads + i);
-        printf("===> Quad #%d op: %10s %20s\n", i, iopcodeNames[(quads + i)->op], "to target code ...");
+        // printf("===> Quad #%d op: %10s %20s\n", i, iopcodeNames[(quads + i)->op], "to target code ...");
         (*generators[quads[i].op])(quads + i);
         currprocessedquads++;
+        
     }
     currprocessedquads-=1;
     patch_incomplete_jumps();
@@ -274,6 +277,7 @@ void patch_incomplete_jumps()
 void generate_relational(vmopcode op, Quad *quad)
 {
     instruction t;
+    t.srcLine = quad->line;
     reset_operand(&t.result);
     reset_operand(&t.arg1);
     reset_operand(&t.arg2);
@@ -301,6 +305,7 @@ void generate_NOT(Quad *quad)
 
     quad->taddress = nextinstructionlabel();
     instruction t;
+    t.srcLine = quad->line;
     t.opcode = jeq_v;
     make_operand(quad->arg1, &t.arg1);
     make_booloperand(&t.arg2, false);
@@ -332,6 +337,7 @@ void generate_OR(Quad *quad)
 {
     quad->taddress = nextinstructionlabel();
     instruction t;
+    t.srcLine = quad->line;
     t.opcode = jeq_v;
     make_operand(quad->arg1, &t.arg1);
     make_booloperand(&t.arg2, true);
@@ -364,19 +370,20 @@ void generate_OR(Quad *quad)
 
     // similar impl for AND
 } //funcstack impl for bellow
-void generate_AND(Quad *q)
+void generate_AND(Quad *quad)
 {
-    q->taddress = nextinstructionlabel();
+    quad->taddress = nextinstructionlabel();
 	instruction t;
+    t.srcLine = quad->line;
 	t.opcode = jeq_v;
-	make_operand(q->arg1, &t.arg1);
+	make_operand(quad->arg1, &t.arg1);
 	make_booloperand(&t.arg2, false);
 	t.result.type = label_a;
 	t.result.val = nextinstructionlabel() + 4;
 	emit_instr(&t);
 
     
-	make_operand(q->arg2, &t.arg1);
+	make_operand(quad->arg2, &t.arg1);
 	t.result.val = nextinstructionlabel() + 3;
 	emit_instr(&t);
 
@@ -385,7 +392,7 @@ void generate_AND(Quad *q)
 
 	t.opcode = assign_v;
 	make_booloperand (&t.arg1, true);
-	make_operand(q->result, &t.result);
+	make_operand(quad->result, &t.result);
 	emit_instr(&t);
 
 	t.opcode = jump_v;
@@ -398,14 +405,15 @@ void generate_AND(Quad *q)
 	t.opcode = assign_v;
 	make_booloperand (&t.arg1, false);
 	reset_operand(&t.arg2);
-	make_operand(q->result, &t.result);
+	make_operand(quad->result, &t.result);
 	emit_instr(&t);
 }
 
 void generate_PARAM(Quad *quad)
 {
     quad->taddress = nextinstructionlabel();
-    instruction t;
+	instruction t;
+    t.srcLine = quad->line;
     t.opcode = pusharg_v;
     reset_operand(&t.arg1);
     reset_operand(&t.arg2);
@@ -421,6 +429,7 @@ void generate_GETRETVAL(Quad *quad)
 {
     quad->taddress = nextinstructionlabel();
     instruction t;
+    t.srcLine = quad->line;
     t.opcode = assign_v;
     make_operand(quad->result, &t.result);
     make_retvaloperand(&t.arg1);
@@ -444,6 +453,7 @@ void generate_FUNCSTART(Quad *q)
 
     Stack_append(funcstack, f);
     instruction t_jump;
+    t_jump.srcLine = q->line;
     unsigned int *d = (unsigned*)malloc(sizeof(unsigned));;
     reset_operand(&t_jump.result);
     reset_operand(&t_jump.arg1);
@@ -470,6 +480,7 @@ void generate_RETURN(Quad *q)
 {
     q->taddress = nextinstructionlabel();
     instruction t;
+    t.srcLine = q->line;
     if(q->result){
         make_retvaloperand(&t.result);
     // if(q->result){
@@ -505,6 +516,7 @@ void generate_FUNCEND(Quad *q)
 
     q->taddress = nextinstructionlabel();
     instruction t;
+    t.srcLine = q->line;
     t.opcode = funcexit_v;
     // printf("seclast emit done\n");
     make_operand(q->arg1, &t.result);
@@ -543,6 +555,7 @@ void generate_MOD(Quad *q)
 void generate_UMINUS(Quad *q)
 {
     instruction t;
+    t.srcLine = q->line;
     t.opcode = mul_v;
     if (q->arg1)
     {

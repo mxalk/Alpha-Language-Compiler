@@ -47,7 +47,7 @@ void execute_arithmetic (struct instruction *instr) {
     assert(rv1 && rv2);
 
     if (rv1->type != number_m || rv2->type != number_m) {
-        avm_error("Not a number in arithmetic!");
+        avm_error("Not a number in arithmetic! PC %d\n",pc);
         executionFinished = 1;
         return;
     }
@@ -70,4 +70,7 @@ void execute_or(struct instruction *instr) {
 }
 void execute_not(struct instruction *instr) {
     avm_error("Unsuported op: %d", instr->opcode);
+}
+void execute_nop (struct instruction *instr) {
+    
 }
