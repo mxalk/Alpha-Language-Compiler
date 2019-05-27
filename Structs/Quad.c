@@ -394,7 +394,7 @@ void printQuads() {
                 break;
 
             case if_lesseq:
-            case if_gratereq:
+            case if_greatereq:
             case if_less:
             case if_greater:
                 printf(" %15u", q.label);
@@ -633,11 +633,12 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
     || e2->type == newtable_e    || e2->type ==  constbool_e   || e2->type ==  conststring_e 
     || e2->type ==  nil_e) 
     {
-        printf("invalid Expressions\n");
+        printf ("|||||||||||||LAALALALALALALAAL||||||||||||||||");
         return NULL;
+        alpha_yyerror("invalid expression type at arithmetic operation!\n");
     }
 
-    if ((e1->type == constnum_e) && (e2->type == constnum_e)) {
+    else if ((e1->type == constnum_e) && (e2->type == constnum_e)) {
         
         valid_expr = new_expr(constnum_e);
     
@@ -658,11 +659,11 @@ Expr * valid_arithop(Iopcode iop, Expr *e1, Expr *e2)    {
                 valid_expr->value.numConst = e1->value.numConst * e2->value.numConst;
                 break;
             default:
-                printf("invalid Iopcode\n");
+                alpha_yyerror("Invalid Iopcode\n");
                 return NULL;
         }
-        return valid_expr;
     }   
+    return valid_expr;
 }
 
 //         SYMBOLS

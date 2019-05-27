@@ -35,7 +35,7 @@ typedef enum iopcode_t {
 	if_eq,
 	if_noteq,
 	if_lesseq,
-	if_gratereq,
+	if_greatereq,
 	if_less,
 	if_greater,
 	jump,

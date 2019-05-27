@@ -138,9 +138,9 @@ unsigned int in_function = 0;
 %type <expression> call
 %type <expression> objectdef
 %type <expression> returnstmt
-%type <iop> lop
-%type <iop> aop
-%type <iop> bop
+//%type <iop> lop
+//%type <iop> aop
+//%type <iop> bop
 %type <afunc> normcall
 %type <afunc> methodcall
 %type <afunc> callsuffix
@@ -216,37 +216,114 @@ stmt_star: stmt stmt_star {
 		} else $$ = NULL;
 	}| {printf("stmt_star ->  nothing\n"); $$=NULL;};
 
-expr:			assignexpr  {printf("expr ->  assignexpr\n");$$ = $1;}
-			|expr aop expr {
-				printf("expr ->  expr op expr %d\n",alpha_yylineno);
+
+expr:	assignexpr  {printf("expr ->  assignexpr\n");$$ = $1;}
+			
+			|expr PLUS expr {
 				Expr* expr0 = new_expr(arithexpr_e);
 				expr0->sym = new_temp();
-				emit($2,$1,$3,expr0,0);
+				emit(add,$1,$3,expr0,0);
 				$$ = expr0;
-			}| expr lop expr{
+			}|expr MUL expr {
+				Expr* expr0 = new_expr(arithexpr_e);
+				expr0->sym = new_temp();
+				emit(mul,$1,$3,expr0,0);
+				$$ = expr0;
+			}|expr DIV expr {
+				Expr* expr0 = new_expr(arithexpr_e);
+				expr0->sym = new_temp();
+				emit(divi,$1,$3,expr0,0);
+				$$ = expr0;
+			}|expr PERC expr {
+				Expr* expr0 = new_expr(arithexpr_e);
+				expr0->sym = new_temp();
+				emit(mod,$1,$3,expr0,0);
+				$$ = expr0;
+			}|expr MINUS expr {
+				Expr* expr0 = new_expr(arithexpr_e);
+				expr0->sym = new_temp();
+				emit(sub,$1,$3,expr0,0);
+				$$ = expr0;
+			}
+			
+			| expr EQUALS expr{
 				Expr* result;
 				result = new_expr(boolexpr_e);
 				result->sym = new_temp();
-				emit($2, $1 , $3,NULL, nextQuad()+3);
+				emit(if_eq, $1 , $3,NULL, nextQuad()+3);
 				emit(assign, newexpr_constbool(0),NULL, result,0);
 				emit(jump,NULL,NULL,NULL,nextQuad()+2);
-				emit(assign, newexpr_constbool(1),NULL, result,0); // arg2 = NULL , label = NULL on assign OR aop
+				emit(assign, newexpr_constbool(1),NULL, result,0);
 				$$ = result;
-			}|
-			expr bop expr{
+			}| expr NEQUALS expr{
+				Expr* result;
+				result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit(if_noteq, $1 , $3,NULL, nextQuad()+3);
+				emit(assign, newexpr_constbool(0),NULL, result,0);
+				emit(jump,NULL,NULL,NULL,nextQuad()+2);
+				emit(assign, newexpr_constbool(1),NULL, result,0); 
+				$$ = result;
+			}| expr GREATER expr{
+				Expr* result;
+				result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit(if_greater, $1 , $3,NULL, nextQuad()+3);
+				emit(assign, newexpr_constbool(0),NULL, result,0);
+				emit(jump,NULL,NULL,NULL,nextQuad()+2);
+				emit(assign, newexpr_constbool(1),NULL, result,0); 
+				$$ = result;
+			}| expr GREATER_E expr{
+				Expr* result;
+				result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit(if_greatereq, $1 , $3,NULL, nextQuad()+3);
+				emit(assign, newexpr_constbool(0),NULL, result,0);
+				emit(jump,NULL,NULL,NULL,nextQuad()+2);
+				emit(assign, newexpr_constbool(1),NULL, result,0); 
+				$$ = result;
+			}| expr LESS expr{
+				Expr* result;
+				result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit(if_less, $1 , $3,NULL, nextQuad()+3);
+				emit(assign, newexpr_constbool(0),NULL, result,0);
+				emit(jump,NULL,NULL,NULL,nextQuad()+2);
+				emit(assign, newexpr_constbool(1),NULL, result,0); 
+				$$ = result;
+			}| expr LESS_E expr{
+				Expr* result;
+				result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit(if_lesseq, $1 , $3,NULL, nextQuad()+3);
+				emit(assign, newexpr_constbool(0),NULL, result,0);
+				emit(jump,NULL,NULL,NULL,nextQuad()+2);
+				emit(assign, newexpr_constbool(1),NULL, result,0); 
+				$$ = result;
+			}
+			
+			|expr AND expr{
 				Expr* result = new_expr(boolexpr_e);
 				result->sym = new_temp();
-				emit($2, $1 , $3, result,0);
+				emit(and, $1 , $3, result,0);
 				$$ = result;
-			}|term {printf("expr ->  term\n");
+			}|
+			expr OR expr{
+				Expr* result = new_expr(boolexpr_e);
+				result->sym = new_temp();
+				emit(or, $1 , $3, result,0);
+				$$ = result;
+			}
+			
+			|term {printf("expr ->  term\n");
 				$$ = $1;
 			};
 
-aop:	PLUS{$$ = add;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;}|MINUS{$$ = sub;};
+//aop:	PLUS{$$ = add;}|MUL{$$ = mul;}|DIV{$$ = divi;}|PERC{$$ = mod;}|MINUS{$$ = sub;};
 
-lop:	GREATER{ $$ = if_greater;}|GREATER_E{$$ = if_gratereq;} | LESS {$$ = if_less;}|LESS_E {$$ = if_lesseq;}| EQUALS {$$ = if_eq;} | NEQUALS {$$ = if_noteq;};
+//lop:	GREATER{ $$ = if_greater;}|GREATER_E{$$ = if_gratereq;} | LESS {$$ = if_less;}|LESS_E {$$ = if_lesseq;}| EQUALS {$$ = if_eq;} | NEQUALS {$$ = if_noteq;};
 
-bop:	AND{$$ = and;} | OR{$$ = or;};
+//bop:	AND{$$ = and;} | OR{$$ = or;};
 
 term:	 ANGL_O expr ANGL_C {printf("term ->  ( expr )\n");
 				$$ = $2;

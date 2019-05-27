@@ -1,12 +1,13 @@
-x = 0;
+x = 10;
 i = 0;
 
-while ((x <= 5) or (i!=10)) {
+while (x >= 5 or i==10 ) {
 
-    print(x);
-    i++;
-    x++;
+    print(i);
+    i = i + 1;
+    x--;
 }
+
 
 
 
