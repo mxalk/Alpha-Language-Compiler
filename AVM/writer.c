@@ -139,6 +139,7 @@ int t_code() {
             case jge_v:
             case jlt_v:
             case jgt_v:
+            case uminus_v:
             case tablegetelem_v:
             case tablesetelem_v:
                 if(!operand(&instr->arg2)) {
@@ -164,7 +165,6 @@ int t_code() {
                 }
             case nop_v:
                 break;
-            case uminus_v:
             case and_v:
             case or_v:
             case not_v:

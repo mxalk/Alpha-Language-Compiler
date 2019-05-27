@@ -542,7 +542,24 @@ void generate_MOD(Quad *q)
 
 void generate_UMINUS(Quad *q)
 {
-
+    instruction t;
+    t.opcode = mul_v;
+    if (q->arg1)
+    {
+        // printf("arg1\n");
+        make_operand(q->arg1, &t.arg1);
+    }
+    Expr* arg2 = (Expr*)malloc(sizeof(Expr));
+    arg2 =  newexpr_constnum(-1);
+    q->arg2 = arg2;
+    make_operand(q->arg2,&t.arg2);
+    if (q->result)
+    {
+        // printf("result\n");
+        make_operand(q->result, &t.result);
+    }
+    q->taddress = nextinstructionlabel();
+    emit_instr(&t);
     return;
 }
 

@@ -1,46 +1,5 @@
 x = 10;
 i = 0;
+x = -x + i;
 
-while (x >= 5 or i==10 ) {
-
-    print(i);
-    i = i + 1;
-    x--;
-}
-
-
-
-
-
-
-
-/*
 print(x);
-
-while (1) {
-    print(x);
-    if (x == 10) 
-        break;
-    x--;
-}
-
-while (x<10) {
-    for (y = 0  ; y<10 ; y++) {
-        i++;
-    }
-    x++;
-}
-print(i);
-*/
-
-/*
-
-a = true;
-
-
-if( a and false){
-
-}else{
-    print("geia");
-}
-*/
