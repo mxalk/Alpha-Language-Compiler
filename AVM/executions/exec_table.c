@@ -195,9 +195,6 @@ void execute_tablegetelem(struct instruction *instr) {
     // printf("instr->result %d \n", instr->result.val);
     // printf("type %d \n", lv->type);
 
-    // assert(lv == &retval); // kai edo stamatei
-    // assert(&stack[N] >= lv && lv < &stack[top]); // kai edo
-
     
     // // autes einai oi default
     // assert(lv && (&stack[N] >= lv && lv < &stack[top] || lv == &retval));
@@ -230,12 +227,14 @@ void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
             bucket = table->numIndexed[b];
             if (bucket && bucket->key.data.numVal == index->data.numVal) {
                 table->numIndexed[b] = bucket->next;
+                table->total--;
                 break;
             }
             if (!bucket) break;
             while (bucket_next = bucket->next) {
                 if (bucket_next && bucket_next->key.data.numVal == index->data.numVal) {
                     bucket->next = bucket_next->next;
+                    table->total--;
                     break;
                 }
                 bucket = bucket->next;
@@ -245,12 +244,14 @@ void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
             bucket = table->strIndexed[b];
             if (bucket && !strcmp(bucket->key.data.strVal, index->data.strVal)) {
                 table->strIndexed[b] = bucket->next;
+                table->total--;
                 break;
             }
             if (!bucket) break;
             while (bucket_next = bucket->next) {
                 if (bucket_next && !strcmp(bucket_next->key.data.strVal, index->data.strVal)) {
                     bucket->next = bucket_next->next;
+                    table->total--;
                     break;
                 }
                 bucket = bucket->next;
@@ -260,12 +261,14 @@ void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
             bucket = table->boolIndexed[b];
             if (bucket && bucket->key.data.boolVal == index->data.boolVal) {
                 table->boolIndexed[b] = bucket->next;
+                table->total--;
                 break;
             }
             if (!bucket) break;
             while (bucket_next = bucket->next) {
                 if (bucket_next && bucket_next->key.data.boolVal == index->data.boolVal) {
                     bucket->next = bucket_next->next;
+                    table->total--;
                     break;
                 }
                 bucket = bucket->next;
@@ -275,12 +278,14 @@ void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
             bucket = table->ufncIndexed[b];
             if (bucket && bucket->key.data.funcVal == index->data.funcVal) {
                 table->ufncIndexed[b] = bucket->next;
+                table->total--;
                 break;
             }
             if (!bucket) break;
             while (bucket_next = bucket->next) {
                 if (bucket_next && bucket_next->key.data.funcVal == index->data.funcVal) {
                     bucket->next = bucket_next->next;
+                    table->total--;
                     break;
                 }
                 bucket = bucket->next;
@@ -290,12 +295,14 @@ void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
             bucket = table->lfncIndexed[b];
             if (bucket && bucket->key.data.libfuncVal == index->data.libfuncVal) {
                 table->lfncIndexed[b] = bucket->next;
+                table->total--;
                 break;
             }
             if (!bucket) break;
             while (bucket_next = bucket->next) {
                 if (bucket_next && bucket_next->key.data.libfuncVal == index->data.libfuncVal) {
                     bucket->next = bucket_next->next;
+                    table->total--;
                     break;
                 }
                 bucket = bucket->next;
@@ -307,7 +314,6 @@ void avm_tableremoveindex(struct avm_table *table, struct avm_memcell *index) {
             avm_warning("avm table_removeindex: nil or a undef");
             break;
     }
-    table->total--;
 }
 
 void execute_tablesetelem(struct instruction *instr) {

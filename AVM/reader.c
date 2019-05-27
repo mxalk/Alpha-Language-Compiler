@@ -133,7 +133,7 @@ int t_code() {
     }
     struct instruction *instr;
     code = (struct instruction*)malloc(sizeof(struct instruction) * codeSize);
-printf("currInstr / totalInstr : opcode \n");
+// printf("currInstr / totalInstr : opcode \n");
     for (int i = 0; i<codeSize; i++) {
         instr = &code[i];
         if (!readUnsigned((unsigned *)&instr->srcLine)) {
@@ -144,7 +144,7 @@ printf("currInstr / totalInstr : opcode \n");
             avm_error("Error reading instruction(%d) opcode", i);
             return 0;
         }
-printf("%d/%d:%d = ",i,codeSize-1,instr->opcode);
+// printf("%d/%d:%d = ",i,codeSize-1,instr->opcode);
         switch (instr->opcode) {
             case add_v:
             case sub_v:
@@ -194,7 +194,7 @@ printf("%d/%d:%d = ",i,codeSize-1,instr->opcode);
                 avm_error("Error reading instruction(%d), invalid opcode", i);
                 assert(0);
         }
-printf(" res: %u, a1: %u, a2: %u\n",instr->result.type,instr->arg1.type,instr->arg2.type);
+// printf(" res: %u, a1: %u, a2: %u\n",instr->result.type,instr->arg1.type,instr->arg2.type);
     }
     return 1;
 }

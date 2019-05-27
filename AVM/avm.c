@@ -533,10 +533,10 @@ void libfunc_input(void) {
         }
     }
     buff[i] = '\0';
+    avm_memcellclear(&retval);
 
     // string = between double quotes
     if (buff[0] == '"' && buff[strlen(buff)] == '"') {
-        avm_memcellclear(&retval);
         retval.type = string_m;
         retval.data.strVal = buff;
         return;
@@ -545,7 +545,6 @@ void libfunc_input(void) {
     // number = can be translated to number
     double number = atof(buff);
     if (number) {
-        avm_memcellclear(&retval);
         retval.type = number_m;
         retval.data.numVal = number;
         return;
@@ -553,13 +552,11 @@ void libfunc_input(void) {
 
     // boolean = contains false/true
     if (strstr(buff, "false")) {
-        avm_memcellclear(&retval);
         retval.type = bool_m;
         retval.data.boolVal = 0;
         return;
     }
     if (strstr(buff, "true")) {
-        avm_memcellclear(&retval);
         retval.type = bool_m;
         retval.data.boolVal = 1;
         return;
@@ -567,18 +564,35 @@ void libfunc_input(void) {
 
     // nil = contains nil
     if (strstr(buff, "nil")) {
-        avm_memcellclear(&retval);
         retval.type = nil_m;
         return;
     }
 
+    char *tmp;
+    for (unsigned i = 0; i<totalNamedLibFuncs; i++) {
+        tmp = namedLibFuncs[i];
+        if (!strcmp(tmp, buff)) {
+            retval.type = libfunc_m;
+            retval.data.libfuncVal = buff;
+            return;
+        }
+    }
+
+    for (unsigned i = 0; i<totalUserFuncs; i++) {
+        tmp = userFuncs[i].id;
+        if (!strcmp(tmp, buff)) {
+            retval.type = userfunc_m;
+            retval.data.funcVal = userFuncs[i].address;
+            return;
+        }
+    }
+
     // string
-    avm_memcellclear(&retval);
     retval.type = string_m;
     retval.data.strVal = buff;
     return;
 }
-// IMPLEMENT DIS
+
 void libfunc_objectmemberkeys(void) {
     unsigned n = avm_totalactuals();
     if (n!=1) {

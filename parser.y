@@ -6,7 +6,7 @@
 #include "./Structs/Quad.h"
 #include "./Structs/t_libAVM.h"
 
-#define debug 1
+#define debug 0
 #define errors_halt 1
 #define exit(x) if(errors_halt)exit(x)
 #define printf(...) if(debug)printf(__VA_ARGS__);
