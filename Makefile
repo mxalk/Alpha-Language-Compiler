@@ -30,7 +30,7 @@ out: $(OBJECTS) writer.o parser.o scanner.o
 
 $(OBJ)/%.o: $(STRUCTS)/%.c 
 	@echo -e -n ${GREY}
-	$(CC) -I$(STRUCTS) -c $< -o $@
+	$(CC) -I$(STRUCTS) -c $< -o $@ -w
 	@echo -e -n ${NC}
 
 $(DIR):
@@ -114,7 +114,7 @@ clean_start:
 clean:
 	@echo -e -n ${NC}
 	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o reader.o reader *.abc
-	$(RM) tests_4h_5h/*.abc 
+	$(RM) tests_4h_5h/*.abc out avm_exec
 	$(RM) -r obj/
 
 test: all
