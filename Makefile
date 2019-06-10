@@ -104,6 +104,10 @@ clean_start:
 	@echo "                                                                           "
 	@echo "                       ALPHA LANGUAGE VIRTUAL MACHINE                      "
 	@echo "                                                                           "
+	@echo "                     XALKIADAKIS MALIAROUDAKIS TAPANLIS                    "
+	@echo "                                                                           "
+	@echo "                                    2019                                   "
+	@echo "                                                                           "
 	@echo "==========================================================================="
 
 	
