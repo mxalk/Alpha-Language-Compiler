@@ -11,6 +11,7 @@ EXECSOURCES := $(EXEC)/exec_assign.c $(EXEC)/exec_func.c $(EXEC)/exec_jumps.c $(
 SOURCES := $(STRUCTS)/Stack.c $(STRUCTS)/Queue.c $(STRUCTS)/SymTable.c $(STRUCTS)/Quad.c $(STRUCTS)/t_libAVM.c 
 OBJECTS := $(patsubst $(STRUCTS)/%.c, $(OBJ)/%.o, $(SOURCES))
 EXECOBJECTS := $(patsubst $(EXEC)/%.c, $(EXECOBJ)/%.o, $(EXECSOURCES))
+CHECK_RUN = | $(MAKE) clean && echo "Error on $@ compilation.... cleaning up!"
 
 GREY="\033[0;37m"
 CYAN="\033[0;36m"
@@ -105,14 +106,12 @@ clean_start:
 	@echo "                       ALPHA LANGUAGE VIRTUAL MACHINE                      "
 	@echo "                                                                           "
 	@echo "                     XALKIADAKIS MALIAROUDAKIS TAPANLIS                    "
-	@echo "                                                                           "
 	@echo "                                    2019                                   "
-	@echo "                                                                           "
 	@echo "==========================================================================="
 
 	
 	
-
+	@sleep 1
 	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o reader.o
 
 clean:
