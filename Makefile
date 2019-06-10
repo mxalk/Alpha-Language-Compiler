@@ -114,8 +114,8 @@ clean_start:
 clean:
 	@echo -e -n ${NC}
 	$(RM) obj/*.o parser.o scanner.o scanner.c parser.c parser.h parser.output writer.o reader.o reader *.abc
-	$(RM) tests_4h_5h/*.abc
-	rmdir obj/
+	$(RM) tests_4h_5h/*.abc 
+	$(RM) -r obj/
 
 test: all
 	./out temp.txt
